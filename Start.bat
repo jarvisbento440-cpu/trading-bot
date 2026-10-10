@@ -9,15 +9,18 @@ call :findpy
 if defined PY goto makevenv
 
 echo Python ist nicht installiert. Es wird jetzt automatisch installiert...
-echo (Falls Windows fragt, bitte mit "Ja" bestaetigen.)
+echo Falls Windows fragt, bitte mit "Ja" bestaetigen.
 winget install -e --id Python.Python.3.12 --scope user --accept-package-agreements --accept-source-agreements
-call :findpy
-if not defined PY goto nopython
+echo.
+echo Python wurde installiert. Bitte dieses Fenster schliessen
+echo und Start.bat noch einmal doppelklicken.
+pause
+exit /b 0
 
 :makevenv
 echo Erster Start: Python-Umgebung wird eingerichtet, bitte warten...
 %PY% -m venv .venv
-if errorlevel 1 goto nopython
+if errorlevel 1 goto badvenv
 
 :install
 echo Pruefe Pakete...
@@ -33,19 +36,22 @@ pause
 exit /b 0
 
 :findpy
-rem Sucht ein echtes Python (nicht den Microsoft-Store-Platzhalter)
+rem Sucht ein funktionierendes Python (nicht den Microsoft-Store-Platzhalter)
 set "PY="
-py -3 --version >nul 2>nul && set "PY=py -3" && exit /b 0
-python --version >nul 2>nul && set "PY=python" && exit /b 0
-for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do if exist "%%D\python.exe" set "PY="%%D\python.exe""
+py -3 -c "import encodings" >nul 2>nul && set "PY=py -3" && exit /b 0
+python -c "import encodings" >nul 2>nul && set "PY=python" && exit /b 0
+for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
+  "%%D\python.exe" -c "import encodings" >nul 2>nul && set "PY="%%D\python.exe""
+)
 exit /b 0
 
-:nopython
+:badvenv
+if exist ".venv" rmdir /s /q ".venv"
 echo.
-echo Python konnte nicht automatisch installiert werden.
-echo Bitte Python von https://www.python.org/downloads/ installieren,
-echo bei der Installation "Add python.exe to PATH" anhaken
-echo und danach Start.bat noch einmal doppelklicken.
+echo Python funktioniert nicht richtig.
+echo Bitte Python von https://www.python.org/downloads/ herunterladen, starten,
+echo "Repair" bzw. "Install Now" waehlen und "Add python.exe to PATH" anhaken.
+echo Danach Start.bat noch einmal doppelklicken.
 pause
 exit /b 1
 
