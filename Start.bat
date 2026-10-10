@@ -7,6 +7,7 @@ if exist ".venv\Scripts\python.exe" goto install
 
 call :findpy
 if defined PY goto makevenv
+if exist "%LOCALAPPDATA%\Programs\Python\Python3*" goto badvenv
 
 echo Python ist nicht installiert. Es wird jetzt automatisch installiert...
 echo Falls Windows fragt, bitte mit "Ja" bestaetigen.
@@ -48,9 +49,10 @@ exit /b 0
 :badvenv
 if exist ".venv" rmdir /s /q ".venv"
 echo.
-echo Python funktioniert nicht richtig.
-echo Bitte Python von https://www.python.org/downloads/ herunterladen, starten,
-echo "Repair" bzw. "Install Now" waehlen und "Add python.exe to PATH" anhaken.
+echo Python ist installiert, aber beschaedigt.
+echo So reparierst du es: Windows-Einstellungen, Apps, Installierte Apps,
+echo "Python 3.12" suchen, auf die drei Punkte, "Aendern", dann "Repair".
+echo Oder den Installer von https://www.python.org/downloads/ starten und "Repair" waehlen.
 echo Danach Start.bat noch einmal doppelklicken.
 pause
 exit /b 1
