@@ -34,7 +34,7 @@ class Config:
 
 def load_config(path: str | Path = "config.yaml") -> Config:
     load_dotenv()
-    raw = yaml.safe_load(Path(path).read_text()) or {}
+    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     risk = Risk(**raw.pop("risk", {}))
     cfg = Config(**raw, risk=risk)
     cfg.telegram_token = os.getenv("TELEGRAM_BOT_TOKEN", "")

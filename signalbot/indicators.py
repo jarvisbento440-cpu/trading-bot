@@ -53,3 +53,82 @@ def trend_direction(df: pd.DataFrame) -> str:
     if d["close"] < d["ema50"] < d["ema200"] or (d["close"] < d["ema50"] and d["ema20"] < d["ema50"]):
         return "down"
     return "flat"
+
+
+def trend_series(higher: pd.DataFrame, tf_ms: int, ts: pd.Series) -> pd.Series:
+    """Trend der höheren Zeitebene für jeden Zeitpunkt in ts, ohne Blick in die Zukunft.
+
+    Eine Tageskerze zählt erst ab ihrem Ende (ts + tf_ms).
+    """
+    if len(higher) < 60:
+        return pd.Series(["flat"] * len(ts), index=ts.index)
+    h = add_indicators(higher)
+    up = (h["close"] > h["ema50"]) & ((h["ema50"] > h["ema200"]) | (h["ema20"] > h["ema50"]))
+    down = (h["close"] < h["ema50"]) & ((h["ema50"] < h["ema200"]) | (h["ema20"] < h["ema50"]))
+    trend = pd.DataFrame({
+        "avail": h["ts"] + tf_ms,
+        "trend": np.where(up, "up", np.where(down, "down", "flat")),
+    })
+    left = pd.DataFrame({"ts": ts.values, "order": range(len(ts))})
+    m = pd.merge_asof(left.sort_values("ts"), trend.sort_values("avail"),
+                      left_on="ts", right_on="avail", direction="backward")
+    m = m.sort_values("order")
+    return pd.Series(m["trend"].fillna("flat").values, index=ts.index)
+
+
+def bollinger(close: pd.Series, n: int = 20, k: float = 2.0) -> tuple[pd.Series, pd.Series]:
+    mid = close.rolling(n).mean()
+    sd = close.rolling(n).std()
+    return mid + k * sd, mid - k * sd
+
+
+FIB_LEVELS = [0.0, 0.236, 0.382, 0.5, 0.618, 0.786, 1.0]
+
+
+def fibonacci(df: pd.DataFrame, lookback: int = 150) -> dict | None:
+    """Fibonacci-Retracement zwischen Hoch und Tief der letzten `lookback` Kerzen.
+
+    Kam das Hoch nach dem Tief, ist es ein Aufwärtsimpuls (Retracement nach unten gemessen).
+    """
+    w = df.tail(lookback)
+    if len(w) < 20:
+        return None
+    hi_i, lo_i = w["high"].idxmax(), w["low"].idxmin()
+    hi, lo = float(w.loc[hi_i, "high"]), float(w.loc[lo_i, "low"])
+    up = hi_i > lo_i
+    levels = [
+        {"ratio": r, "price": hi - r * (hi - lo) if up else lo + r * (hi - lo)}
+        for r in FIB_LEVELS
+    ]
+    return {
+        "direction": "up" if up else "down",
+        "from": {"ts": int(w.loc[lo_i if up else hi_i, "ts"]), "price": lo if up else hi},
+        "to": {"ts": int(w.loc[hi_i if up else lo_i, "ts"]), "price": hi if up else lo},
+        "levels": levels,
+    }
+
+
+def support_resistance(df: pd.DataFrame, lookback: int = 300, wing: int = 5, max_levels: int = 3) -> list[dict]:
+    """Unterstützungen/Widerstände aus Umkehrpunkten (Fraktale), nah beieinander zusammengefasst."""
+    w = df.tail(lookback).reset_index(drop=True)
+    if len(w) < 2 * wing + 5:
+        return []
+    a = atr(w).iloc[-1]
+    pivots = []
+    for i in range(wing, len(w) - wing):
+        win = w.iloc[i - wing:i + wing + 1]
+        if w.at[i, "high"] == win["high"].max():
+            pivots.append(float(w.at[i, "high"]))
+        if w.at[i, "low"] == win["low"].min():
+            pivots.append(float(w.at[i, "low"]))
+    clusters: list[list[float]] = []
+    for p in sorted(pivots):
+        if clusters and p - clusters[-1][-1] <= 0.5 * a:
+            clusters[-1].append(p)
+        else:
+            clusters.append([p])
+    price = float(w["close"].iloc[-1])
+    levels = [{"price": sum(c) / len(c), "touches": len(c)} for c in clusters if len(c) >= 2]
+    above = sorted([l for l in levels if l["price"] > price], key=lambda l: l["price"])[:max_levels]
+    below = sorted([l for l in levels if l["price"] <= price], key=lambda l: -l["price"])[:max_levels]
+    return [{**l, "kind": "resistance"} for l in above] + [{**l, "kind": "support"} for l in below]

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 import time
 
 from .config import Config, load_config
@@ -56,16 +57,30 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
-    p.add_argument("command", choices=["backfill", "once", "run"],
-                   help="backfill = Historie laden, once = einmal prüfen, run = Dauerbetrieb")
+    p.add_argument("command", choices=["ui", "backfill", "once", "run"], nargs="?", default="ui",
+                   help="ui = Oberfläche (Standard), backfill = Historie laden, "
+                        "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche")
     p.add_argument("--config", default="config.yaml")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--offline", action="store_true", help="Oberfläche ohne Kurs-Aktualisierung")
+    p.add_argument("--no-window", action="store_true", help="kein Fenster öffnen")
     args = p.parse_args()
+
+    # Windows-Konsole: Umlaute und Emojis nicht abstürzen lassen
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cfg = load_config(args.config)
     db = Database(cfg.database)
     ex = make_exchange(cfg.exchange)
     notifier = Notifier(cfg.telegram_token, cfg.telegram_chat_id)
+
+    if args.command == "ui":
+        from .ui import serve
+        serve(cfg, port=args.port, sync=not args.offline, open_browser=not args.no_window)
+        return
 
     if args.command == "backfill":
         sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)

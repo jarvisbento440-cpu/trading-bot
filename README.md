@@ -15,7 +15,22 @@ Beobachtet BTC, ETH, SOL, XRP und ONDO rund um die Uhr und schickt Einstiegs-Sig
 3. Ab Score 65 (einstellbar) kommt ein Signal mit Einstieg, Stop (1,5 × ATR) und zwei Zielen.
 4. Jedes Signal wird gespeichert, damit es später ausgewertet werden kann.
 
-## Starten (Mac/Linux)
+## Starten unter Windows (mit Oberfläche)
+
+1. Python installieren: https://www.python.org/downloads/ → bei der Installation **„Add python.exe to PATH“** anhaken.
+2. Ordner entpacken, **Doppelklick auf `Start.bat`**.
+3. Beim ersten Start werden Pakete installiert und 2 Jahre Kursdaten geladen (einige Minuten). Danach öffnet sich das Fenster.
+
+Das schwarze Konsolenfenster muss offen bleiben, solange der Bot läuft.
+
+### Die Oberfläche
+
+- Alle Coins nebeneinander, oben Zeitebene (1 Std / 4 Std / 1 Tag) wählen.
+- Ein- und ausblendbar: Signal-Pfeile mit Score, EMA 20/50/200, Fibonacci-Retracement, Unterstützung/Widerstand, Bollinger-Bänder.
+- Aktuelles Signal: Einstieg (blau), Stop (rot), Ziel 1 und 2 (grün) als Linien.
+- **Neues Signal:** Die Kachel blinkt gelb, es piept und Windows zeigt eine Benachrichtigung. Klick auf die Kachel öffnet den Coin im Vollbild mit allen Details. Esc schließt.
+
+## Starten (Mac/Linux, Terminal)
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -23,7 +38,8 @@ pip install -r requirements.txt
 cp .env.example .env        # Telegram-Daten eintragen (optional)
 python -m signalbot backfill   # einmalig: 2 Jahre Historie laden (dauert ein paar Minuten)
 python -m signalbot once       # einmal prüfen, Signale anzeigen
-python -m signalbot run        # Dauerbetrieb, prüft alle 5 Minuten
+python -m signalbot run        # Dauerbetrieb ohne Oberfläche, prüft alle 5 Minuten
+python -m signalbot ui         # Oberfläche im Browser
 ```
 
 Ohne Telegram-Daten werden Signale nur im Terminal angezeigt.

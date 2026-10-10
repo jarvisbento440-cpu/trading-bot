@@ -67,25 +67,12 @@ def _score(row: pd.Series, prev: pd.Series, side: str) -> tuple[int, list[str]]:
     return max(0, min(100, score)), reasons
 
 
-def evaluate(df: pd.DataFrame, higher_trend: str, risk: Risk) -> Setup | None:
-    """Bewertet die letzte abgeschlossene Kerze. Gibt das beste Setup oder None zurück."""
-    if len(df) < MIN_BARS:
-        return None
-    d = add_indicators(df)
-    row, prev = d.iloc[-1], d.iloc[-2]
-
-    best = None
-    for side, needed in (("long", "up"), ("short", "down")):
-        if higher_trend != needed:
-            continue  # nur mit dem übergeordneten Trend handeln
-        score, reasons = _score(row, prev, side)
-        reasons.insert(0, f"Übergeordneter Trend {'aufwärts' if side == 'long' else 'abwärts'}")
-        if best is None or score > best[1]:
-            best = (side, score, reasons)
-    if best is None:
-        return None
-
-    side, score, reasons = best
+def _setup_at(row: pd.Series, prev: pd.Series, higher_trend: str, risk: Risk) -> Setup | None:
+    side = {"up": "long", "down": "short"}.get(higher_trend)
+    if side is None:
+        return None  # nur mit dem übergeordneten Trend handeln
+    score, reasons = _score(row, prev, side)
+    reasons.insert(0, f"Übergeordneter Trend {'aufwärts' if side == 'long' else 'abwärts'}")
     entry = float(row["close"])
     risk_abs = risk.stop_atr * float(row["atr"])
     sign = 1 if side == "long" else -1
@@ -99,3 +86,29 @@ def evaluate(df: pd.DataFrame, higher_trend: str, risk: Risk) -> Setup | None:
         bar_ts=int(row["ts"]),
         reasons=reasons,
     )
+
+
+def evaluate(df: pd.DataFrame, higher_trend: str, risk: Risk) -> Setup | None:
+    """Bewertet die letzte abgeschlossene Kerze."""
+    if len(df) < MIN_BARS:
+        return None
+    d = add_indicators(df)
+    return _setup_at(d.iloc[-1], d.iloc[-2], higher_trend, risk)
+
+
+def history_setups(d: pd.DataFrame, trends: pd.Series, risk: Risk, min_score: int,
+                   cooldown_bars: int, last_n: int = 400) -> list[Setup]:
+    """Setups über die letzten Kerzen (für die Markierungen im Chart).
+
+    d: DataFrame mit Indikatoren, trends: Trend der höheren Zeitebene pro Zeile.
+    """
+    out: list[Setup] = []
+    last_idx = {"long": -10**9, "short": -10**9}
+    first = max(MIN_BARS, len(d) - last_n)
+    for i in range(first, len(d)):
+        s = _setup_at(d.iloc[i], d.iloc[i - 1], trends.iloc[i], risk)
+        if s is None or s.score < min_score or i - last_idx[s.side] < cooldown_bars:
+            continue
+        last_idx[s.side] = i
+        out.append(s)
+    return out
