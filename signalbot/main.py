@@ -1,0 +1,88 @@
+import argparse
+import logging
+import time
+
+from .config import Config, load_config
+from .data import make_exchange, sync_all
+from .db import Database
+from .indicators import trend_direction
+from .notify import Notifier, format_signal
+from .strategy import evaluate
+
+log = logging.getLogger("signalbot")
+
+
+def closed_candles(df, tf_ms: int, now_ms: int):
+    """Entfernt die letzte Kerze, wenn sie noch läuft."""
+    if len(df) and df["ts"].iloc[-1] + tf_ms > now_ms:
+        return df.iloc[:-1]
+    return df
+
+
+def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
+    now = ex.milliseconds()
+    sent = 0
+    for symbol in cfg.symbols:
+        trend_df = closed_candles(
+            db.candles(ex.id, symbol, cfg.trend_timeframe, 400),
+            ex.parse_timeframe(cfg.trend_timeframe) * 1000, now,
+        )
+        trend = trend_direction(trend_df)
+        for tf in cfg.signal_timeframes:
+            tf_ms = ex.parse_timeframe(tf) * 1000
+            df = closed_candles(db.candles(ex.id, symbol, tf, 500), tf_ms, now)
+            setup = evaluate(df, trend, cfg.risk)
+            if setup is None:
+                continue
+            log.info("%s %s: %s Score %d (Trend %s)", symbol, tf, setup.side, setup.score, trend)
+            if setup.score < cfg.min_score:
+                continue
+            last = db.last_signal_bar(symbol, tf, setup.side)
+            if last is not None and setup.bar_ts - last < cfg.risk.cooldown_bars * tf_ms:
+                continue
+            is_new = db.insert_signal({
+                "created_at": now, "symbol": symbol, "timeframe": tf, "bar_ts": setup.bar_ts,
+                "side": setup.side, "score": setup.score, "entry": setup.entry, "stop": setup.stop,
+                "target1": setup.target1, "target2": setup.target2,
+                "reasons": "; ".join(setup.reasons),
+            })
+            if is_new:
+                notifier.send(format_signal(symbol, tf, setup))
+                sent += 1
+    return sent
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
+    p.add_argument("command", choices=["backfill", "once", "run"],
+                   help="backfill = Historie laden, once = einmal prüfen, run = Dauerbetrieb")
+    p.add_argument("--config", default="config.yaml")
+    args = p.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    cfg = load_config(args.config)
+    db = Database(cfg.database)
+    ex = make_exchange(cfg.exchange)
+    notifier = Notifier(cfg.telegram_token, cfg.telegram_chat_id)
+
+    if args.command == "backfill":
+        sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
+        return
+
+    if args.command == "once":
+        sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
+        log.info("%d Signal(e) verschickt", scan(cfg, ex, db, notifier))
+        return
+
+    notifier.send("🤖 Signal-Bot gestartet: " + ", ".join(cfg.symbols))
+    while True:
+        try:
+            sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
+            scan(cfg, ex, db, notifier)
+        except Exception:
+            log.exception("Fehler im Durchlauf, nächster Versuch beim nächsten Intervall")
+        time.sleep(cfg.poll_minutes * 60)
+
+
+if __name__ == "__main__":
+    main()

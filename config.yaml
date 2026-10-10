@@ -1,0 +1,34 @@
+# Börse für öffentliche Kursdaten (kein API-Key nötig): binance, kraken, bybit, okx ...
+exchange: binance
+
+# Coins, die beobachtet werden
+symbols:
+  - BTC/USDT
+  - ETH/USDT
+  - SOL/USDT
+  - XRP/USDT
+  - ONDO/USDT
+
+# Zeitebenen: Signale kommen aus "signal_timeframes",
+# "trend_timeframe" dient als Filter (Long nur bei Aufwärtstrend, Short nur bei Abwärtstrend).
+signal_timeframes: [1h, 4h]
+trend_timeframe: 1d
+store_timeframes: [15m, 1h, 4h, 1d]
+
+# Wie viele Tage Historie beim ersten Start geladen werden
+backfill_days: 730
+
+# Wie oft der Bot prüft (Minuten)
+poll_minutes: 5
+
+# Mindest-Score (0-100), ab dem ein Signal verschickt wird
+min_score: 65
+
+# Risiko-Management
+risk:
+  stop_atr: 1.5        # Stop = Einstieg -/+ 1,5 x ATR
+  target1_r: 1.5       # Ziel 1 = 1,5 x Risiko
+  target2_r: 2.5       # Ziel 2 = 2,5 x Risiko
+  cooldown_bars: 6     # gleiches Setup frühestens nach 6 Kerzen erneut melden
+
+database: data/signalbot.db
