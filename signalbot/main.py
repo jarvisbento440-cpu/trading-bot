@@ -57,13 +57,18 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
-    p.add_argument("command", choices=["ui", "backfill", "once", "run"], nargs="?", default="ui",
+    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest"], nargs="?", default="ui",
                    help="ui = Oberfläche (Standard), backfill = Historie laden, "
-                        "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche")
+                        "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche, "
+                        "backtest = Strategien an der Vergangenheit testen")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--offline", action="store_true", help="Oberfläche ohne Kurs-Aktualisierung")
     p.add_argument("--no-window", action="store_true", help="kein Fenster öffnen")
+    p.add_argument("--days", type=int, default=365, help="Backtest-Zeitraum in Tagen")
+    p.add_argument("--exchange", help="andere Börse für den Backtest, z. B. coinbaseexchange")
+    p.add_argument("--quote", help="andere Quote-Währung, z. B. USD statt USDT")
+    p.add_argument("--out", default="data", help="Ordner für die Backtest-Ergebnisse")
     args = p.parse_args()
 
     # Windows-Konsole: Umlaute und Emojis nicht abstürzen lassen
@@ -80,6 +85,20 @@ def main() -> None:
     if args.command == "ui":
         from .ui import serve
         serve(cfg, port=args.port, sync=not args.offline, open_browser=not args.no_window)
+        return
+
+    if args.command == "backtest":
+        from . import backtest
+        if args.exchange:
+            cfg.exchange = args.exchange
+        if args.quote:
+            cfg.symbols = [s.split("/")[0] + "/" + args.quote for s in cfg.symbols]
+        ex = make_exchange(cfg.exchange)
+        sync_all(ex, db, cfg.symbols, ["1h", "4h", "1d"], args.days + 250)
+        result = backtest.run(cfg, args.days, exchange=ex.id)
+        path = backtest.save(result, args.out)
+        print(backtest.report(result))
+        log.info("Ergebnis gespeichert: %s", path)
         return
 
     if args.command == "backfill":

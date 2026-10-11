@@ -23,7 +23,7 @@ def sync_candles(ex: ccxt.Exchange, db: Database, symbol: str, timeframe: str, b
     since = last if last is not None else ex.milliseconds() - backfill_days * 86_400_000
     total = 0
     while True:
-        rows = ex.fetch_ohlcv(symbol, timeframe, since=since, limit=1000)
+        rows = ex.fetch_ohlcv(symbol, timeframe, since=since, limit=300 if ex.id.startswith("coinbase") else 1000)
         if not rows:
             break
         total += db.save_candles(ex.id, symbol, timeframe, rows)
@@ -44,6 +44,8 @@ def sync_all(ex: ccxt.Exchange, db: Database, symbols, timeframes, backfill_days
             log.warning("%s gibt es auf %s nicht, wird übersprungen", symbol, ex.id)
             continue
         for tf in timeframes:
+            if ex.timeframes and tf not in ex.timeframes:
+                continue  # z. B. kein 4h bei Coinbase, wird beim Backtest aus 1h gebaut
             try:
                 sync_candles(ex, db, symbol, tf, backfill_days)
             except ccxt.BaseError as e:

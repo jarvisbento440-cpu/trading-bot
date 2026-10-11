@@ -1,0 +1,32 @@
+name: Backtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Zeitraum in Tagen"
+        default: "365"
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      # GitHub-Server stehen in den USA, dort ist Binance gesperrt -> Coinbase (USD-Paare)
+      - run: python -m signalbot backtest --days "${{ inputs.days }}" --exchange coinbaseexchange --quote USD --out results
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add results/
+          git commit -m "Backtest-Ergebnis ${{ inputs.days }} Tage" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

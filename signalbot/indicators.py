@@ -132,3 +132,56 @@ def support_resistance(df: pd.DataFrame, lookback: int = 300, wing: int = 5, max
     above = sorted([l for l in levels if l["price"] > price], key=lambda l: l["price"])[:max_levels]
     below = sorted([l for l in levels if l["price"] <= price], key=lambda l: -l["price"])[:max_levels]
     return [{**l, "kind": "resistance"} for l in above] + [{**l, "kind": "support"} for l in below]
+
+
+def supertrend(df: pd.DataFrame, n: int = 10, mult: float = 3.0) -> tuple[pd.Series, pd.Series]:
+    """Supertrend-Linie und Richtung (+1 aufwärts, -1 abwärts)."""
+    a = atr(df, n).values
+    hl2 = ((df["high"] + df["low"]) / 2).values
+    close = df["close"].values
+    upper, lower = hl2 + mult * a, hl2 - mult * a
+    fu, fl = upper.copy(), lower.copy()
+    direction = np.ones(len(df))
+    line = np.full(len(df), np.nan)
+    for i in range(1, len(df)):
+        fu[i] = upper[i] if upper[i] < fu[i - 1] or close[i - 1] > fu[i - 1] else fu[i - 1]
+        fl[i] = lower[i] if lower[i] > fl[i - 1] or close[i - 1] < fl[i - 1] else fl[i - 1]
+        if direction[i - 1] == 1:
+            direction[i] = -1 if close[i] < fl[i] else 1
+        else:
+            direction[i] = 1 if close[i] > fu[i] else -1
+        line[i] = fl[i] if direction[i] == 1 else fu[i]
+    return pd.Series(line, index=df.index), pd.Series(direction, index=df.index)
+
+
+def confirmed_swings(df: pd.DataFrame, wing: int = 3) -> pd.DataFrame:
+    """Letztes bestätigtes Swing-Hoch/-Tief je Kerze, ohne Blick in die Zukunft.
+
+    Ein Umkehrpunkt gilt erst `wing` Kerzen später als bestätigt.
+    """
+    h, l = df["high"], df["low"]
+    win = 2 * wing + 1
+    is_ph = h == h.rolling(win, center=True).max()
+    is_pl = l == l.rolling(win, center=True).min()
+    pos = pd.Series(np.arange(len(df)), index=df.index, dtype=float)
+    out = pd.DataFrame(index=df.index)
+    out["sh"] = h.where(is_ph).shift(wing).ffill()
+    out["sh_idx"] = pos.where(is_ph).shift(wing).ffill()
+    out["sl"] = l.where(is_pl).shift(wing).ffill()
+    out["sl_idx"] = pos.where(is_pl).shift(wing).ffill()
+    return out
+
+
+def add_strategy_columns(d: pd.DataFrame) -> pd.DataFrame:
+    """Zusätzliche Spalten für die Strategien (d hat schon add_indicators)."""
+    d = d.copy()
+    c = d["close"]
+    macd = ema(c, 12) - ema(c, 26)
+    d["macd"], d["macd_sig"] = macd, ema(macd, 9)
+    mid = c.rolling(20).mean()
+    sd = c.rolling(20).std()
+    d["bb_mid"], d["bb_up"], d["bb_lo"] = mid, mid + 2 * sd, mid - 2 * sd
+    d["bb_width"] = (d["bb_up"] - d["bb_lo"]) / mid
+    d["bb_width_q"] = d["bb_width"].rolling(120).quantile(0.1)
+    d["st_line"], d["st_dir"] = supertrend(d)
+    return d.join(confirmed_swings(d))
