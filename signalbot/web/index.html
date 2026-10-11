@@ -13,13 +13,17 @@
   <div id="status" class="status">…</div>
   <div class="group" id="tf-buttons" aria-label="Zeitebene"></div>
   <div class="group toggles">
-    <label><input type="checkbox" data-layer="signals" checked> Signale</label>
-    <label><input type="checkbox" data-layer="ema" checked> EMA 20/50/200</label>
-    <label><input type="checkbox" data-layer="fib" checked> Fibonacci</label>
-    <label><input type="checkbox" data-layer="sr"> Unterstützung/Widerstand</label>
+    <label><input type="checkbox" data-layer="signals"> Signale</label>
+    <label><input type="checkbox" data-layer="ema"> EMA 20/50/200</label>
+    <label><input type="checkbox" data-layer="zones"> Liquiditätszonen</label>
+    <label><input type="checkbox" data-layer="fib"> Fibonacci</label>
     <label><input type="checkbox" data-layer="bb"> Bollinger</label>
+    <label><input type="checkbox" data-layer="st"> Supertrend</label>
   </div>
-  <div class="group">
+  <div class="group strat-wrap">
+    <button id="strat-btn" class="btn">Strategien ▾</button>
+    <div id="strat-panel" class="strat-panel hidden"></div>
+    <button id="bt-open" class="btn">📊 Backtest</button>
     <button id="sound-btn" class="btn" title="Ton bei neuen Signalen">🔔 Ton an</button>
   </div>
 </header>
@@ -29,7 +33,7 @@
   <aside class="sidebar">
     <h2>Letzte Signale</h2>
     <ul id="signal-list" class="signal-list"><li class="muted">Noch keine Signale</li></ul>
-    <p class="disclaimer">Der Score ist keine Gewinngarantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.</p>
+    <p class="disclaimer">Signale und Trefferquoten sind keine Gewinngarantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.</p>
   </aside>
 </main>
 
@@ -43,6 +47,15 @@
     <div id="focus-chart" class="focus-chart"></div>
     <div id="focus-info" class="focus-info"></div>
   </div>
+</div>
+
+<div id="backtest" class="focus hidden" role="dialog" aria-modal="true">
+  <div class="focus-head">
+    <div class="focus-title">Backtest: Wie oft lagen die Strategien richtig?</div>
+    <button id="bt-run" class="btn">Mit eigenen Daten neu berechnen</button>
+    <button id="bt-close" class="btn">✕ Schließen (Esc)</button>
+  </div>
+  <div id="backtest-body" class="bt-body"></div>
 </div>
 
 <script src="vendor/lightweight-charts.standalone.production.js"></script>

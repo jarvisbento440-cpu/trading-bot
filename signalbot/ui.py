@@ -18,10 +18,11 @@ import pandas as pd
 from .config import Config
 from .data import make_exchange, sync_all
 from .db import Database
-from .indicators import add_indicators, bollinger, fibonacci, support_resistance, trend_series
+from . import backtest
+from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from .strategy import history_setups
+from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
 WEB = Path(__file__).parent / "web"
@@ -95,6 +96,7 @@ def _line(d: pd.DataFrame, col: str) -> list[dict]:
 class Api:
     def __init__(self, cfg: Config, worker: Worker):
         self.cfg, self.worker = cfg, worker
+        self.bt_running, self.bt_error = False, None
 
     def _db(self) -> Database:
         return Database(self.cfg.database)
@@ -117,10 +119,10 @@ class Api:
                                      pd.Series([int(time.time() * 1000)])).iloc[-1]
             coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend})
         rows = db.conn.execute(
-            "SELECT id, created_at, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons, status "
+            "SELECT id, created_at, strategy, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons, status "
             "FROM signals ORDER BY id DESC LIMIT 50"
         ).fetchall()
-        cols = ["id", "created_at", "symbol", "timeframe", "bar_ts", "side", "score", "entry", "stop",
+        cols = ["id", "created_at", "strategy", "symbol", "timeframe", "bar_ts", "side", "score", "entry", "stop",
                 "target1", "target2", "reasons", "status"]
         return {
             "status": self.worker.status,
@@ -130,29 +132,79 @@ class Api:
             "min_score": self.cfg.min_score,
             "coins": coins,
             "signals": [dict(zip(cols, r)) for r in rows],
+            "strategies": self.strategies(),
+            "backtest_running": self.bt_running,
+            "backtest_error": self.bt_error,
         }
+
+    def strategies(self) -> list[dict]:
+        bt = backtest.latest_result(self.cfg)
+        out = []
+        for st in STRATEGIES:
+            stats = (bt or {}).get("strategies", {}).get(st.key, {}).get("all") if bt else None
+            out.append({"key": st.key, "name": st.name, "short": st.short, "color": st.color,
+                        "description": st.description, "enabled": st.key in self.cfg.strategies,
+                        "stats": stats if stats and stats.get("trades") else None})
+        return out
+
+    def backtest_result(self) -> dict | None:
+        r = backtest.latest_result(self.cfg)
+        if r:
+            r = {k: v for k, v in r.items() if k != "trades"}
+        return r
+
+    def start_backtest(self, days: int = 365) -> bool:
+        if self.bt_running:
+            return False
+        self.bt_running, self.bt_error = True, None
+
+        def job():
+            try:
+                db = Database(self.cfg.database)
+                ex = make_exchange(self.cfg.exchange)
+                sync_all(ex, db, self.cfg.symbols, ["1h", "4h", "1d"], days + 250)
+                backtest.save(backtest.run(self.cfg, days, exchange=ex.id), Path(self.cfg.database).parent)
+            except Exception as e:
+                log.exception("Backtest fehlgeschlagen")
+                self.bt_error = str(e)
+            finally:
+                self.bt_running = False
+
+        threading.Thread(target=job, daemon=True).start()
+        return True
 
     def chart(self, symbol: str, tf: str) -> dict:
         db = self._db()
         ex = self.cfg.exchange
         tf_ms = TF_MS.get(tf, 3_600_000)
-        df = db.candles(ex, symbol, tf, 700)
+        df = db.candles(ex, symbol, tf, 800)
         if df.empty:
             return {"candles": []}
         df = df.drop(columns=["time"])
-        d = add_indicators(df)
+        closed = closed_candles(df, tf_ms, int(time.time() * 1000)).reset_index(drop=True)
+        d = prepare(closed)
         d["bb_up"], d["bb_lo"] = bollinger(d["close"])
-        view = d.tail(500)
+        view_from = int(df["ts"].iloc[max(0, len(df) - 500)])
+        view = df[df["ts"] >= view_from]
+        dv = d[d["ts"] >= view_from]
 
-        closed = closed_candles(df, tf_ms, int(time.time() * 1000))
-        dc = add_indicators(closed)
         daily = db.candles(ex, symbol, self.cfg.trend_timeframe, 400).drop(columns=["time"])
-        trends = trend_series(daily, TF_MS.get(self.cfg.trend_timeframe, 86_400_000), dc["ts"])
-        setups = history_setups(dc, trends, self.cfg.risk, self.cfg.min_score, self.cfg.risk.cooldown_bars)
-        last = setups[-1] if setups else None
-        # Ein Setup gilt als aktuell, wenn es höchstens 6 Kerzen alt ist
-        active = last if last and (int(dc["ts"].iloc[-1]) - last.bar_ts) <= 6 * tf_ms else None
+        trends = trend_series(daily, TF_MS.get(self.cfg.trend_timeframe, 86_400_000), d["ts"])
+        first = int(d.index[d["ts"] >= view_from][0]) if len(dv) else len(d)
+        setups = scan_history(d, trends, min_score=self.cfg.min_score, start=first)
+        bt = backtest.latest_result(self.cfg)
+        last_ts = int(d["ts"].iloc[-1]) if len(d) else 0
 
+        def pack(s):
+            st = backtest.stats_for(bt, s.strategy, tf, s.score if s.strategy == "score" else None)
+            return {"time": s.bar_ts // 1000, "strategy": s.strategy, "name": BY_KEY[s.strategy].name,
+                    "side": s.side, "score": s.score, "entry": s.entry, "stop": s.stop,
+                    "target1": s.target1, "target2": s.target2, "reasons": s.reasons,
+                    "winrate": st.get("winrate") if st else None, "trades": st.get("trades") if st else None,
+                    "avg_r": st.get("avg_r") if st else None}
+
+        # Aktuelle Signale: höchstens 6 Kerzen alt
+        active = [pack(s) for s in setups if last_ts - s.bar_ts <= 6 * tf_ms]
         return {
             "symbol": symbol,
             "tf": tf,
@@ -165,24 +217,19 @@ class Api:
                  "color": "rgba(38,166,154,0.35)" if r.close >= r.open else "rgba(239,83,80,0.35)"}
                 for r in view.itertuples()
             ],
-            "ema20": _line(view, "ema20"),
-            "ema50": _line(view, "ema50"),
-            "ema200": _line(view, "ema200"),
-            "bb_up": _line(view, "bb_up"),
-            "bb_lo": _line(view, "bb_lo"),
-            "rsi": _num(d["rsi"].iloc[-1]),
-            "setups": [
-                {"time": s.bar_ts // 1000, "side": s.side, "score": s.score, "entry": s.entry, "stop": s.stop,
-                 "target1": s.target1, "target2": s.target2, "reasons": s.reasons}
-                for s in setups if s.bar_ts >= int(view["ts"].iloc[0])
-            ],
-            "active": None if active is None else {
-                "time": active.bar_ts // 1000, "side": active.side, "score": active.score,
-                "entry": active.entry, "stop": active.stop, "target1": active.target1,
-                "target2": active.target2, "reasons": active.reasons,
-            },
+            "ema20": _line(dv, "ema20"),
+            "ema50": _line(dv, "ema50"),
+            "ema200": _line(dv, "ema200"),
+            "bb_up": _line(dv, "bb_up"),
+            "bb_lo": _line(dv, "bb_lo"),
+            "supertrend": _line(dv, "st_line"),
+            "rsi": _num(d["rsi"].iloc[-1]) if len(d) else None,
+            "trend": trends.iloc[-1] if len(trends) else "flat",
+            "setups": [pack(s) for s in setups],
+            "active": active[-1] if active else None,
+            "active_all": active,
             "fib": fibonacci(df),
-            "sr": support_resistance(df),
+            "zones": liquidity_zones(df),
         }
 
 
@@ -205,6 +252,10 @@ def make_handler(api: Api):
             try:
                 if url.path == "/api/state":
                     return self._json(api.state())
+                if url.path == "/api/backtest":
+                    return self._json(api.backtest_result())
+                if url.path == "/api/backtest/run":
+                    return self._json({"started": api.start_backtest(int(q.get("days", 365)))})
                 if url.path == "/api/chart":
                     return self._json(api.chart(q.get("symbol", ""), q.get("tf", "4h")))
                 path = "index.html" if url.path in ("", "/") else url.path.lstrip("/")

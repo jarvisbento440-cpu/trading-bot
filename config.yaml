@@ -24,6 +24,10 @@ poll_minutes: 5
 # Mindest-Score (0-100), ab dem ein Signal verschickt wird
 min_score: 65
 
+# Welche Strategien Signale schicken dürfen (Erklärung: docs/strategien.md)
+# score, donchian, supertrend, macd, rsi, squeeze, fib, sweep
+strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
+
 # Risiko-Management
 risk:
   stop_atr: 1.5        # Stop = Einstieg -/+ 1,5 x ATR

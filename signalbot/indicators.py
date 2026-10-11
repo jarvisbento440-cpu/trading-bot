@@ -185,3 +185,59 @@ def add_strategy_columns(d: pd.DataFrame) -> pd.DataFrame:
     d["bb_width_q"] = d["bb_width"].rolling(120).quantile(0.1)
     d["st_line"], d["st_dir"] = supertrend(d)
     return d.join(confirmed_swings(d))
+
+
+def liquidity_zones(df: pd.DataFrame, lookback: int = 400, wing: int = 3, per_side: int = 4) -> list[dict]:
+    """Liquiditätszonen aus Swing-Hochs/-Tiefs.
+
+    Über Swing-Hochs liegen Stops von Short-Tradern (Buy-Side-Liquidität), unter Swing-Tiefs Stops von
+    Long-Tradern (Sell-Side-Liquidität). Nahe beieinander liegende Hochs/Tiefs („Equal Highs/Lows“) werden
+    zu einer Zone zusammengefasst; je mehr Berührungen, desto stärker. Eine Zone gilt als „abgeholt“
+    (swept), sobald der Kurs danach durch sie hindurch gelaufen ist.
+    """
+    w = df.tail(lookback).reset_index(drop=True)
+    if len(w) < 2 * wing + 20:
+        return []
+    a = float(atr(w).iloc[-1])
+    win = 2 * wing + 1
+    hi, lo = w["high"], w["low"]
+    is_ph = (hi == hi.rolling(win, center=True).max()).values
+    is_pl = (lo == lo.rolling(win, center=True).min()).values
+    price = float(w["close"].iloc[-1])
+    zones = []
+    for kind, mask, col in (("buy", is_ph, "high"), ("sell", is_pl, "low")):
+        pts = sorted(((float(w.at[i, col]), i) for i in np.flatnonzero(mask)), key=lambda p: p[0])
+        clusters: list[list[tuple[float, int]]] = []
+        for p in pts:
+            if clusters and p[0] - clusters[-1][-1][0] <= 0.3 * a and p[0] - clusters[-1][0][0] <= 0.8 * a:
+                clusters[-1].append(p)
+            else:
+                clusters.append([p])
+        for cl in clusters:
+            prices = [p for p, _ in cl]
+            last_i = max(i for _, i in cl)
+            first_i = min(i for _, i in cl)
+            top = max(prices) + 0.25 * a
+            bottom = min(prices) - 0.25 * a
+            after = w.iloc[last_i + wing + 1:]
+            if kind == "buy":
+                broken = after.index[after["high"] > top + 0.05 * a]
+            else:
+                broken = after.index[after["low"] < bottom - 0.05 * a]
+            swept_i = int(broken[0]) if len(broken) else None
+            zones.append({
+                "kind": kind, "top": top, "bottom": bottom, "touches": len(cl),
+                "start": int(w.at[first_i, "ts"]),
+                "end": int(w.at[swept_i, "ts"]) if swept_i is not None else None,
+                "swept": swept_i is not None,
+                "distance": (min(prices) - price) / a if kind == "buy" else (price - max(prices)) / a,
+            })
+    out = []
+    for kind in ("buy", "sell"):
+        open_ = [z for z in zones if z["kind"] == kind and not z["swept"] and z["distance"] > -0.5]
+        open_.sort(key=lambda z: (z["distance"] - 1.5 * (z["touches"] - 1)))
+        out += open_[:per_side]
+        swept = [z for z in zones if z["kind"] == kind and z["swept"]]
+        swept.sort(key=lambda z: -z["end"])
+        out += swept[:2]  # die zwei zuletzt abgeholten als Verlauf
+    return out

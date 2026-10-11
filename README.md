@@ -63,6 +63,14 @@ docker compose logs -f
 pip install pytest && python -m pytest
 ```
 
+## Strategien und Backtest
+
+8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
+
+- Backtest im Programm: Button **„📊 Backtest“**. Ergebnis mit 1 Jahr echter Kurse: [results/backtest-bericht.md](results/backtest-bericht.md).
+- Neu berechnen im Terminal: `python -m signalbot backtest --days 365`
+- Auf GitHub: Reiter „Actions“ → „Backtest“ → „Run workflow“ (läuft auf GitHub-Servern mit Coinbase-Kursen und speichert das Ergebnis in `results/`).
+
 ## Nächste Schritte
 
 4. Backtest → echte Trefferquoten pro Score

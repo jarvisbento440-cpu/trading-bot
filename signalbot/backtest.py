@@ -183,6 +183,12 @@ def save(result: dict, folder: str | Path) -> Path:
     return p
 
 
+def latest_result(cfg: Config) -> dict | None:
+    """Neuestes Backtest-Ergebnis: eigener Lauf (data/) oder mitgeliefert (results/)."""
+    found = [r for r in (load_result(Path(cfg.database).parent), load_result("results")) if r]
+    return max(found, key=lambda r: r.get("created_at", 0)) if found else None
+
+
 def load_result(folder: str | Path) -> dict | None:
     p = Path(folder) / "backtest.json"
     if not p.exists():

@@ -28,6 +28,8 @@ class Config:
     min_score: int = 65
     risk: Risk = field(default_factory=Risk)
     database: str = "data/signalbot.db"
+    strategies: list[str] = field(default_factory=lambda: [
+        "score", "donchian", "supertrend", "macd", "rsi", "squeeze", "fib", "sweep"])
     telegram_token: str = ""
     telegram_chat_id: str = ""
 

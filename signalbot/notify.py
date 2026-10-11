@@ -6,7 +6,7 @@ import requests
 
 log = logging.getLogger(__name__)
 
-DISCLAIMER = "Score ist keine Gewinngarantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade."
+DISCLAIMER = "Signale und Trefferquoten sind keine Gewinngarantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade."
 
 
 def fmt_price(p: float) -> str:
@@ -14,16 +14,22 @@ def fmt_price(p: float) -> str:
     return f"{p:,.{digits}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def format_signal(symbol: str, timeframe: str, s) -> str:
+def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None) -> str:
     icon = "🟢" if s.side == "long" else "🔴"
     rr = abs(s.target1 - s.entry) / abs(s.entry - s.stop)
+    if hist and hist.get("trades"):
+        quote = (f"Trefferquote im Backtest: {hist['winrate'] * 100:.0f} % "
+                 f"({hist['trades']} Trades, Ø {hist['avg_r']:+.2f} R)").replace(".", ",")
+    else:
+        quote = "Trefferquote: noch kein Backtest"
     lines = [
-        f"{icon} {symbol} {s.side.upper()} ({timeframe})",
+        f"{icon} {symbol} {s.side.upper()} ({timeframe}) · {strategy_name}",
         f"Einstieg: ~{fmt_price(s.entry)}",
         f"Stop: {fmt_price(s.stop)}",
         f"Ziel 1: {fmt_price(s.target1)}   Ziel 2: {fmt_price(s.target2)}",
         f"Chance/Risiko (Ziel 1): 1 : {rr:.1f}".replace(".", ","),
-        f"Setup-Score: {s.score}/100",
+        *([f"Setup-Score: {s.score}/100"] if getattr(s, "score", 0) else []),
+        quote,
         "Gründe:",
         *[f"• {r}" for r in s.reasons],
         "",

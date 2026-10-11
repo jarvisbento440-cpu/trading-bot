@@ -8,9 +8,8 @@ import time
 from .config import Config, load_config
 from .data import make_exchange, sync_all
 from .db import Database
-from .indicators import trend_direction
+from .indicators import trend_series
 from .notify import Notifier, format_signal
-from .strategy import evaluate
 
 log = logging.getLogger("signalbot")
 
@@ -23,35 +22,37 @@ def closed_candles(df, tf_ms: int, now_ms: int):
 
 
 def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
+    """Prüft alle Strategien auf der letzten abgeschlossenen Kerze und verschickt neue Signale."""
+    from .backtest import latest_result, stats_for
+    from .strategies import BY_KEY, prepare, signals_at
+
     now = ex.milliseconds()
+    bt = latest_result(cfg)
     sent = 0
     for symbol in cfg.symbols:
-        trend_df = closed_candles(
-            db.candles(ex.id, symbol, cfg.trend_timeframe, 400),
-            ex.parse_timeframe(cfg.trend_timeframe) * 1000, now,
-        )
-        trend = trend_direction(trend_df)
+        daily = db.candles(ex.id, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
         for tf in cfg.signal_timeframes:
             tf_ms = ex.parse_timeframe(tf) * 1000
-            df = closed_candles(db.candles(ex.id, symbol, tf, 500), tf_ms, now)
-            setup = evaluate(df, trend, cfg.risk)
-            if setup is None:
+            df = closed_candles(db.candles(ex.id, symbol, tf, 600).drop(columns=["time"]), tf_ms, now)
+            if len(df) < 220:
                 continue
-            log.info("%s %s: %s Score %d (Trend %s)", symbol, tf, setup.side, setup.score, trend)
-            if setup.score < cfg.min_score:
-                continue
-            last = db.last_signal_bar(symbol, tf, setup.side)
-            if last is not None and setup.bar_ts - last < cfg.risk.cooldown_bars * tf_ms:
-                continue
-            is_new = db.insert_signal({
-                "created_at": now, "symbol": symbol, "timeframe": tf, "bar_ts": setup.bar_ts,
-                "side": setup.side, "score": setup.score, "entry": setup.entry, "stop": setup.stop,
-                "target1": setup.target1, "target2": setup.target2,
-                "reasons": "; ".join(setup.reasons),
-            })
-            if is_new:
-                notifier.send(format_signal(symbol, tf, setup))
-                sent += 1
+            d = prepare(df.reset_index(drop=True))
+            trend = trend_series(daily, ex.parse_timeframe(cfg.trend_timeframe) * 1000, d["ts"]).iloc[-1]
+            for sig in signals_at(d, len(d) - 1, trend, [k for k in cfg.strategies if k in BY_KEY], cfg.min_score):
+                log.info("%s %s: %s %s", symbol, tf, sig.strategy, sig.side)
+                last = db.last_signal_bar(symbol, tf, sig.side, sig.strategy)
+                if last is not None and sig.bar_ts - last < cfg.risk.cooldown_bars * tf_ms:
+                    continue
+                is_new = db.insert_signal({
+                    "created_at": now, "strategy": sig.strategy, "symbol": symbol, "timeframe": tf,
+                    "bar_ts": sig.bar_ts, "side": sig.side, "score": sig.score, "entry": sig.entry,
+                    "stop": sig.stop, "target1": sig.target1, "target2": sig.target2,
+                    "reasons": "; ".join(sig.reasons),
+                })
+                if is_new:
+                    hist = stats_for(bt, sig.strategy, tf, sig.score if sig.strategy == "score" else None)
+                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist))
+                    sent += 1
     return sent
 
 
