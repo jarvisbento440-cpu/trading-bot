@@ -1,0 +1,34 @@
+name: Kurs-Historie
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Ab Datum"
+        default: "2021-01-01"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ccxt
+      - run: python scripts/fetch_history.py --since "${{ inputs.since }}" --out /tmp/history
+      - name: In Branch "history" speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan history
+          git rm -rq --cached .
+          rm -rf ./*  .github .gitignore .gitattributes .env.example 2>/dev/null || true
+          mkdir -p history && cp /tmp/history/* history/
+          git add history
+          git commit -qm "Kurs-Historie ab ${{ inputs.since }}"
+          git push -f origin history
