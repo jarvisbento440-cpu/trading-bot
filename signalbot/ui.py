@@ -22,6 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
+from . import regime
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -117,7 +118,10 @@ class Api:
             if len(daily) >= 60:
                 trend = trend_series(daily, TF_MS.get(self.cfg.trend_timeframe, 86_400_000),
                                      pd.Series([int(time.time() * 1000)])).iloc[-1]
-            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend})
+            light = None
+            if self.cfg.trend_light and self.cfg.trend_timeframe == "1d" and len(daily):
+                light = regime.current(daily.drop(columns=["time"]), int(time.time() * 1000))
+            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light})
         rows = db.conn.execute(
             "SELECT id, created_at, strategy, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons, status "
             "FROM signals ORDER BY id DESC LIMIT 50"
@@ -133,6 +137,7 @@ class Api:
             "coins": coins,
             "signals": [dict(zip(cols, r)) for r in rows],
             "strategies": self.strategies(),
+            "trend_light": regime.BACKTEST if self.cfg.trend_light else None,
             "backtest_running": self.bt_running,
             "backtest_error": self.bt_error,
         }
@@ -190,6 +195,14 @@ class Api:
 
         daily = db.candles(ex, symbol, self.cfg.trend_timeframe, 400).drop(columns=["time"])
         trends = trend_series(daily, TF_MS.get(self.cfg.trend_timeframe, 86_400_000), d["ts"])
+        sma = []
+        if self.cfg.trend_light and self.cfg.trend_timeframe == "1d" and len(daily):
+            dd = regime.closed_daily(daily, int(time.time() * 1000)).reset_index(drop=True)
+            ma = regime.sma_line(dd)
+            # Gilt ab dem Ende der Tageskerze; grün = Ampel an, grau = raus
+            sma = [{"time": (int(t) + regime.DAY_MS) // 1000, "value": float(m),
+                    "color": "#26a69a" if c > m else "#8b949e"}
+                   for t, c, m in zip(dd["ts"], dd["close"], ma) if pd.notna(m) and int(t) + regime.DAY_MS >= view_from]
         first = int(d.index[d["ts"] >= view_from][0]) if len(dv) else len(d)
         setups = scan_history(d, trends, min_score=self.cfg.min_score, start=first)
         bt = backtest.latest_result(self.cfg)
@@ -223,6 +236,7 @@ class Api:
             "bb_up": _line(dv, "bb_up"),
             "bb_lo": _line(dv, "bb_lo"),
             "supertrend": _line(dv, "st_line"),
+            "sma50": sma,
             "rsi": _num(d["rsi"].iloc[-1]) if len(d) else None,
             "trend": trends.iloc[-1] if len(trends) else "flat",
             "setups": [pack(s) for s in setups],

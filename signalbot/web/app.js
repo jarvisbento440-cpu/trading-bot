@@ -16,7 +16,7 @@
 
   const state = {
     tf: store.get("tf", "4h"),
-    layers: Object.assign({ signals: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
+    layers: Object.assign({ light: true, signals: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
     strategies: [],
     stratOn: store.get("stratOn", null), // null = alle an
     sound: store.get("sound", true),
@@ -27,6 +27,8 @@
     focus: null,
     timeframes: ["1h", "4h", "1d"],
     newIds: new Set(),
+    regimeSeen: store.get("regimeSeen", {}),
+    trendLight: null,
   };
 
   const $ = (s, el = document) => el.querySelector(s);
@@ -94,7 +96,8 @@
     }
   }
 
-  const stratInfo = (key) => state.strategies.find((x) => x.key === key) || { name: key, short: "?", color: "#8b949e" };
+  const stratInfo = (key) => key === "regime" ? { name: "Trendampel", short: "A", color: "#26a69a" }
+    : state.strategies.find((x) => x.key === key) || { name: key, short: "?", color: "#8b949e" };
   // Ohne eigene Auswahl: nur Strategien, die im Backtest nicht klar verloren haben
   const stratEnabled = (key) => {
     if (state.stratOn !== null) return state.stratOn.includes(key);
@@ -127,7 +130,7 @@
     return {
       chart, candles, volume,
       ema20: line(COLORS.ema20), ema50: line(COLORS.ema50), ema200: line(COLORS.ema200, 2),
-      bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0),
+      bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0), sma50: line("#26a69a", 3, 0),
       priceLines: [], big, fitted: false, zones: (() => { const z = new ZonesPrimitive(); candles.attachPrimitive(z); return z; })(),
     };
   }
@@ -152,6 +155,7 @@
     c.bbUp.setData(L.bb ? shift(data.bb_up) : []);
     c.bbLo.setData(L.bb ? shift(data.bb_lo) : []);
     c.st.setData(L.st && data.supertrend ? shift(data.supertrend) : []);
+    c.sma50.setData(L.light && data.sma50 ? shift(data.sma50) : []);
     // Kacheln: nur die zwei nächsten offenen Zonen je Seite, Vollbild: alle
     const zones = !L.zones ? [] : c.big ? data.zones
       : ["buy", "sell"].flatMap((k) => data.zones.filter((z) => z.kind === k && !z.swept).slice(0, 2));
@@ -211,7 +215,7 @@
       <div class="tile-head">
         <span class="tile-sym">${coinName(coin.symbol)}</span>
         <span class="tile-price"></span><span class="tile-chg"></span>
-        <span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
+        <span class="badge tile-light" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
       </div>
       <div class="tile-chart"></div>
       <div class="tile-empty">Lade Daten…</div>`;
@@ -234,6 +238,31 @@
     tr.textContent = { up: "Tagestrend ↑", down: "Tagestrend ↓", flat: "Seitwärts" }[coin.trend];
     tr.className = "badge tile-trend " + (coin.trend === "flat" ? "" : coin.trend);
     el.classList.toggle("alert", state.alerts.has(coin.symbol));
+    const lt = $(".tile-light", el), r = coin.regime;
+    lt.hidden = !r;
+    if (r) {
+      lt.textContent = r.state === "long" ? `🚦 Halten · ${Math.round(r.size * 100)} %` : "🚦 Raus";
+      lt.className = "badge tile-light light-" + r.state;
+      lt.title = lightText(r);
+    }
+  }
+
+  const dateDe = (ms) => new Date(ms).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  function lightText(r) {
+    return (r.state === "long" ? "Trendampel grün: Tagesschluss über dem 50-Tage-Schnitt" : "Trendampel aus: Tagesschluss unter dem 50-Tage-Schnitt") +
+      ` · seit ${dateDe(r.since)} (${pct(r.since_change)})`;
+  }
+
+  // Trendampel-Wechsel: Kachel blinkt wie bei einem Signal
+  function checkRegime(coin) {
+    const r = coin.regime;
+    if (!r) return;
+    const prev = state.regimeSeen[coin.symbol];
+    state.regimeSeen[coin.symbol] = r.since;
+    if (prev === undefined || prev === r.since) return;
+    raiseAlert({ id: "r" + r.since, symbol: coin.symbol, side: r.state === "long" ? "long" : "short", timeframe: "1d",
+      strategy: "regime", entry: r.close, stop: r.sma,
+      title: `${coinName(coin.symbol)} Trendampel: ${r.state === "long" ? "HALTEN / KAUFEN" : "RAUS"}` });
   }
 
   function loadChartApply(symbol, data) {
@@ -310,7 +339,7 @@
     flashTitle(true);
     if ("Notification" in window && Notification.permission === "granted") {
       try {
-        const n = new Notification(`${coinName(sig.symbol)} ${sideDe(sig.side)} (${sig.timeframe})`, {
+        const n = new Notification(sig.title || `${coinName(sig.symbol)} ${sideDe(sig.side)} (${sig.timeframe})`, {
           body: `${stratInfo(sig.strategy || "score").name} · Einstieg ~${fmt(sig.entry)} · Stop ${fmt(sig.stop)}`, tag: "sig" + sig.id });
         n.onclick = () => { window.focus(); openFocus(sig.symbol); };
       } catch { /* egal */ }
@@ -368,7 +397,11 @@
     st.coins.forEach((coin) => {
       const tile = state.tiles.get(coin.symbol) || makeTile(coin);
       updateTileHead(tile, coin);
+      checkRegime(coin);
     });
+    store.set("regimeSeen", state.regimeSeen);
+    state.trendLight = st.trend_light;
+    state.coins = st.coins;
 
     const maxId = st.signals.reduce((m, s) => Math.max(m, s.id), 0);
     if (state.lastSeenId === null) state.lastSeenId = maxId; // erster Start: alte Signale nicht als neu melden
@@ -407,7 +440,18 @@
     render(focusChart, data);
     const row = (k, v, cls = "") => `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`;
     const acts = (data.active_all || []).filter((s) => stratEnabled(s.strategy)).slice().reverse();
-    let html = `<h3>Aktuelle Signale</h3>`;
+    let html = "";
+    const coin = (state.coins || []).find((c) => c.symbol === data.symbol);
+    const r = coin && coin.regime;
+    if (r) {
+      html += `<h3>Trendampel (Tagesfilter)</h3><div class="light-card ${r.state}">
+        <div class="row"><span class="badge light-${r.state}">${r.state === "long" ? "🚦 HALTEN" : "🚦 RAUS"}</span>
+        <span class="muted">seit ${dateDe(r.since)} · ${pct(r.since_change)}</span></div>
+        <table>${row("Tagesschluss", fmt(r.close))}${row("50-Tage-Schnitt", fmt(r.sma))}${row("Abstand", pct(r.distance), r.distance >= 0 ? "up" : "down")}
+        ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
+        <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
+    }
+    html += `<h3>Aktuelle Signale</h3>`;
     if (!acts.length) html += `<p class="muted">Gerade kein Signal der eingeschalteten Strategien.</p>`;
     acts.forEach((a, idx) => {
       const st = stratInfo(a.strategy);
@@ -479,6 +523,16 @@
       <div class="table-wrap"><table class="bt">
       <thead><tr><th>Strategie</th><th>Trades</th><th>Trefferquote</th><th>Ø pro Trade</th><th>Summe</th><th>Profit-Faktor</th><th>Max. Rückgang</th><th>Long</th><th>Short</th>
       ${r.timeframes.map((t) => `<th>${t}</th>`).join("")}</tr></thead><tbody>`;
+    const tl = state.trendLight;
+    if (tl) {
+      let tlHtml = `<h3>Trendampel (Tagesfilter, 2021–2026)</h3><p class="muted">${tl.focus}, gleich gewichtet, Zeitraum jeweils 11.10.–10.10., 0,1 % Gebühr pro Seite. Regeln wurden nur auf 2021–2025 ausgewählt, 2025/26 ist das unberührte Prüfjahr.</p>
+        <div class="table-wrap"><table class="bt"><thead><tr><th>Jahr</th><th>Trendampel</th><th>Kaufen &amp; Halten</th></tr></thead><tbody>` +
+        tl.rows.map(([y, a, b]) => `<tr><td>${y}</td><td class="${a >= 0 ? "up" : "down"}">${a > 0 ? "+" : ""}${a} %</td><td class="${b >= 0 ? "up" : "down"}">${b > 0 ? "+" : ""}${b} %</td></tr>`).join("") +
+        `<tr><td>Größter Rückgang</td><td>${tl.maxdd[0]} %</td><td>${tl.maxdd[1]} %</td></tr></tbody></table></div>
+        <p class="muted">Die Trendampel verdient nicht in jedem Jahr mehr, aber sie halbiert die großen Abstürze. In starken Bullenjahren liegt Kaufen &amp; Halten vorne.</p>
+        <h3>Einzel-Signale (1h/4h)</h3>`;
+      html = tlHtml + html;
+    }
     for (const [key, s] of rows) {
       const a = s.all, st = stratInfo(key);
       const good = a.avg_r != null && a.avg_r > 0;

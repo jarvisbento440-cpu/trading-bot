@@ -31,6 +31,8 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     sent = 0
     for symbol in cfg.symbols:
         daily = db.candles(ex.id, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
+        if cfg.trend_light and cfg.trend_timeframe == "1d":
+            sent += _trend_light(symbol, daily, now, db, notifier)
         for tf in cfg.signal_timeframes:
             tf_ms = ex.parse_timeframe(tf) * 1000
             df = closed_candles(db.candles(ex.id, symbol, tf, 600).drop(columns=["time"]), tf_ms, now)
@@ -54,6 +56,19 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                     notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist))
                     sent += 1
     return sent
+
+
+def _trend_light(symbol: str, daily, now: int, db: Database, notifier: Notifier) -> int:
+    """Meldet, wenn die Trendampel auf der letzten Tageskerze umgesprungen ist."""
+    from .regime import current, format_switch
+    r = current(daily, now)
+    if not r or not r["switched"]:
+        return 0
+    if not db.insert_regime_alert(symbol, r["bar_ts"], r["state"]):
+        return 0
+    log.info("%s Trendampel: %s", symbol, r["state"])
+    notifier.send(format_switch(symbol, r))
+    return 1
 
 
 def main() -> None:

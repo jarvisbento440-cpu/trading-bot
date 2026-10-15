@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS signals (
     closed_at  INTEGER,
     UNIQUE (strategy, symbol, timeframe, bar_ts, side)
 );
+CREATE TABLE IF NOT EXISTS regime_alerts (
+    symbol TEXT NOT NULL,
+    bar_ts INTEGER NOT NULL,  -- Tageskerze, auf der die Trendampel umsprang
+    state  TEXT NOT NULL,     -- long / flat
+    PRIMARY KEY (symbol, bar_ts)
+);
 """
 
 
@@ -81,6 +87,12 @@ class Database:
         df = df.iloc[::-1].reset_index(drop=True)
         df["time"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
         return df
+
+    def insert_regime_alert(self, symbol: str, bar_ts: int, state: str) -> bool:
+        """Merkt sich einen Trendampel-Wechsel. False, wenn er schon gemeldet wurde."""
+        cur = self.conn.execute("INSERT OR IGNORE INTO regime_alerts VALUES (?, ?, ?)", (symbol, bar_ts, state))
+        self.conn.commit()
+        return cur.rowcount > 0
 
     def insert_signal(self, sig: dict) -> bool:
         """Speichert ein Signal. False, wenn es schon existiert."""

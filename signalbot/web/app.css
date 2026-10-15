@@ -96,3 +96,7 @@ table.bt th, table.bt td { padding: 6px 10px; border-bottom: 1px solid var(--bor
 table.bt th:first-child, table.bt td:first-child { text-align: left; }
 table.bt th { color: var(--muted); font-weight: 500; }
 .btn:disabled { opacity: .6; cursor: default; }
+.badge.light-long { background: rgba(38,166,154,.18); border-color: var(--up); color: var(--up); font-weight: 600; }
+.badge.light-flat { background: rgba(139,148,158,.12); border-color: var(--muted); color: var(--muted); font-weight: 600; }
+.light-card { border-left: 3px solid var(--muted); background: var(--panel-2); border-radius: 6px; padding: 8px 10px; }
+.light-card.long { border-left-color: var(--up); }

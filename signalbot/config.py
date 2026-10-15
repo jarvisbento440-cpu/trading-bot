@@ -30,6 +30,7 @@ class Config:
     database: str = "data/signalbot.db"
     strategies: list[str] = field(default_factory=lambda: [
         "score", "donchian", "supertrend", "macd", "rsi", "squeeze", "fib", "sweep"])
+    trend_light: bool = True  # Trendampel (Tages-Trendfilter) anzeigen und melden
     telegram_token: str = ""
     telegram_chat_id: str = ""
 

@@ -54,3 +54,5 @@ def test_api_chart_json(tmp_path):
     assert len(data["candles"]) == 300 and data["fib"] and "setups" in data
     state = json.loads(json.dumps(_clean(api.state()), allow_nan=False))
     assert state["coins"][0]["symbol"] == "SOL/USDT"
+    assert "regime" in state["coins"][0] and state["trend_light"]["rows"]
+    assert "sma50" in data
