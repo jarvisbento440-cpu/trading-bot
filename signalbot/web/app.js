@@ -16,7 +16,7 @@
 
   const state = {
     tf: store.get("tf", "4h"),
-    layers: Object.assign({ light: true, signals: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
+    layers: Object.assign({ sessions: true, light: true, signals: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
     strategies: [],
     stratOn: store.get("stratOn", null), // null = alle an
     sound: store.get("sound", true),
@@ -96,6 +96,137 @@
     }
   }
 
+
+  // ---------- Handelssitzungen (Börsenzeiten, Sommer-/Winterzeit automatisch) ----------
+  const SESSIONS = [
+    { key: "asia", name: "Asien", where: "Tokio / Hongkong", color: "199,120,221",
+      open: ["Asia/Tokyo", 9, 0], close: ["Asia/Hong_Kong", 16, 0] },
+    { key: "europe", name: "Europa", where: "London / Frankfurt", color: "79,156,249",
+      open: ["Europe/London", 8, 0], close: ["Europe/Berlin", 17, 30] },
+    { key: "usa", name: "USA", where: "New York (NYSE/Nasdaq)", color: "242,184,75",
+      open: ["America/New_York", 9, 30], close: ["America/New_York", 16, 0] },
+  ];
+  const tzFmt = {};
+  function tzParts(ms, tz) {
+    tzFmt[tz] = tzFmt[tz] || new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23",
+      year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", weekday: "short" });
+    const p = {};
+    tzFmt[tz].formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
+    return p;
+  }
+  // Ortszeit (Datum y-m-d, h:mi) in Zeitzone tz -> UTC-Millisekunden
+  function zoned(y, m, d, h, mi, tz) {
+    const guess = Date.UTC(y, m - 1, d, h, mi);
+    let t = guess;
+    for (let k = 0; k < 2; k++) {
+      const p = tzParts(t, tz);
+      const shown = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute);
+      t += guess - shown;
+    }
+    return t;
+  }
+  // Alle Sitzungen (Mo–Fr in der Börsen-Zeitzone) zwischen fromMs und toMs
+  function sessionsBetween(fromMs, toMs) {
+    const out = [];
+    for (let day = Math.floor(fromMs / 864e5) - 1; day <= Math.floor(toMs / 864e5) + 1; day++) {
+      const dt = new Date(day * 864e5);
+      const y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate();
+      const wd = dt.getUTCDay();
+      if (wd === 0 || wd === 6) continue; // Kalendertag der Börse: Sa/So zu (Feiertage nicht berücksichtigt)
+      for (const s of SESSIONS) {
+        const start = zoned(y, m, d, s.open[1], s.open[2], s.open[0]);
+        const end = zoned(y, m, d, s.close[1], s.close[2], s.close[0]);
+        if (end > fromMs && start < toMs) out.push({ ...s, start, end });
+      }
+    }
+    return out;
+  }
+  const timeDe = (ms) => new Date(ms).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const dayDe = (ms) => {
+    const a = new Date(ms), b = new Date();
+    const diff = Math.round((new Date(a.getFullYear(), a.getMonth(), a.getDate()) - new Date(b.getFullYear(), b.getMonth(), b.getDate())) / 864e5);
+    return diff === 0 ? "" : diff === 1 ? "morgen " : a.toLocaleDateString("de-DE", { weekday: "short" }) + " ";
+  };
+  const durDe = (ms) => { const m = Math.round(ms / 6e4); return m >= 60 ? `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")} min` : `${m} min`; };
+  function sessionStatus(now = Date.now()) {
+    const list = sessionsBetween(now - 864e5, now + 5 * 864e5);
+    return SESSIONS.map((s) => {
+      const mine = list.filter((x) => x.key === s.key);
+      const cur = mine.find((x) => x.start <= now && now < x.end);
+      const next = mine.filter((x) => x.start > now).sort((a, b) => a.start - b.start)[0];
+      return { ...s, open: !!cur, cur, next };
+    });
+  }
+
+  class SessionsPrimitive {
+    constructor() {
+      this.on = false; this.big = false; this.times = []; this.chart = null; this.series = null; this.req = null;
+      const self = this;
+      this.view = { zOrder: () => "bottom", renderer: () => ({ draw: (t) => self.draw(t) }) };
+    }
+    attached(p) { this.chart = p.chart; this.series = p.series; this.req = p.requestUpdate; }
+    detached() { this.chart = null; }
+    paneViews() { return [this.view]; }
+    updateAllViews() {}
+    set(times, on, big) {
+      // times: echte UTC-Sekunden der Kerzen (ohne Ortszeit-Verschiebung)
+      this.times = times; this.on = on; this.big = big;
+      this.list = on && times.length > 1 ? sessionsBetween(times[0] * 1000, (times[times.length - 1] + (times[1] - times[0])) * 1000) : [];
+      if (this.req) this.req();
+    }
+    // Uhrzeit -> logische Position (Kerze i liegt bei i, ihr Beginn bei i - 0,5)
+    logical(t) {
+      const T = this.times, n = T.length, dur = T[n - 1] - T[n - 2];
+      if (t <= T[0]) return -0.5 - (T[0] - t) / dur;
+      if (t >= T[n - 1]) return n - 1.5 + (t - T[n - 1]) / dur;
+      let lo = 0, hi = n - 1;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (T[mid] <= t) lo = mid; else hi = mid; }
+      const span = Math.min(T[hi] - T[lo], dur);
+      return lo - 0.5 + Math.min(1, (t - T[lo]) / span);
+    }
+    draw(target) {
+      if (!this.chart || !this.on || !this.list || !this.list.length) return;
+      const ts = this.chart.timeScale();
+      target.useBitmapCoordinateSpace(({ context: ctx, bitmapSize, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
+        const H = bitmapSize.height, row = (this.big ? 5 : 3) * vr;
+        // logicalToCoordinate kann nur ganze Kerzen: dazwischen linear interpolieren
+        const coord = (l) => {
+          const i = Math.floor(l), c0 = ts.logicalToCoordinate(i), c1 = ts.logicalToCoordinate(i + 1);
+          return c0 == null || c1 == null ? null : c0 + (l - i) * (c1 - c0);
+        };
+        this.list.forEach((s) => {
+          const a = coord(this.logical(s.start / 1000));
+          const b = coord(this.logical(s.end / 1000));
+          if (a == null || b == null || b < 0) return;
+          const x1 = Math.max(0, a * hr), x2 = Math.min(bitmapSize.width, b * hr);
+          if (x2 <= x1) return;
+          const r = SESSIONS.findIndex((x) => x.key === s.key);
+          ctx.fillStyle = `rgba(${s.color},0.045)`;
+          ctx.fillRect(x1, 0, x2 - x1, H);
+          ctx.fillStyle = `rgba(${s.color},0.75)`;
+          ctx.fillRect(x1, r * (row + vr), x2 - x1, row);
+          if (this.big && x2 - x1 > 60 * hr) {
+            ctx.font = `${10 * vr}px "Segoe UI", system-ui, sans-serif`;
+            ctx.textBaseline = "top";
+            ctx.fillStyle = `rgba(${s.color},0.9)`;
+            ctx.fillText(`${s.name} ${timeDe(s.start)}`, x1 + 3 * hr, 3 * (row + vr) + 2 * vr + r * 12 * vr);
+          }
+        });
+      });
+    }
+  }
+
+  function renderSessionClock() {
+    const box = $("#sessions");
+    if (!box) return;
+    box.innerHTML = sessionStatus().map((s) => {
+      const txt = s.open ? `offen bis ${timeDe(s.cur.end)} (noch ${durDe(s.cur.end - Date.now())})`
+        : s.next ? `öffnet ${dayDe(s.next.start)}${timeDe(s.next.start)}` : "zu";
+      return `<span class="sess ${s.open ? "open" : ""}" style="--c:${s.color}" title="${s.where}: ${timeDe(s.next ? s.next.start : 0)}–${timeDe(s.next ? s.next.end : 0)} Uhr deine Zeit">
+        <i></i><b>${s.name}</b> ${txt}</span>`;
+    }).join("");
+  }
+
   const stratInfo = (key) => key === "regime" ? { name: "Trendampel", short: "A", color: "#26a69a" }
     : state.strategies.find((x) => x.key === key) || { name: key, short: "?", color: "#8b949e" };
   // Ohne eigene Auswahl: nur Strategien, die im Backtest nicht klar verloren haben
@@ -132,6 +263,7 @@
       ema20: line(COLORS.ema20), ema50: line(COLORS.ema50), ema200: line(COLORS.ema200, 2),
       bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0), sma50: line("#26a69a", 3, 0),
       priceLines: [], big, fitted: false, zones: (() => { const z = new ZonesPrimitive(); candles.attachPrimitive(z); return z; })(),
+      sessions: (() => { const z = new SessionsPrimitive(); candles.attachPrimitive(z); return z; })(),
     };
   }
 
@@ -160,6 +292,7 @@
     const zones = !L.zones ? [] : c.big ? data.zones
       : ["buy", "sell"].flatMap((k) => data.zones.filter((z) => z.kind === k && !z.swept).slice(0, 2));
     c.zones.set(zones, c.big);
+    c.sessions.set(data.candles.map((k) => k.time), L.sessions && data.tf !== "1d", c.big);
 
     // Signal-Pfeile, Farbe je Strategie
     const markers = L.signals ? data.setups.filter((s) => stratEnabled(s.strategy)).map((s) => {
@@ -451,6 +584,11 @@
         ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
         <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
     }
+    html += `<h3>Börsenzeiten (deine Uhrzeit)</h3><table>` + sessionStatus().map((s) => {
+      const x = s.open ? s.cur : s.next;
+      return row(`<span class="sess-dot" style="--c:${s.color}" title="${s.where}"></span><span title="${s.where}">${s.name}</span>`,
+        (x ? `${s.open ? "offen " : dayDe(x.start)}${timeDe(x.start)}–${timeDe(x.end)}` : "–"), s.open ? "up nowrap" : "nowrap");
+    }).join("") + `</table><p class="muted">Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New Yorker Börse. Farbige Streifen oben im Chart = Börsen offen. Die meiste Bewegung kommt oft zur US-Eröffnung und wenn Europa und USA gleichzeitig offen sind. US-Wirtschaftsdaten kommen meist eine Stunde vor der US-Eröffnung. Feiertage sind nicht berücksichtigt.</p>`;
     html += `<h3>Aktuelle Signale</h3>`;
     if (!acts.length) html += `<p class="muted">Gerade kein Signal der eingeschalteten Strategien.</p>`;
     acts.forEach((a, idx) => {
@@ -631,5 +769,7 @@
     await loadAllCharts();
     setInterval(refreshState, 15000);
     setInterval(loadAllCharts, 60000);
+    renderSessionClock();
+    setInterval(renderSessionClock, 30000);
   })();
 })();

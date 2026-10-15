@@ -100,3 +100,10 @@ table.bt th { color: var(--muted); font-weight: 500; }
 .badge.light-flat { background: rgba(139,148,158,.12); border-color: var(--muted); color: var(--muted); font-weight: 600; }
 .light-card { border-left: 3px solid var(--muted); background: var(--panel-2); border-radius: 6px; padding: 8px 10px; }
 .light-card.long { border-left-color: var(--up); }
+.sessions { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+.sess { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--border); color: var(--muted); }
+.sess i, .sess-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: rgba(var(--c), .35); margin-right: 4px; }
+.sess b { font-weight: 600; }
+.sess.open { color: var(--text); border-color: rgba(var(--c), .9); background: rgba(var(--c), .12); }
+.sess.open i { background: rgb(var(--c)); box-shadow: 0 0 6px rgb(var(--c)); }
+.nowrap { white-space: nowrap; }
