@@ -22,7 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import regime
+from . import heatmap, regime
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -98,6 +98,7 @@ class Api:
     def __init__(self, cfg: Config, worker: Worker):
         self.cfg, self.worker = cfg, worker
         self.bt_running, self.bt_error = False, None
+        self._hm_cache: dict = {}
 
     def _db(self) -> Database:
         return Database(self.cfg.database)
@@ -151,6 +152,31 @@ class Api:
                         "description": st.description, "enabled": st.key in self.cfg.strategies,
                         "stats": stats if stats and stats.get("trades") else None})
         return out
+
+    def heatmap(self, symbol: str, rng: str) -> dict | None:
+        """Liquidations-Heatmap; feinste vorhandene Zeitebene (15m, sonst 1h)."""
+        window = heatmap.RANGES.get(rng)
+        if not window:
+            return None
+        db = self._db()
+        now = int(time.time() * 1000)
+        for tf in ("15m", "1h"):
+            tf_ms = TF_MS[tf]
+            need = int(window * 2 / tf_ms) + 5
+            df = closed_candles(db.candles(self.cfg.exchange, symbol, tf, need).drop(columns=["time"]), tf_ms, now)
+            fresh = len(df) and df["ts"].iloc[-1] >= now - 2 * 3_600_000 - tf_ms
+            if len(df) < need * 0.6 or (tf == "15m" and not fresh):
+                continue  # zu wenig oder veraltete 15m-Daten: 1h nehmen
+            df = df.reset_index(drop=True)
+            key = (symbol, rng, tf, int(df["ts"].iloc[-1]))
+            if key not in self._hm_cache:
+                self._hm_cache = {k: v for k, v in self._hm_cache.items() if k[:2] != key[:2]}
+                out = heatmap.compute(df, window)
+                if out:
+                    out.update(range=rng, tf=tf, step=tf_ms // 1000)
+                self._hm_cache[key] = out
+            return self._hm_cache[key]
+        return None
 
     def backtest_result(self) -> dict | None:
         r = backtest.latest_result(self.cfg)
@@ -270,6 +296,8 @@ def make_handler(api: Api):
                     return self._json(api.backtest_result())
                 if url.path == "/api/backtest/run":
                     return self._json({"started": api.start_backtest(int(q.get("days", 365)))})
+                if url.path == "/api/heatmap":
+                    return self._json(api.heatmap(q.get("symbol", ""), q.get("range", "3d")))
                 if url.path == "/api/chart":
                     return self._json(api.chart(q.get("symbol", ""), q.get("tf", "4h")))
                 path = "index.html" if url.path in ("", "/") else url.path.lstrip("/")

@@ -28,6 +28,7 @@
     timeframes: ["1h", "4h", "1d"],
     newIds: new Set(),
     regimeSeen: store.get("regimeSeen", {}),
+    heatmap: store.get("heatmap", "off"),
     trendLight: null,
   };
 
@@ -227,6 +228,79 @@
     }).join("");
   }
 
+
+  // ---------- Liquidations-Heatmap ----------
+  const HM_STOPS = [[40, 20, 80], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+  function hmColor(v) {
+    const t = v / 255 * (HM_STOPS.length - 1), i = Math.min(HM_STOPS.length - 2, Math.floor(t)), f = t - i;
+    const a = HM_STOPS[i], b = HM_STOPS[i + 1];
+    return [0, 1, 2].map((k) => Math.round(a[k] + (b[k] - a[k]) * f));
+  }
+  // Uhrzeit (UTC-Sekunden) -> x-Pixel, über die Kerzenzeiten des Charts
+  function timeMapper(chart, T) {
+    const ts = chart.timeScale(), n = T.length;
+    if (n < 2) return () => null;
+    const dur = T[n - 1] - T[n - 2];
+    const logical = (t) => {
+      if (t <= T[0]) return -0.5 - (T[0] - t) / dur;
+      if (t >= T[n - 1]) return n - 1.5 + (t - T[n - 1]) / dur;
+      let lo = 0, hi = n - 1;
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (T[mid] <= t) lo = mid; else hi = mid; }
+      return lo - 0.5 + Math.min(1, (t - T[lo]) / Math.min(T[hi] - T[lo], dur));
+    };
+    return (t) => {
+      const l = logical(t), i = Math.floor(l), c0 = ts.logicalToCoordinate(i), c1 = ts.logicalToCoordinate(i + 1);
+      return c0 == null || c1 == null ? null : c0 + (l - i) * (c1 - c0);
+    };
+  }
+
+  class HeatmapPrimitive {
+    constructor() {
+      this.hm = null; this.img = null; this.times = []; this.chart = null; this.series = null; this.req = null;
+      const self = this;
+      this.view = { zOrder: () => "bottom", renderer: () => ({ draw: (t) => self.draw(t) }) };
+    }
+    attached(p) { this.chart = p.chart; this.series = p.series; this.req = p.requestUpdate; }
+    detached() { this.chart = null; }
+    paneViews() { return [this.view]; }
+    updateAllViews() {}
+    set(times, hm) {
+      this.times = times;
+      if (hm !== this.hm) {
+        this.hm = hm; this.img = null;
+        if (hm) {
+          const raw = atob(hm.data), cols = hm.times.length, bins = hm.bins;
+          const c = document.createElement("canvas"); c.width = cols; c.height = bins;
+          const ctx = c.getContext("2d"), id = ctx.createImageData(cols, bins);
+          for (let j = 0; j < cols; j++) {
+            for (let b = 0; b < bins; b++) {
+              const v = raw.charCodeAt(j * bins + b), o = ((bins - 1 - b) * cols + j) * 4;
+              if (v < 20) continue;
+              const [r, g, bl] = hmColor(v);
+              id.data[o] = r; id.data[o + 1] = g; id.data[o + 2] = bl; id.data[o + 3] = Math.round(255 * (0.08 + 0.8 * v / 255));
+            }
+          }
+          ctx.putImageData(id, 0, 0);
+          this.img = c;
+        }
+      }
+      if (this.req) this.req();
+    }
+    draw(target) {
+      if (!this.chart || !this.series || !this.img || this.times.length < 2) return;
+      const hm = this.hm, x = timeMapper(this.chart, this.times);
+      const xa = x(hm.times[0]), xb = x(hm.times[hm.times.length - 1] + hm.step);
+      const ya = this.series.priceToCoordinate(hm.pmax), yb = this.series.priceToCoordinate(hm.pmin);
+      if (xa == null || xb == null || ya == null || yb == null) return;
+      target.useBitmapCoordinateSpace(({ context: ctx, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(this.img, xa * hr, ya * vr, (xb - xa) * hr, (yb - ya) * vr);
+        ctx.restore();
+      });
+    }
+  }
+
   const stratInfo = (key) => key === "regime" ? { name: "Trendampel", short: "A", color: "#26a69a" }
     : state.strategies.find((x) => x.key === key) || { name: key, short: "?", color: "#8b949e" };
   // Ohne eigene Auswahl: nur Strategien, die im Backtest nicht klar verloren haben
@@ -264,6 +338,7 @@
       bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0), sma50: line("#26a69a", 3, 0),
       priceLines: [], big, fitted: false, zones: (() => { const z = new ZonesPrimitive(); candles.attachPrimitive(z); return z; })(),
       sessions: (() => { const z = new SessionsPrimitive(); candles.attachPrimitive(z); return z; })(),
+      heat: (() => { const z = new HeatmapPrimitive(); candles.attachPrimitive(z); return z; })(),
     };
   }
 
@@ -293,6 +368,8 @@
       : ["buy", "sell"].flatMap((k) => data.zones.filter((z) => z.kind === k && !z.swept).slice(0, 2));
     c.zones.set(zones, c.big);
     c.sessions.set(data.candles.map((k) => k.time), L.sessions && data.tf !== "1d", c.big);
+    const hm = state.heatmap !== "off" && data.heatmap && data.heatmap.range === state.heatmap ? data.heatmap : null;
+    c.heat.set(data.candles.map((k) => k.time), hm);
 
     // Signal-Pfeile, Farbe je Strategie
     const markers = L.signals ? data.setups.filter((s) => stratEnabled(s.strategy)).map((s) => {
@@ -329,7 +406,12 @@
     }
     if (!c.fitted) {
       const n = data.candles.length;
-      c.chart.timeScale().setVisibleLogicalRange({ from: n - (c.big ? 220 : 120), to: n + 5 });
+      let from = n - (c.big ? 220 : 120);
+      if (hm) { // Heatmap-Zeitraum ganz zeigen
+        const t0 = hm.times[0]; let i = data.candles.findIndex((k) => k.time >= t0);
+        if (i >= 0) from = Math.min(from, i - 3);
+      }
+      c.chart.timeScale().setVisibleLogicalRange({ from, to: n + 5 });
       c.fitted = true;
     }
   }
@@ -413,6 +495,10 @@
 
   async function loadChart(symbol) {
     const data = await getJSON(`/api/chart?symbol=${encodeURIComponent(symbol)}&tf=${state.tf}`);
+    if (state.heatmap !== "off") {
+      try { data.heatmap = await getJSON(`/api/heatmap?symbol=${encodeURIComponent(symbol)}&range=${state.heatmap}`); }
+      catch (e) { data.heatmap = null; }
+    }
     state.data.set(symbol + "|" + state.tf, data);
     const tile = state.tiles.get(symbol);
     if (tile) {
@@ -584,6 +670,14 @@
         ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
         <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
     }
+    const H = state.heatmap !== "off" && data.heatmap ? data.heatmap : null;
+    if (H) {
+      const z = H.zones.slice().sort((a, b) => b.price - a.price);
+      html += `<h3>Liquidations-Heatmap (${H.range === "3d" ? "3 Tage" : "1 Woche"})</h3><table>` +
+        z.map((q) => row(`${q.side === "above" ? "▲" : "▼"} ${fmt(q.price)}`,
+          `${pct(q.distance)} · <span class="hm-bar"><i style="width:${Math.round(q.strength * 100)}%"></i></span>`, q.side === "above" ? "down" : "up")).join("") +
+        `</table><p class="muted">Geschätzt aus Kursen und Volumen: wo gehebelte Trader (10x–100x) liquidiert würden. Gelb = viel Liquidität. Der Kurs läuft solche Zonen oft an, danach verschwinden sie (abgeholt). Kein echtes Orderbuch, nur ein Modell.</p>`;
+    }
     html += `<h3>Börsenzeiten (deine Uhrzeit)</h3><table>` + sessionStatus().map((s) => {
       const x = s.open ? s.cur : s.next;
       return row(`<span class="sess-dot" style="--c:${s.color}" title="${s.where}"></span><span title="${s.where}">${s.name}</span>`,
@@ -705,6 +799,26 @@
   // ---------- Bedienung ----------
   function saveTf() { store.set("tf", state.tf); }
 
+  function renderHeatButtons() {
+    const box = $("#hm-buttons");
+    const labels = { off: "Aus", "3d": "3 Tage", "1w": "1 Woche" };
+    box.innerHTML = `<span class="muted">Heatmap</span>`;
+    Object.entries(labels).forEach(([k, label]) => {
+      const b = document.createElement("button");
+      b.className = "btn" + (k === state.heatmap ? " active" : "");
+      b.textContent = label;
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        state.heatmap = k; store.set("heatmap", k); renderHeatButtons();
+        state.tiles.forEach((t) => { t.chart.fitted = false; });
+        if (focusChart) focusChart.fitted = false;
+        loadAllCharts();
+        if (state.focus) loadChart(state.focus.symbol).catch(console.error);
+      });
+      box.appendChild(b);
+    });
+  }
+
   function renderTfButtons() {
     const labels = { "15m": "15 Min", "1h": "1 Std", "4h": "4 Std", "1d": "1 Tag" };
     [$("#tf-buttons"), $("#focus-tf")].forEach((box) => {
@@ -765,6 +879,7 @@
   // ---------- Start ----------
   (async () => {
     renderTfButtons();
+    renderHeatButtons();
     await refreshState();
     await loadAllCharts();
     setInterval(refreshState, 15000);

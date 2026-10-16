@@ -107,3 +107,5 @@ table.bt th { color: var(--muted); font-weight: 500; }
 .sess.open { color: var(--text); border-color: rgba(var(--c), .9); background: rgba(var(--c), .12); }
 .sess.open i { background: rgb(var(--c)); box-shadow: 0 0 6px rgb(var(--c)); }
 .nowrap { white-space: nowrap; }
+.hm-bar { display: inline-block; width: 50px; height: 6px; background: var(--panel); border-radius: 3px; vertical-align: middle; overflow: hidden; }
+.hm-bar i { display: block; height: 100%; background: linear-gradient(90deg, #3b528b, #21918c, #5ec962, #fde725); }

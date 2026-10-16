@@ -67,6 +67,8 @@ pip install pytest && python -m pytest
 
 **Börsenzeiten:** oben eine Uhr, welche Börse gerade offen ist (Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New York), in deiner Ortszeit mit automatischer Sommer-/Winterzeit. In den 1h- und 4h-Charts zeigen farbige Streifen, wann welche Börse offen war (Schalter „Börsenzeiten“).
 
+**Liquidations-Heatmap:** Buttons „Heatmap: 3 Tage / 1 Woche“ oben. Farbfläche im Chart, wo gehebelte Trader (10x–100x) liquidiert würden (geschätzt aus Kursen und Volumen, ähnlich Coinglass). Gelb = viel Liquidität; wird der Preis erreicht, verschwindet die Zone. Im Vollbild stehen die stärksten Zonen ober- und unterhalb des Kurses.
+
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
 
 8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
