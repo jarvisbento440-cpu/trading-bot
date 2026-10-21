@@ -36,7 +36,8 @@
   const fmt = (p) => p == null ? "–" : p.toLocaleString("de-DE", {
     minimumFractionDigits: p >= 100 ? 2 : p >= 1 ? 4 : 5, maximumFractionDigits: p >= 100 ? 2 : p >= 1 ? 4 : 5 });
   const pct = (v) => v == null ? "" : (v >= 0 ? "+" : "") + v.toFixed(2).replace(".", ",") + " %";
-  const coinName = (s) => s.split("/")[0];
+  const names = {};
+  const coinName = (s) => names[s] || s.split("/")[0];
   const sideDe = (s) => s === "long" ? "LONG" : "SHORT";
 
   async function getJSON(url) {
@@ -335,7 +336,7 @@
     return {
       chart, candles, volume,
       ema20: line(COLORS.ema20), ema50: line(COLORS.ema50), ema200: line(COLORS.ema200, 2),
-      bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0), sma50: line("#26a69a", 3, 0),
+      bbUp: line(COLORS.bb, 1, 2), bbLo: line(COLORS.bb, 1, 2), st: line("#c678dd", 2, 0), sma50: (() => { const l = line("#26a69a", 3, 0); l.applyOptions({ autoscaleInfoProvider: () => null }); return l; })(),
       priceLines: [], big, fitted: false, zones: (() => { const z = new ZonesPrimitive(); candles.attachPrimitive(z); return z; })(),
       sessions: (() => { const z = new SessionsPrimitive(); candles.attachPrimitive(z); return z; })(),
       heat: (() => { const z = new HeatmapPrimitive(); candles.attachPrimitive(z); return z; })(),
@@ -428,13 +429,19 @@
     el.tabIndex = 0;
     el.innerHTML = `
       <div class="tile-head">
-        <span class="tile-sym">${coinName(coin.symbol)}</span>
+        <span class="tile-sym">${coinName(coin.symbol)}</span>${coin.extra ? `<span class="badge">${coin.kind || ""}</span>` : ""}
         <span class="tile-price"></span><span class="tile-chg"></span>
         <span class="badge tile-light" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
       </div>
       <div class="tile-chart"></div>
-      <div class="tile-empty">Lade Daten…</div>`;
-    $("#grid").appendChild(el);
+      <div class="tile-empty">Lade Daten…</div>
+      ${coin.extra ? `<button class="tile-x" title="Kachel entfernen">✕</button>` : ""}`;
+    $("#grid").insertBefore(el, picker.el);
+    if (coin.extra) $(".tile-x", el).addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await getJSON(`/api/watch/remove?symbol=${encodeURIComponent(coin.symbol)}`).catch(() => {});
+      refreshState();
+    });
     const tile = { el, symbol: coin.symbol, chart: buildChart($(".tile-chart", el), false) };
     const open = () => openFocus(coin.symbol);
     el.addEventListener("click", open);
@@ -613,10 +620,18 @@
     if (state.btWasRunning && !st.backtest_running && !$("#backtest").classList.contains("hidden")) openBacktest();
     state.btWasRunning = !!st.backtest_running;
 
+    const live = new Set(st.coins.map((c) => c.symbol));
+    state.tiles.forEach((t, sym) => { if (!live.has(sym)) { t.chart.chart.remove(); t.el.remove(); state.tiles.delete(sym); } });
     st.coins.forEach((coin) => {
+      names[coin.symbol] = coin.name;
+      const isNew = !state.tiles.has(coin.symbol);
       const tile = state.tiles.get(coin.symbol) || makeTile(coin);
       updateTileHead(tile, coin);
       checkRegime(coin);
+      if (coin.loading) $(".tile-empty", tile.el).textContent = "Lade Kurs-Historie…";
+      // neue Kachel oder Laden gerade fertig: Chart holen
+      if ((isNew && state.started) || (tile.wasLoading && !coin.loading)) loadChart(coin.symbol).catch(console.error);
+      tile.wasLoading = coin.loading;
     });
     store.set("regimeSeen", state.regimeSeen);
     state.trendLight = st.trend_light;
@@ -641,7 +656,8 @@
     box.classList.remove("hidden");
     if (!focusChart) focusChart = buildChart($("#focus-chart"), true);
     focusChart.fitted = false;
-    $("#focus-title").textContent = symbol;
+    $("#focus-title").textContent = symbol.includes("/") ? symbol : `${coinName(symbol)} · ${symbol}`;
+    renderFocusStrats();
     renderTfButtons();
     const cached = state.data.get(symbol + "|" + state.tf);
     if (cached) renderFocus(cached);
@@ -715,6 +731,66 @@
     $("#focus-info").innerHTML = html;
   }
 
+  // ---------- Kachel „Markt hinzufügen“ ----------
+  const picker = (() => {
+    const el = document.createElement("article");
+    el.className = "tile picker";
+    el.innerHTML = `<div class="tile-head"><span class="tile-sym">＋ Markt hinzufügen</span></div>
+      <div class="picker-body">
+        <input type="search" class="picker-q" placeholder="Suchen: Gold, S&P 500, DAX, Nvidia, PEPE …" aria-label="Markt suchen">
+        <ul class="picker-list"><li class="muted">Lade…</li></ul>
+        <p class="muted">Krypto von der Börse, alles andere (Aktien, Indizes, Rohstoffe, Devisen) kostenlos von Yahoo Finance.</p>
+      </div>`;
+    $("#grid").appendChild(el);
+    const q = $(".picker-q", el), list = $(".picker-list", el);
+    let timer = null, seq = 0;
+    async function run() {
+      const my = ++seq;
+      let res = [];
+      try { res = await getJSON(`/api/search?q=${encodeURIComponent(q.value)}`); }
+      catch (e) { list.innerHTML = '<li class="muted">Suche gerade nicht möglich</li>'; return; }
+      if (my !== seq) return;
+      if (!res.length) { list.innerHTML = '<li class="muted">Nichts gefunden</li>'; return; }
+      list.innerHTML = "";
+      res.forEach((r) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${r.name}</strong> <span class="muted">${r.symbol}</span><span class="badge">${r.type || ""}</span>`;
+        li.addEventListener("click", async () => {
+          li.classList.add("busy");
+          await getJSON(`/api/watch/add?symbol=${encodeURIComponent(r.symbol)}&name=${encodeURIComponent(r.name)}&type=${encodeURIComponent(r.type || "")}`).catch(() => {});
+          q.value = ""; run();
+          refreshState();
+        });
+        list.appendChild(li);
+      });
+    }
+    q.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(run, 300); });
+    el.addEventListener("click", (e) => e.stopPropagation());
+    return { el, run };
+  })();
+
+  // ---------- Strategien im Vollbild ----------
+  function renderFocusStrats() {
+    const box = $("#focus-strats");
+    box.innerHTML = "";
+    state.strategies.forEach((st) => {
+      const b = document.createElement("button");
+      const on = stratEnabled(st.key);
+      b.className = "chip" + (on ? " on" : "");
+      b.style.setProperty("--c", st.color);
+      b.title = st.description + (st.stats ? ` · Backtest: ${pctDe(st.stats.winrate)}, ${rDe(st.stats.avg_r)}` : "");
+      b.innerHTML = `<span class="dot" style="background:${st.color}">${st.short}</span>${st.name}`;
+      b.addEventListener("click", () => {
+        const cur = state.strategies.filter((x) => stratEnabled(x.key)).map((x) => x.key);
+        state.stratOn = on ? cur.filter((k) => k !== st.key) : [...cur, st.key];
+        store.set("stratOn", state.stratOn);
+        renderFocusStrats(); renderStrategyPanel(); rerenderAll();
+        state.tiles.forEach((t, sym) => { const d = state.data.get(sym + "|" + state.tf); if (d) loadChartApply(sym, d); });
+      });
+      box.appendChild(b);
+    });
+  }
+
   // ---------- Strategien-Auswahl ----------
   function renderStrategyPanel() {
     const box = $("#strat-panel");
@@ -729,6 +805,7 @@
     box.querySelectorAll("[data-strat]").forEach((cb) => cb.addEventListener("change", () => {
       state.stratOn = [...box.querySelectorAll("[data-strat]:checked")].map((x) => x.dataset.strat);
       store.set("stratOn", state.stratOn);
+      if (state.focus) renderFocusStrats();
       rerenderAll();
       state.tiles.forEach((t, sym) => { const d = state.data.get(sym + "|" + state.tf); if (d) loadChartApply(sym, d); });
     }));
@@ -882,6 +959,8 @@
     renderHeatButtons();
     await refreshState();
     await loadAllCharts();
+    state.started = true;
+    picker.run();
     setInterval(refreshState, 15000);
     setInterval(loadAllCharts, 60000);
     renderSessionClock();

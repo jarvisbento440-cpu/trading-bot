@@ -9,6 +9,7 @@ from .config import Config, load_config
 from .data import make_exchange, sync_all
 from .db import Database
 from .indicators import trend_series
+from .markets import sync_extra
 from .notify import Notifier, format_signal
 
 log = logging.getLogger("signalbot")
@@ -29,13 +30,17 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     now = ex.milliseconds()
     bt = latest_result(cfg)
     sent = 0
-    for symbol in cfg.symbols:
-        daily = db.candles(ex.id, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
+    from .markets import all_symbols
+    from .yahoo import EXCHANGE as YAHOO, is_yahoo
+
+    for symbol in all_symbols(cfg):
+        src = YAHOO if is_yahoo(symbol) else ex.id
+        daily = db.candles(src, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
         if cfg.trend_light and cfg.trend_timeframe == "1d":
             sent += _trend_light(symbol, daily, now, db, notifier)
         for tf in cfg.signal_timeframes:
             tf_ms = ex.parse_timeframe(tf) * 1000
-            df = closed_candles(db.candles(ex.id, symbol, tf, 600).drop(columns=["time"]), tf_ms, now)
+            df = closed_candles(db.candles(src, symbol, tf, 600).drop(columns=["time"]), tf_ms, now)
             if len(df) < 220:
                 continue
             d = prepare(df.reset_index(drop=True))
@@ -130,6 +135,7 @@ def main() -> None:
     while True:
         try:
             sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
+            sync_extra(cfg, ex, db)
             scan(cfg, ex, db, notifier)
         except Exception:
             log.exception("Fehler im Durchlauf, nächster Versuch beim nächsten Intervall")

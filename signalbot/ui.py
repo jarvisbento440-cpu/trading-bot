@@ -22,7 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import heatmap, regime
+from . import heatmap, markets, regime
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class Worker(threading.Thread):
             try:
                 self.status = "Lade Kurs-Historie (erster Start, einige Minuten)…" if first else "Aktualisiere…"
                 sync_all(ex, db, self.cfg.symbols, self.cfg.store_timeframes, self.cfg.backfill_days)
+                markets.sync_extra(self.cfg, ex, db)
                 scan(self.cfg, ex, db, notifier)
                 first = False
                 self.error = None
@@ -99,15 +100,18 @@ class Api:
         self.cfg, self.worker = cfg, worker
         self.bt_running, self.bt_error = False, None
         self._hm_cache: dict = {}
+        self.loading: set[str] = set()
+        self._ex = None
 
     def _db(self) -> Database:
         return Database(self.cfg.database)
 
     def state(self) -> dict:
         db = self._db()
-        ex = self.cfg.exchange
         coins = []
-        for sym in self.cfg.symbols:
+        extra = {x["symbol"]: x for x in markets.load_extra(self.cfg)}
+        for sym in markets.all_symbols(self.cfg):
+            ex = markets.exchange_for(self.cfg, sym)
             h1 = db.candles(ex, sym, "1h", 30)
             daily = db.candles(ex, sym, self.cfg.trend_timeframe, 400)
             price = change = None
@@ -122,7 +126,10 @@ class Api:
             light = None
             if self.cfg.trend_light and self.cfg.trend_timeframe == "1d" and len(daily):
                 light = regime.current(daily.drop(columns=["time"]), int(time.time() * 1000))
-            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light})
+            info = extra.get(sym, {})
+            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light,
+                          "name": info.get("name") or sym.split("/")[0], "kind": info.get("type", "Krypto"),
+                          "extra": sym in extra, "loading": sym in self.loading})
         rows = db.conn.execute(
             "SELECT id, created_at, strategy, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons, status "
             "FROM signals ORDER BY id DESC LIMIT 50"
@@ -163,7 +170,7 @@ class Api:
         for tf in ("15m", "1h"):
             tf_ms = TF_MS[tf]
             need = int(window * 2 / tf_ms) + 5
-            df = closed_candles(db.candles(self.cfg.exchange, symbol, tf, need).drop(columns=["time"]), tf_ms, now)
+            df = closed_candles(db.candles(markets.exchange_for(self.cfg, symbol), symbol, tf, need).drop(columns=["time"]), tf_ms, now)
             fresh = len(df) and df["ts"].iloc[-1] >= now - 2 * 3_600_000 - tf_ms
             if len(df) < need * 0.6 or (tf == "15m" and not fresh):
                 continue  # zu wenig oder veraltete 15m-Daten: 1h nehmen
@@ -177,6 +184,41 @@ class Api:
                 self._hm_cache[key] = out
             return self._hm_cache[key]
         return None
+
+    def _exchange(self):
+        if self._ex is None:
+            self._ex = make_exchange(self.cfg.exchange)
+        return self._ex
+
+    def search(self, q: str) -> list[dict]:
+        return markets.search(self.cfg, self._exchange() if self.worker.sync else None, q)
+
+    def watch_add(self, symbol: str, name: str, kind: str) -> bool:
+        if not symbol:
+            return False
+        markets.add(self.cfg, symbol, name, kind)
+        if not self.worker.sync:
+            return True
+        self.loading.add(symbol)
+
+        def job():  # Historie sofort laden, nicht erst beim nächsten Durchlauf
+            try:
+                db = Database(self.cfg.database)
+                if markets.yahoo.is_yahoo(symbol):
+                    markets.yahoo.sync(db, symbol)
+                else:
+                    sync_all(self._exchange(), db, [symbol], self.cfg.store_timeframes, self.cfg.backfill_days)
+            except Exception:
+                log.exception("Laden von %s fehlgeschlagen", symbol)
+            finally:
+                self.loading.discard(symbol)
+
+        threading.Thread(target=job, daemon=True).start()
+        return True
+
+    def watch_remove(self, symbol: str) -> bool:
+        markets.remove(self.cfg, symbol)
+        return True
 
     def backtest_result(self) -> dict | None:
         r = backtest.latest_result(self.cfg)
@@ -206,7 +248,7 @@ class Api:
 
     def chart(self, symbol: str, tf: str) -> dict:
         db = self._db()
-        ex = self.cfg.exchange
+        ex = markets.exchange_for(self.cfg, symbol)
         tf_ms = TF_MS.get(tf, 3_600_000)
         df = db.candles(ex, symbol, tf, 800)
         if df.empty:
@@ -296,6 +338,12 @@ def make_handler(api: Api):
                     return self._json(api.backtest_result())
                 if url.path == "/api/backtest/run":
                     return self._json({"started": api.start_backtest(int(q.get("days", 365)))})
+                if url.path == "/api/search":
+                    return self._json(api.search(q.get("q", "")))
+                if url.path == "/api/watch/add":
+                    return self._json({"ok": api.watch_add(q.get("symbol", ""), q.get("name", ""), q.get("type", ""))})
+                if url.path == "/api/watch/remove":
+                    return self._json({"ok": api.watch_remove(q.get("symbol", ""))})
                 if url.path == "/api/heatmap":
                     return self._json(api.heatmap(q.get("symbol", ""), q.get("range", "3d")))
                 if url.path == "/api/chart":

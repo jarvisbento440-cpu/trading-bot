@@ -62,6 +62,11 @@ def fetch(symbol: str, interval: str, rng: str) -> list[list]:
         if None in (o, h, l, c):
             continue
         rows.append([int(t) * 1000, float(o), float(h), float(l), float(c), float(q["volume"][i] or 0)])
+    step = {"60m": H_MS, "15m": 900_000}.get(interval)
+    if step and len(rows) > 2:
+        # Yahoo hängt den aktuellen Kurs als Extra-Zeile mit "krummer" Zeit an: nur Zeilen im Kerzen-Raster behalten
+        mods = pd.Series([r[0] % step for r in rows]).mode()
+        rows = [r for r in rows if r[0] % step == mods.iloc[0]]
     return rows
 
 

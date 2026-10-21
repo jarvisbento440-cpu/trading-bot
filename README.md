@@ -65,6 +65,8 @@ pip install pytest && python -m pytest
 
 ## Strategien und Backtest
 
+**Eigene Märkte:** Kachel „＋ Markt hinzufügen“ mit Suchfeld. Krypto kommt von der Börse (alle Paare), Aktien, Indizes (S&P 500, DAX …), Rohstoffe (Gold, Silber, Öl) und Devisen kostenlos von Yahoo Finance. ✕ oben rechts entfernt die Kachel. Im Vollbild lassen sich die Strategien oben direkt ein- und ausschalten.
+
 **Börsenzeiten:** oben eine Uhr, welche Börse gerade offen ist (Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New York), in deiner Ortszeit mit automatischer Sommer-/Winterzeit. In den 1h- und 4h-Charts zeigen farbige Streifen, wann welche Börse offen war (Schalter „Börsenzeiten“).
 
 **Liquidations-Heatmap:** Buttons „Heatmap: 3 Tage / 1 Woche“ oben. Farbfläche im Chart, wo gehebelte Trader (10x–100x) liquidiert würden (geschätzt aus Kursen und Volumen, ähnlich Coinglass). Gelb = viel Liquidität; wird der Preis erreicht, verschwindet die Zone. Im Vollbild stehen die stärksten Zonen ober- und unterhalb des Kurses.

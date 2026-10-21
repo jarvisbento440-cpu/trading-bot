@@ -109,3 +109,24 @@ table.bt th { color: var(--muted); font-weight: 500; }
 .nowrap { white-space: nowrap; }
 .hm-bar { display: inline-block; width: 50px; height: 6px; background: var(--panel); border-radius: 3px; vertical-align: middle; overflow: hidden; }
 .hm-bar i { display: block; height: 100%; background: linear-gradient(90deg, #3b528b, #21918c, #5ec962, #fde725); }
+.tile-x { position: absolute; top: 6px; right: 8px; z-index: 4; background: transparent; border: 0; color: var(--muted); cursor: pointer; font-size: 14px; }
+.tile-x:hover { color: var(--down); }
+.tile.picker { cursor: default; }
+.picker-body { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 12px; min-height: 0; flex: 1; }
+.picker-q { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px; }
+.picker-q:focus { outline: none; border-color: var(--accent); }
+.picker-list { list-style: none; margin: 0; padding: 0; overflow: auto; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.picker-list li { display: flex; gap: 8px; align-items: baseline; padding: 5px 8px; border-radius: 6px; background: var(--panel-2); cursor: pointer; }
+.picker-list li:hover { outline: 1px solid var(--accent); }
+.picker-list li .badge { margin-left: auto; }
+.picker-list li.busy { opacity: .5; }
+.focus-strats { gap: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; background: var(--panel-2); color: var(--muted); border: 1px solid var(--border);
+  border-radius: 14px; padding: 2px 9px 2px 3px; cursor: pointer; font-size: 12px; opacity: .55; }
+.chip.on { color: var(--text); border-color: var(--c); opacity: 1; }
+.chip .dot { width: 16px; height: 16px; font-size: 10px; }
+#focus .focus-head { flex-wrap: wrap; }
+#focus .focus-title { flex: 0 0 auto; white-space: nowrap; }
+#focus .focus-strats { flex: 1; }
+#focus .btn, #focus-tf { white-space: nowrap; flex-wrap: nowrap; }
+.tile:has(.tile-x) .tile-head { padding-right: 30px; }
