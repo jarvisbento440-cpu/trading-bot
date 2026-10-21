@@ -1,0 +1,30 @@
+name: Yahoo-Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python scripts/check_yahoo.py /tmp/yahoo
+      - name: In Branch "yahoo-check" speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan yahoo-check
+          git rm -rq --cached .
+          rm -rf ./* .github .gitignore .gitattributes .env.example 2>/dev/null || true
+          mkdir -p yahoo && cp /tmp/yahoo/* yahoo/
+          git add yahoo
+          git commit -qm "Yahoo-Test"
+          git push -f origin yahoo-check
