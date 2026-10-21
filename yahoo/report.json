@@ -1,0 +1,132 @@
+{
+ "search": {
+  "gold": [
+   {
+    "symbol": "GOLD",
+    "name": "Gold.com, Inc.",
+    "type": "Aktie",
+    "where": "NYSE"
+   },
+   {
+    "symbol": "GC=F",
+    "name": "Gold Dec 26",
+    "type": "Rohstoff/Future",
+    "where": "New York Commodity Exchange"
+   },
+   {
+    "symbol": "MGC=F",
+    "name": "Micro Gold Futures,Dec-2026",
+    "type": "Rohstoff/Future",
+    "where": "New York Commodity Exchange"
+   },
+   {
+    "symbol": "GLD",
+    "name": "SPDR Gold Shares",
+    "type": "ETF",
+    "where": "NYSEArca"
+   },
+   {
+    "symbol": "GS",
+    "name": "Goldman Sachs Group, Inc. (The)",
+    "type": "Aktie",
+    "where": "NYSE"
+   }
+  ],
+  "s&p 500": [
+   {
+    "symbol": "^GSPC",
+    "name": "S&P 500",
+    "type": "Index",
+    "where": "SNP"
+   },
+   {
+    "symbol": "SPY",
+    "name": "State Street SPDR S&P 500 ETF T",
+    "type": "ETF",
+    "where": "NYSEArca"
+   },
+   {
+    "symbol": "VOO",
+    "name": "Vanguard S&P 500 ETF",
+    "type": "ETF",
+    "where": "NYSEArca"
+   },
+   {
+    "symbol": "ES=F",
+    "name": "E-Mini S&P 500 Dec 26",
+    "type": "Rohstoff/Future",
+    "where": "Chicago Mercantile Exchange"
+   },
+   {
+    "symbol": "SPMO",
+    "name": "Invesco S&P 500 Momentum ETF",
+    "type": "ETF",
+    "where": "NYSEArca"
+   }
+  ],
+  "nvidia": [
+   {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corporation",
+    "type": "Aktie",
+    "where": "NASDAQ"
+   },
+   {
+    "symbol": "SNVDA=F",
+    "name": "NVIDIA Corp Single Stock future",
+    "type": "Rohstoff/Future",
+    "where": "Chicago Mercantile Exchange"
+   },
+   {
+    "symbol": "XNVDA=F",
+    "name": "Micro NVIDIA Corp Stock Futures",
+    "type": "Rohstoff/Future",
+    "where": "Chicago Mercantile Exchange"
+   },
+   {
+    "symbol": "NVDX",
+    "name": "T-Rex 2X Long NVIDIA Daily Targ",
+    "type": "ETF",
+    "where": "BATS Trading"
+   },
+   {
+    "symbol": "NVDA.TO",
+    "name": "NVIDIA CDR (CAD HEDGED)",
+    "type": "Aktie",
+    "where": "Toronto"
+   }
+  ],
+  "dax": [
+   {
+    "symbol": "DAX",
+    "name": "Global X DAX Germany ETF",
+    "type": "ETF",
+    "where": "NASDAQ"
+   },
+   {
+    "symbol": "^GDAXI",
+    "name": "DAX                           P",
+    "type": "Index",
+    "where": "XETRA"
+   },
+   {
+    "symbol": "DXR",
+    "name": "Daxor Corporation",
+    "type": "Aktie",
+    "where": "NASDAQ"
+   },
+   {
+    "symbol": "EXS1.DE",
+    "name": "iShares Core DAX UCITS ETF DE I",
+    "type": "ETF",
+    "where": "XETRA"
+   },
+   {
+    "symbol": "^DAX-IV",
+    "name": "NETS DAX Index Fund (Germany) (",
+    "type": "Index",
+    "where": "NYSE MKT"
+   }
+  ]
+ }
+}
