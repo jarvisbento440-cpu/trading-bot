@@ -14,7 +14,7 @@ Daten: Coinbase (USD), BTC, ETH, SOL, XRP, ONDO, 1h und 4h. Gleiche Regeln wie i
 | Fibonacci Golden Pocket | 0 | – | – | – | – |
 | **Alle** | **32** | **5** | **20** | **−17,8 R** | **5** |
 
-Je Coin (abgeschlossen): BTC −9,6 R, ONDO −8,5 R, XRP −0,9 R. ETH und SOL: kein einziges Signal (Tagestrend passte nicht).
+Je Coin (abgeschlossen): BTC −8,4 R, ONDO −8,4 R, XRP −0,9 R. ETH und SOL: kein einziges Signal (Tagestrend passte nicht).
 
 ## Alle Signale
 
