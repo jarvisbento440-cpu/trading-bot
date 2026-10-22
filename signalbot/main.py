@@ -137,6 +137,8 @@ def main() -> None:
             sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
             sync_extra(cfg, ex, db)
             scan(cfg, ex, db, notifier)
+            from .paper import update as paper_update
+            paper_update(cfg, db)
         except Exception:
             log.exception("Fehler im Durchlauf, nächster Versuch beim nächsten Intervall")
         time.sleep(cfg.poll_minutes * 60)

@@ -65,6 +65,8 @@ pip install pytest && python -m pytest
 
 ## Strategien und Backtest
 
+**Papier-Test:** Button „📝 Papier-Test“. Jedes Signal wird automatisch als virtueller Trade mitgeschrieben (Einstieg zur nächsten Kerze, Stop, Ziel, Ergebnis in R nach Gebühren) und ausgewertet, solange das Programm läuft. Filter „nur mit Trendampel“ und „nur eingeschaltete Strategien“, Umrechnung in Euro über Kapital und Risiko pro Trade. Es wird nichts wirklich gehandelt.
+
 **Eigene Märkte:** Kachel „＋ Markt hinzufügen“ mit Suchfeld. Krypto kommt von der Börse (alle Paare), Aktien, Indizes (S&P 500, DAX …), Rohstoffe (Gold, Silber, Öl) und Devisen kostenlos von Yahoo Finance. ✕ oben rechts entfernt die Kachel. Im Vollbild lassen sich die Strategien oben direkt ein- und ausschalten.
 
 **Börsenzeiten:** oben eine Uhr, welche Börse gerade offen ist (Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New York), in deiner Ortszeit mit automatischer Sommer-/Winterzeit. In den 1h- und 4h-Charts zeigen farbige Streifen, wann welche Börse offen war (Schalter „Börsenzeiten“).

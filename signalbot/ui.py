@@ -22,7 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import heatmap, markets, regime
+from . import heatmap, markets, paper, regime
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ class Worker(threading.Thread):
                 sync_all(ex, db, self.cfg.symbols, self.cfg.store_timeframes, self.cfg.backfill_days)
                 markets.sync_extra(self.cfg, ex, db)
                 scan(self.cfg, ex, db, notifier)
+                paper.update(self.cfg, db)
                 first = False
                 self.error = None
                 self.last_update = time.time()
@@ -220,6 +221,26 @@ class Api:
         markets.remove(self.cfg, symbol)
         return True
 
+    def paper(self) -> dict:
+        db = self._db()
+        paper.update(self.cfg, db)  # auch im Offline-Modus mit vorhandenen Kerzen weiterrechnen
+        ts = paper.trades(db)
+        out = {"all": paper.stats(ts), "light": paper.stats([t for t in ts if t["follows_light"]]),
+               "by_strategy": {}, "trades": ts[:2000], "since": min((t["bar_ts"] for t in ts), default=None)}
+        for st in STRATEGIES:
+            mine = [t for t in ts if t["strategy"] == st.key]
+            out["by_strategy"][st.key] = {"name": st.name, "all": paper.stats(mine),
+                                          "light": paper.stats([t for t in mine if t["follows_light"]])}
+        # Kurve in R über die Zeit (abgeschlossene Trades)
+        def curve(sel):
+            eq, pts = 0.0, []
+            for t in sorted((t for t in sel if t["status"] in ("win", "loss", "timeout")), key=lambda t: t["exit_ts"]):
+                eq += t["r"]
+                pts.append([t["exit_ts"], eq])
+            return pts
+        out["curve"] = {"all": curve(ts), "light": curve([t for t in ts if t["follows_light"]])}
+        return out
+
     def backtest_result(self) -> dict | None:
         r = backtest.latest_result(self.cfg)
         if r:
@@ -344,6 +365,8 @@ def make_handler(api: Api):
                     return self._json({"ok": api.watch_add(q.get("symbol", ""), q.get("name", ""), q.get("type", ""))})
                 if url.path == "/api/watch/remove":
                     return self._json({"ok": api.watch_remove(q.get("symbol", ""))})
+                if url.path == "/api/paper":
+                    return self._json(api.paper())
                 if url.path == "/api/heatmap":
                     return self._json(api.heatmap(q.get("symbol", ""), q.get("range", "3d")))
                 if url.path == "/api/chart":

@@ -811,6 +811,90 @@
     }));
   }
 
+
+  // ---------- Papier-Test ----------
+  const paperOpt = Object.assign({ light: false, enabledOnly: true, capital: 1000, risk: 1 }, store.get("paperOpt", {}));
+  function paperStats(ts) {
+    const closed = ts.filter((t) => ["win", "loss", "timeout"].includes(t.status)).sort((a, b) => a.exit_ts - b.exit_ts);
+    const open = ts.filter((t) => t.status === "open");
+    let eq = 0, peak = 0, dd = 0;
+    const curve = closed.map((t) => { eq += t.r; peak = Math.max(peak, eq); dd = Math.max(dd, peak - eq); return [t.exit_ts, eq]; });
+    const wins = closed.filter((t) => t.status === "win").length;
+    return { n: closed.length, wins, winrate: closed.length ? wins / closed.length : null, total: eq,
+      avg: closed.length ? eq / closed.length : null, dd, open: open.length, openR: open.reduce((s, t) => s + (t.r || 0), 0), curve };
+  }
+  function curveSvg(curve) {
+    if (curve.length < 2) return "";
+    const W = 640, H = 120, xs = curve.map((p) => p[0]), ys = [0, ...curve.map((p) => p[1])];
+    const x0 = xs[0], x1 = xs[xs.length - 1] || x0 + 1, y0 = Math.min(...ys), y1 = Math.max(...ys) || 1;
+    const X = (x) => ((x - x0) / Math.max(1, x1 - x0)) * (W - 10) + 5, Y = (y) => H - 8 - ((y - y0) / Math.max(1e-9, y1 - y0)) * (H - 16);
+    const d = curve.map((p, i) => `${i ? "L" : "M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join("");
+    const last = curve[curve.length - 1][1];
+    return `<svg class="paper-curve" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Verlauf in R">
+      <line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--border)" stroke-dasharray="4 4"/>
+      <path d="${d}" fill="none" stroke="${last >= 0 ? "var(--up)" : "var(--down)"}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+  async function openPaper() {
+    const box = $("#paper"); box.classList.remove("hidden");
+    const body = $("#paper-body");
+    let r;
+    try { r = await getJSON("/api/paper"); } catch (e) { body.innerHTML = '<p class="muted">Konnte den Papier-Test nicht laden.</p>'; return; }
+    const draw = () => {
+      let ts = r.trades.filter((t) => t.status !== "skipped" && t.status !== "waiting");
+      if (paperOpt.enabledOnly) ts = ts.filter((t) => stratEnabled(t.strategy));
+      if (paperOpt.light) ts = ts.filter((t) => t.follows_light);
+      const s = paperStats(ts);
+      const eur = (R) => (R * paperOpt.capital * paperOpt.risk / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
+      const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
+      const since = r.since ? new Date(r.since).toLocaleDateString("de-DE") : null;
+      let html = `<div class="paper-opts">
+        <label><input type="checkbox" id="po-light" ${paperOpt.light ? "checked" : ""}> Nur Trades, für die die Trendampel sprach</label>
+        <label><input type="checkbox" id="po-en" ${paperOpt.enabledOnly ? "checked" : ""}> Nur eingeschaltete Strategien</label>
+        <label>Kapital <input type="number" id="po-cap" min="0" step="100" value="${paperOpt.capital}"> €</label>
+        <label>Risiko pro Trade <input type="number" id="po-risk" min="0.1" max="10" step="0.1" value="${paperOpt.risk}"> %</label></div>`;
+      if (!r.trades.length) {
+        html += `<p>Noch keine Signale aufgezeichnet. Ab jetzt wird jedes neue Signal automatisch als virtueller Trade mitgeschrieben, solange das Programm läuft. Nichts wird wirklich gekauft.</p>`;
+        body.innerHTML = html; bindPaper(draw); return;
+      }
+      html += `<p class="muted">Aufgezeichnet seit ${since}. Gleiche Regeln wie im Backtest: Einstieg zur nächsten Kerze, Stop vor Ziel, 0,1 % Gebühr pro Seite. Nichts wird wirklich gehandelt.</p>
+        <div class="paper-kpis">
+          <div><span class="muted">Abgeschlossen</span><b>${s.n}</b></div>
+          <div><span class="muted">Trefferquote</span><b>${s.winrate == null ? "–" : pctDe(s.winrate)}</b></div>
+          <div><span class="muted">Ergebnis</span><b class="${cls(s.total)}">${rDe(s.total)}</b><span class="${cls(s.total)}">${eur(s.total)}</span></div>
+          <div><span class="muted">Ø pro Trade</span><b class="${cls(s.avg)}">${s.avg == null ? "–" : rDe(s.avg)}</b></div>
+          <div><span class="muted">Größter Rückgang</span><b>${s.n ? "−" + s.dd.toFixed(1).replace(".", ",") + " R" : "–"}</b><span>${s.n ? eur(-s.dd) : ""}</span></div>
+          <div><span class="muted">Offen</span><b>${s.open}</b><span class="${cls(s.openR)}">${s.open ? rDe(s.openR) : ""}</span></div>
+        </div>${curveSvg(s.curve)}
+        <h3>Je Strategie</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th><th>Trades</th><th>Trefferquote</th><th>Ergebnis</th><th>Ø pro Trade</th><th>Offen</th></tr></thead><tbody>` +
+        state.strategies.map((st) => {
+          const m = paperStats(ts.filter((t) => t.strategy === st.key));
+          if (!m.n && !m.open) return "";
+          return `<tr><td><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td><td>${m.n}</td><td>${m.winrate == null ? "–" : pctDe(m.winrate)}</td>
+            <td class="${cls(m.total)}">${rDe(m.total)}</td><td class="${cls(m.avg)}">${m.avg == null ? "–" : rDe(m.avg)}</td><td>${m.open}</td></tr>`;
+        }).join("") + `</tbody></table></div>
+        <h3>Trades</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Signal</th><th class="l">Markt</th><th class="l">Strategie</th><th>Richtung</th><th>Ampel</th><th>Einstieg</th><th>Stop</th><th>Ziel</th><th>Status</th><th>Ergebnis</th></tr></thead><tbody>` +
+        ts.slice(0, 200).map((t) => {
+          const st = stratInfo(t.strategy);
+          const status = { open: "offen", win: "Ziel erreicht", loss: "Stop", timeout: "Zeit abgelaufen" }[t.status] || t.status;
+          const when = new Date(t.bar_ts).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+          return `<tr><td>${when} · ${t.timeframe}</td><td class="l">${coinName(t.symbol)}</td><td class="l"><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td>
+            <td class="${t.side === "long" ? "up" : "down"}">${sideDe(t.side)}</td><td>${t.light == null ? "–" : t.follows_light ? "✓" : "✗"}</td>
+            <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.target1)}</td><td>${status}</td>
+            <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td></tr>`;
+        }).join("") + `</tbody></table></div>
+        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>`;
+      body.innerHTML = html; bindPaper(draw);
+    };
+    draw();
+  }
+  function bindPaper(draw) {
+    const save = () => { store.set("paperOpt", paperOpt); draw(); };
+    $("#po-light").addEventListener("change", (e) => { paperOpt.light = e.target.checked; save(); });
+    $("#po-en").addEventListener("change", (e) => { paperOpt.enabledOnly = e.target.checked; save(); });
+    $("#po-cap").addEventListener("change", (e) => { paperOpt.capital = Math.max(0, +e.target.value || 0); save(); });
+    $("#po-risk").addEventListener("change", (e) => { paperOpt.risk = Math.min(10, Math.max(0.1, +e.target.value || 1)); save(); });
+  }
+
   // ---------- Backtest-Ansicht ----------
   async function openBacktest() {
     const box = $("#backtest");
@@ -938,13 +1022,16 @@
 
   $("#focus-close").addEventListener("click", closeFocus);
   $("#bt-open").addEventListener("click", openBacktest);
+  $("#paper-open").addEventListener("click", openPaper);
+  $("#paper-close").addEventListener("click", () => $("#paper").classList.add("hidden"));
   $("#bt-close").addEventListener("click", () => $("#backtest").classList.add("hidden"));
   $("#bt-run").addEventListener("click", runBacktest);
   $("#strat-btn").addEventListener("click", (e) => { e.stopPropagation(); $("#strat-panel").classList.toggle("hidden"); });
   document.addEventListener("click", (e) => { if (!e.target.closest("#strat-panel") && !e.target.closest("#strat-btn")) $("#strat-panel").classList.add("hidden"); });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
+    if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
+    else if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
     else if (state.focus) closeFocus();
   });
   document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && state.focus) closeFocus(); });
