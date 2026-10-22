@@ -76,3 +76,24 @@ Neu getestet wurden die vier am besten belegten Kandidaten aus der Recherche. Er
 Neue Zahlen: `scripts/research3.py`, `results/research3_results.json` (Fokus-5 und alle 10 Coins, 0,1 % und 0,25 % Gebühr).
 
 Fazit: Die Liste beschreibt die üblichen Lehrbuch-Ansätze. Getestet auf fünf Jahren Krypto-Tagesdaten hält keiner davon besser als die einfache Trendampel. Verlustfrei ist keiner.
+
+## Nachtrag 2: Smart-Money-Bausteine (Order Blocks, Fair Value Gaps)
+
+Feste Regeln, nur Long, Fokus-5, Tageskerzen und 4h-Kerzen (`scripts/research4.py`, `results/research4_results.json`):
+
+- **Fair Value Gap:** Tief einer Kerze liegt über dem Hoch der vorletzten Kerze → Lücke. Kauf, wenn der Kurs später in die Lücke zurückkommt und nicht darunter schließt.
+- **Order Block:** Schluss über dem 10-Kerzen-Hoch (Strukturbruch); die letzte rote Kerze davor ist der Order Block. Kauf beim Rücklauf in diese Zone.
+- Stopp: Schluss unter der Zone. Ziel 2 R (eine Variante 3 R), spätestens nach 30 Tages- bzw. 90 4h-Kerzen raus. Varianten mit Trendfilter (nur über dem 50-Tage-Schnitt).
+
+| Regel (0,1 % Gebühr) | Tag: Entwicklung / Prüfjahr | 4h: Entwicklung / Prüfjahr | Trades pro Coin/Jahr (Tag / 4h) |
+|---|---|---|---|
+| FVG | −8 % / −27 % | +17 % / −36 % | 19 / 103 |
+| FVG + Trendfilter | −3 % / −9 % | +17 % / −7 % | 12 / 52 |
+| Order Block | −8 % / −6 % | +2 % / −23 % | 10 / 62 |
+| Order Block + Trendfilter | −3 % / −4 % | +13 % / −12 % | 7 / 33 |
+| Order Block + Trend, Ziel 3 R | −2 % / −2 % | +9 % / −12 % | 6 / 28 |
+| Zum Vergleich: Trendampel | +26 % / +13 % | | ~23 Wechsel |
+
+Bei 0,25 % Gebühr wird alles noch deutlich schlechter (4h-FVG im Prüfjahr −52 %).
+
+Fazit: Als feste Regeln verlieren Order Blocks und Fair Value Gaps im Prüfjahr in **jeder** Variante. Auf 4h sahen sie in den Bullenjahren gut aus, aber nur, weil der Markt damals ohnehin stieg; ohne Rückenwind bleiben die Gebühren und Fehlsignale übrig. Nicht ins Programm übernehmen.
