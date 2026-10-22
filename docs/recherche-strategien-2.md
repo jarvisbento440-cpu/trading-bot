@@ -59,3 +59,20 @@ Neu getestet wurden die vier am besten belegten Kandidaten aus der Recherche. Er
    - Vorschlag: als **zusätzliches Hinweis-Signal** im Programm anzeigen und ein paar Monate mitschreiben, bevor echtes Geld daran hängt. Die 20-Tage-Variante ist ruhiger (weniger Wechsel, kleinerer Rückgang).
 3. **Donchian-Ensemble, Niedrig-Volatilität, Kalender, On-Chain-Schwellen:** kein Vorteil bei uns bzw. zu dünn belegt.
 4. **Verluste ganz vermeiden geht nicht.** Was realistisch ist: Abstürze begrenzen (Trendampel: −18 % statt −59 % im Prüfjahr), kleine Positionen, günstige Börse, und keinen Hebel.
+
+## Nachtrag: Jengs Liste der „bewährten Ansätze“ (22.10.2026)
+
+| Ansatz | Schon getestet als | Ergebnis |
+|---|---|---|
+| Trendfolge mit gleitenden Durchschnitten | SMA-Filter 20–200, EMA-Kreuze, Trendampel | Nur SMA50-Trendampel hält. |
+| Golden Cross 50/200 | EMA 50/200 (Runde 1), **SMA 50/200 neu** | Durchgefallen (Prüfjahr −7 bis −10 %), nur ~2 Wechsel/Jahr, kommt zu spät. |
+| Breakout | Donchian 20/30/50/55 Tage, Donchian-Ensemble, Bollinger-Squeeze | Kein Vorteil nach Gebühren. |
+| Breakout mit Retest (Pullback) | **neu** (20 und 50 Tage) | In der Entwicklung gut (+23 %), im Prüfjahr −2 bis −7 %. Durchgefallen. |
+| Pullback im Trend | RSI-Rücksetzer, Fib Golden Pocket, Dip-Kauf | Knapp ±0 nach Gebühren. |
+| Price Action / Smart Money / Liquidität | Liquiditäts-Sweep, Liquiditätszonen | Sweep war die schlechteste Strategie (−0,32 R pro Trade). |
+| Range-Trading | **neu** (unteres Fünftel der 20/30-Tage-Spanne kaufen, oberes verkaufen, nur bei ADX < 20/25) | Entwicklung −2 bis −7 %/Jahr, Prüfjahr +4 bis +12 %. Funktioniert nur, wenn der Markt wirklich seitwärts läuft; die Entwicklungsjahre waren trendig. Nicht verlässlich. |
+| Momentum | Momentum-Rotation, Zeitreihen-Momentum 14–90 Tage, MAX | Rotation durchgefallen; MAX (20-Tage-Hoch, 1 Tag) einziger wackeliger Kandidat. |
+
+Neue Zahlen: `scripts/research3.py`, `results/research3_results.json` (Fokus-5 und alle 10 Coins, 0,1 % und 0,25 % Gebühr).
+
+Fazit: Die Liste beschreibt die üblichen Lehrbuch-Ansätze. Getestet auf fünf Jahren Krypto-Tagesdaten hält keiner davon besser als die einfache Trendampel. Verlustfrei ist keiner.
