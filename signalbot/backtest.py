@@ -80,7 +80,8 @@ def simulate(d: pd.DataFrame, sig: Signal, max_bars: int) -> dict | None:
                     break
             return dict(result="win", r=reward / risk - fee_r, bars=j - sig.i, exit_i=j, t2=hit_t2)
     if j0 + max_bars > n:
-        return dict(result="open", r=0.0, bars=n - 1 - sig.i, exit_i=n - 1)
+        move = (c[n - 1] - entry) if long else (entry - c[n - 1])  # Stand jetzt, noch nicht abgeschlossen
+        return dict(result="open", r=0.0, r_open=move / risk - fee_r, bars=n - 1 - sig.i, exit_i=n - 1)
     j = j0 + max_bars - 1
     move = (c[j] - entry) if long else (entry - c[j])
     return dict(result="timeout", r=move / risk - fee_r, bars=j - sig.i, exit_i=j)

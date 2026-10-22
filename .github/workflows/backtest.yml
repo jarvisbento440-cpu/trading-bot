@@ -6,6 +6,9 @@ on:
       days:
         description: "Zeitraum in Tagen"
         default: "365"
+      out:
+        description: "Ordner für das Ergebnis"
+        default: "results"
 
 permissions:
   contents: write
@@ -21,12 +24,12 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       # GitHub-Server stehen in den USA, dort ist Binance gesperrt -> Coinbase (USD-Paare)
-      - run: python -m signalbot backtest --days "${{ inputs.days }}" --exchange coinbaseexchange --quote USD --out results
+      - run: python -m signalbot backtest --days "${{ inputs.days }}" --exchange coinbaseexchange --quote USD --out "${{ inputs.out }}"
       - name: Ergebnis speichern
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add results/
+          git add "${{ inputs.out }}"
           git commit -m "Backtest-Ergebnis ${{ inputs.days }} Tage" || exit 0
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
