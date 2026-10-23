@@ -14,7 +14,8 @@ def fmt_price(p: float) -> str:
     return f"{p:,.{digits}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None) -> str:
+def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None,
+                  ai: dict | None = None) -> str:
     icon = "🟢" if s.side == "long" else "🔴"
     rr = abs(s.target1 - s.entry) / abs(s.entry - s.stop)
     if hist and hist.get("trades"):
@@ -30,12 +31,20 @@ def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Mo
         f"Chance/Risiko (Ziel 1): 1 : {rr:.1f}".replace(".", ","),
         *([f"Setup-Score: {s.score}/100"] if getattr(s, "score", 0) else []),
         quote,
+        *([_ai_line(ai)] if ai else []),
         "Gründe:",
         *[f"• {r}" for r in s.reasons],
         "",
         DISCLAIMER,
     ]
     return "\n".join(lines)
+
+
+def _ai_line(ai: dict) -> str:
+    from .learn import why_text
+    head = (f"Lernmodell: {ai['p_win'] * 100:.0f} % Trefferchance, erwartet {ai['exp_r']:+.2f} R").replace(".", ",")
+    why = why_text(ai.get("why", []))
+    return head + (f" ({why})" if why else "")
 
 
 class Notifier:

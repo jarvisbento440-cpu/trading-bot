@@ -31,6 +31,7 @@ class Config:
     strategies: list[str] = field(default_factory=lambda: [
         "score", "donchian", "supertrend", "macd", "rsi", "squeeze", "fib", "sweep"])
     trend_light: bool = True  # Trendampel (Tages-Trendfilter) anzeigen und melden
+    learn_filter: bool = True  # Lernmodell: schwache Signale nicht per Telegram melden (Papier-Test zeichnet sie trotzdem auf)
     telegram_token: str = ""
     telegram_chat_id: str = ""
 

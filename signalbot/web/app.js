@@ -534,7 +534,14 @@
     return !st || !st.stats || st.stats.avg_r >= -0.03;
   };
   const pctDe = (x) => x == null ? "–" : Math.round(x * 100) + " %";
-  const rDe = (x) => x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
+  const rDe = (x) => x == null ? "–" : Math.abs(x) < 0.005 ? "±0,00 R" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
+  const whyHtml = (why) => (why || []).map((w) => `<span class="${w.effect > 0 ? "up" : "down"}">${w.effect > 0 ? "▲" : "▼"} ${w.name}</span>`).join(" · ");
+  function aiHtml(ai) {
+    if (!ai) return "";
+    return `<div class="ai-line"><span class="badge ${ai.take ? "up" : "down"}">🧠 ${ai.take ? "Lernfilter: durch" : "Lernfilter: schwach"}</span>
+      ${pctDe(ai.p_win)} Trefferchance · erwartet <span class="${ai.exp_r >= 0 ? "up" : "down"}">${rDe(ai.exp_r)}</span>
+      ${ai.why && ai.why.length ? `<div class="muted small">${whyHtml(ai.why)}</div>` : ""}</div>`;
+  }
 
   // ---------- Chart ----------
   function buildChart(el, big) {
@@ -947,6 +954,7 @@
       html += `<div class="sig-card" style="border-left-color:${st.color}">
         <div class="row"><span class="badge sig-${a.side}">${sideDe(a.side)}</span><strong style="color:${st.color}">${st.name}</strong></div>
         <div class="muted">${hist}</div>
+        ${aiHtml(a.ai)}
         ${idx === 0 ? `<table>${row("Einstieg", fmt(a.entry))}${row("Stop", fmt(a.stop), "down")}${row("Ziel 1", fmt(a.target1), "up")}
         ${row("Ziel 2", fmt(a.target2), "up")}${row("Chance/Risiko", "1 : " + rr.toFixed(1).replace(".", ","))}</table>` :
         `<div class="muted">Einstieg ${fmt(a.entry)} · Stop ${fmt(a.stop)} · Ziel ${fmt(a.target1)}</div>`}
@@ -1051,7 +1059,7 @@
 
 
   // ---------- Papier-Test ----------
-  const paperOpt = Object.assign({ light: false, enabledOnly: true, capital: 1000, risk: 1 }, store.get("paperOpt", {}));
+  const paperOpt = Object.assign({ light: false, enabledOnly: true, ai: false, capital: 1000, risk: 1 }, store.get("paperOpt", {}));
   function paperStats(ts) {
     const closed = ts.filter((t) => ["win", "loss", "timeout"].includes(t.status)).sort((a, b) => a.exit_ts - b.exit_ts);
     const open = ts.filter((t) => t.status === "open");
@@ -1081,6 +1089,8 @@
       let ts = r.trades.filter((t) => t.status !== "skipped" && t.status !== "waiting");
       if (paperOpt.enabledOnly) ts = ts.filter((t) => stratEnabled(t.strategy));
       if (paperOpt.light) ts = ts.filter((t) => t.follows_light);
+      const all = ts;
+      if (paperOpt.ai) ts = ts.filter((t) => t.take === true);
       const s = paperStats(ts);
       const eur = (R) => (R * paperOpt.capital * paperOpt.risk / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
       const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
@@ -1088,6 +1098,7 @@
       let html = `<div class="paper-opts">
         <label><input type="checkbox" id="po-light" ${paperOpt.light ? "checked" : ""}> Nur Trades, für die die Trendampel sprach</label>
         <label><input type="checkbox" id="po-en" ${paperOpt.enabledOnly ? "checked" : ""}> Nur eingeschaltete Strategien</label>
+        <label><input type="checkbox" id="po-ai" ${paperOpt.ai ? "checked" : ""}> Nur Signale, die der Lernfilter durchlässt</label>
         <label>Kapital <input type="number" id="po-cap" min="0" step="100" value="${paperOpt.capital}"> €</label>
         <label>Risiko pro Trade <input type="number" id="po-risk" min="0.1" max="10" step="0.1" value="${paperOpt.risk}"> %</label></div>`;
       if (!r.trades.length) {
@@ -1103,6 +1114,7 @@
           <div><span class="muted">Größter Rückgang</span><b>${s.n ? "−" + s.dd.toFixed(1).replace(".", ",") + " R" : "–"}</b><span>${s.n ? eur(-s.dd) : ""}</span></div>
           <div><span class="muted">Offen</span><b>${s.open}</b><span class="${cls(s.openR)}">${s.open ? rDe(s.openR) : ""}</span></div>
         </div>${curveSvg(s.curve)}
+        ${learnHtml(r.learn, all)}
         <h3>Je Strategie</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th><th>Trades</th><th>Trefferquote</th><th>Ergebnis</th><th>Ø pro Trade</th><th>Offen</th></tr></thead><tbody>` +
         state.strategies.map((st) => {
           const m = paperStats(ts.filter((t) => t.strategy === st.key));
@@ -1110,7 +1122,7 @@
           return `<tr><td><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td><td>${m.n}</td><td>${m.winrate == null ? "–" : pctDe(m.winrate)}</td>
             <td class="${cls(m.total)}">${rDe(m.total)}</td><td class="${cls(m.avg)}">${m.avg == null ? "–" : rDe(m.avg)}</td><td>${m.open}</td></tr>`;
         }).join("") + `</tbody></table></div>
-        <h3>Trades</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Signal</th><th class="l">Markt</th><th class="l">Strategie</th><th>Richtung</th><th>Ampel</th><th>Einstieg</th><th>Stop</th><th>Ziel</th><th>Status</th><th>Ergebnis</th></tr></thead><tbody>` +
+        <h3>Trades</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Signal</th><th class="l">Markt</th><th class="l">Strategie</th><th>Richtung</th><th>Ampel</th><th>Einstieg</th><th>Stop</th><th>Ziel</th><th>Status</th><th>Ergebnis</th><th>Lernmodell</th><th class="l">Was dafür (▲) / dagegen (▼) sprach</th></tr></thead><tbody>` +
         ts.slice(0, 200).map((t) => {
           const st = stratInfo(t.strategy);
           const status = { open: "offen", win: "Ziel erreicht", loss: "Stop", timeout: "Zeit abgelaufen" }[t.status] || t.status;
@@ -1118,15 +1130,35 @@
           return `<tr><td>${when} · ${t.timeframe}</td><td class="l">${coinName(t.symbol)}</td><td class="l"><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td>
             <td class="${t.side === "long" ? "up" : "down"}">${sideDe(t.side)}</td><td>${t.light == null ? "–" : t.follows_light ? "✓" : "✗"}</td>
             <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.target1)}</td><td>${status}</td>
-            <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td></tr>`;
+            <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td>
+            <td>${t.p_win == null ? "–" : `<span class="${t.take ? "up" : "down"}">${t.take ? "✓" : "✗"}</span> ${pctDe(t.p_win)}`}</td>
+            <td class="l small">${whyHtml(t.why)}</td></tr>`;
         }).join("") + `</tbody></table></div>
-        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>`;
+        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Lernmodell ✓ = Filter hätte das Signal gemeldet, ✗ = als schwach aussortiert; die Prozentzahl ist die geschätzte Trefferchance. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>`;
       body.innerHTML = html; bindPaper(draw);
     };
     draw();
   }
+  function learnHtml(L, ts) {
+    if (!L || !L.model || !L.model.trained_on) return "";
+    const known = ts.filter((t) => t.take != null);
+    const a = paperStats(known.filter((t) => t.take)), b = paperStats(known.filter((t) => !t.take));
+    const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
+    const R = L.research;
+    const res = R ? `<p class="muted">Geprüft an ${R.trades.toLocaleString("de-DE")} vergangenen Signalen (2021–2026, jeden Monat nur mit älteren Trades neu trainiert).
+      Im Prüfjahr: alle Signale Ø ${rDe(R.pruefjahr.alle.avg_r)}, durchgelassene Ø ${rDe(R.pruefjahr.genommen.avg_r)}, aussortierte Ø ${rDe(R.pruefjahr.aussortiert.avg_r)}
+      ${R.monate_besser ? `(in ${R.monate_besser.replace("/", " von ")} Monaten besser)` : ""}. Der Filter vermeidet also viele Verlierer, macht die Strategien aber noch nicht profitabel.</p>` : "";
+    return `<h3>🧠 Lernmodell</h3>
+      <p class="muted">Schätzt für jedes Signal die Trefferchance aus Merkmalen wie Trendampel, Schwankung, RSI, Abstand zu den Durchschnitten und wie die Strategie zuletzt lief.
+      ${L.filter ? "Signale mit erwartetem Ergebnis unter 0 R werden nicht per Telegram gemeldet, aber hier weiter mitgeschrieben." : "Filter ausgeschaltet (config.yaml: learn_filter), alle Signale werden gemeldet."}</p>
+      <div class="table-wrap"><table class="bt"><thead><tr><th class="l">Hier im Papier-Test</th><th>Trades</th><th>Trefferquote</th><th>Ø pro Trade</th><th>Summe</th></tr></thead><tbody>
+      <tr><td class="l">Vom Filter durchgelassen</td><td>${a.n}</td><td>${a.winrate == null ? "–" : pctDe(a.winrate)}</td><td class="${cls(a.avg)}">${a.avg == null ? "–" : rDe(a.avg)}</td><td class="${cls(a.total)}">${rDe(a.total)}</td></tr>
+      <tr><td class="l">Als schwach aussortiert</td><td>${b.n}</td><td>${b.winrate == null ? "–" : pctDe(b.winrate)}</td><td class="${cls(b.avg)}">${b.avg == null ? "–" : rDe(b.avg)}</td><td class="${cls(b.total)}">${rDe(b.total)}</td></tr>
+      </tbody></table></div>${res}`;
+  }
   function bindPaper(draw) {
     const save = () => { store.set("paperOpt", paperOpt); draw(); };
+    $("#po-ai").addEventListener("change", (e) => { paperOpt.ai = e.target.checked; save(); });
     $("#po-light").addEventListener("change", (e) => { paperOpt.light = e.target.checked; save(); });
     $("#po-en").addEventListener("change", (e) => { paperOpt.enabledOnly = e.target.checked; save(); });
     $("#po-cap").addEventListener("change", (e) => { paperOpt.capital = Math.max(0, +e.target.value || 0); save(); });

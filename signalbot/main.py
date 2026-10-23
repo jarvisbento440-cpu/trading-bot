@@ -24,6 +24,7 @@ def closed_candles(df, tf_ms: int, now_ms: int):
 
 def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     """Prüft alle Strategien auf der letzten abgeschlossenen Kerze und verschickt neue Signale."""
+    from . import learn
     from .backtest import latest_result, stats_for
     from .strategies import BY_KEY, prepare, signals_at
 
@@ -33,6 +34,8 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     from .markets import all_symbols
     from .yahoo import EXCHANGE as YAHOO, is_yahoo
 
+    btc = learn.btc_symbol(cfg.symbols)
+    btc_daily = db.candles(ex.id, btc, "1d", 400).drop(columns=["time"]) if btc else None
     for symbol in all_symbols(cfg):
         src = YAHOO if is_yahoo(symbol) else ex.id
         daily = db.candles(src, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
@@ -45,6 +48,8 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                 continue
             d = prepare(df.reset_index(drop=True))
             trend = trend_series(daily, ex.parse_timeframe(cfg.trend_timeframe) * 1000, d["ts"]).iloc[-1]
+            judge = learn.Assessor(db, d, daily if cfg.trend_timeframe == "1d" else None,
+                                   None if is_yahoo(symbol) else btc_daily, symbol, tf, tf_ms)
             for sig in signals_at(d, len(d) - 1, trend, [k for k in cfg.strategies if k in BY_KEY], cfg.min_score):
                 log.info("%s %s: %s %s", symbol, tf, sig.strategy, sig.side)
                 last = db.last_signal_bar(symbol, tf, sig.side, sig.strategy)
@@ -57,8 +62,15 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                     "reasons": "; ".join(sig.reasons),
                 })
                 if is_new:
+                    ai = judge(sig)
+                    if ai:
+                        learn.store(db, db.signal_id(sig.strategy, symbol, tf, sig.bar_ts, sig.side), ai)
+                        if cfg.learn_filter and not ai["take"]:
+                            log.info("%s %s %s: vom Lernmodell aussortiert (%.0f %%, %+.2f R)",
+                                     symbol, tf, sig.strategy, ai["p_win"] * 100, ai["exp_r"])
+                            continue
                     hist = stats_for(bt, sig.strategy, tf, sig.score if sig.strategy == "score" else None)
-                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist))
+                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist, ai))
                     sent += 1
     return sent
 

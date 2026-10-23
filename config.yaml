@@ -29,6 +29,11 @@ min_score: 65
 # Trendampel: Tages-Trendfilter (50-Tage-Schnitt), meldet Wechsel per Telegram
 trend_light: true
 
+# Lernmodell (docs/lernen.md): schätzt für jedes Signal die Trefferchance aus ~45.000 vergangenen Signalen.
+# true = Signale mit erwartetem Ergebnis unter 0 R werden nicht per Telegram gemeldet
+# (sie erscheinen weiter im Chart und im Papier-Test, damit man sieht, ob der Filter recht hatte).
+learn_filter: true
+
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
 
 # Risiko-Management

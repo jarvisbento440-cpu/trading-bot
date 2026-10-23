@@ -146,3 +146,7 @@ table.bt th.l, table.bt td.l { text-align: left; }
 .draw-tools button span { font-size: 10px; color: var(--muted); }
 .draw-tools button:hover { border-color: var(--border); background: var(--panel-2); }
 .draw-tools button.active { border-color: var(--accent); background: rgba(79,156,249,.18); }
+.ai-line { margin: 4px 0; font-size: 12px; }
+.ai-line .badge { margin-right: 6px; }
+.small { font-size: 11px; }
+.bt td.small { white-space: normal; min-width: 240px; }

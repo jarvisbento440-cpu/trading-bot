@@ -22,7 +22,8 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import heatmap, markets, paper, regime
+from . import heatmap, learn, markets, paper, regime
+from .yahoo import is_yahoo
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -226,7 +227,14 @@ class Api:
         db = self._db()
         paper.update(self.cfg, db)  # auch im Offline-Modus mit vorhandenen Kerzen weiterrechnen
         ts = paper.trades(db)
+        for t in ts:  # Fehler-Analyse: was sprach laut Lernmodell dafür/dagegen?
+            if t["status"] in ("win", "loss", "timeout"):
+                t["why"] = learn.mistake_analysis(t)
+            t.pop("features", None)
         out = {"all": paper.stats(ts), "light": paper.stats([t for t in ts if t["follows_light"]]),
+               "learn": {"model": learn.model_info(), "take": paper.stats([t for t in ts if t["take"] is True]),
+                         "dropped": paper.stats([t for t in ts if t["take"] is False]),
+                         "filter": self.cfg.learn_filter, "research": _learn_research()},
                "by_strategy": {}, "trades": ts[:2000], "since": min((t["bar_ts"] for t in ts), default=None)}
         for st in STRATEGIES:
             mine = [t for t in ts if t["strategy"] == st.key]
@@ -322,6 +330,11 @@ class Api:
         first = int(d.index[d["ts"] >= view_from][0]) if len(dv) else len(d)
         setups = scan_history(d, trends, min_score=self.cfg.min_score, start=first)
         bt = backtest.latest_result(self.cfg)
+        btc = learn.btc_symbol(self.cfg.symbols)
+        btc_daily = None
+        if btc and not is_yahoo(symbol):
+            btc_daily = db.candles(markets.exchange_for(self.cfg, btc), btc, "1d", 400).drop(columns=["time"])
+        judge = learn.Assessor(db, d, daily if self.cfg.trend_timeframe == "1d" else None, btc_daily, symbol, tf, tf_ms)
         last_ts = int(d["ts"].iloc[-1]) if len(d) else 0
 
         def pack(s):
@@ -330,7 +343,11 @@ class Api:
                     "side": s.side, "score": s.score, "entry": s.entry, "stop": s.stop,
                     "target1": s.target1, "target2": s.target2, "reasons": s.reasons,
                     "winrate": st.get("winrate") if st else None, "trades": st.get("trades") if st else None,
-                    "avg_r": st.get("avg_r") if st else None}
+                    "avg_r": st.get("avg_r") if st else None, "ai": ai_pack(s)}
+
+        def ai_pack(s):
+            a = judge(s)
+            return a and {"p_win": a["p_win"], "exp_r": a["exp_r"], "take": a["take"], "why": a["why"]}
 
         # Aktuelle Signale: höchstens 6 Kerzen alt
         active = [pack(s) for s in setups if last_ts - s.bar_ts <= 6 * tf_ms]
@@ -361,6 +378,18 @@ class Api:
             "fib": fibonacci(df),
             "zones": liquidity_zones(df),
         }
+
+
+def _learn_research() -> dict | None:
+    """Kurzfassung der Lern-Forschung (scripts/learn_research.py) für die Anzeige."""
+    p = learn.MODEL_FILE.parent / "lern-ergebnis.json"
+    try:
+        r = json.loads(p.read_text(encoding="utf-8"))
+        run = r["runs"]["l2=3 schwelle=0"]
+        return {"trades": r["trades"], "pruefjahr": run["pruefjahr"], "pruefjahr_fokus": run["pruefjahr_fokus"],
+                "monate_besser": run.get("monate_besser")}
+    except (OSError, ValueError, KeyError):
+        return None
 
 
 def make_handler(api: Api):
