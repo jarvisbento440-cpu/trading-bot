@@ -302,6 +302,229 @@
     }
   }
 
+
+  // ---------- Eigene Zeichnungen: Long/Short-Position und Linien (wie TradingView) ----------
+  const drawings = {}; // symbol -> [ {id, type: long|short|hline, t0, t1, entry, stop, target, price} ]
+  const draw = { tool: null, sel: null, drag: null };
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  async function loadDrawings() {
+    try { Object.assign(drawings, await getJSON("/api/drawings")); } catch (e) { /* egal */ }
+  }
+  function saveDrawings(symbol) {
+    fetch(`/api/drawings?symbol=${encodeURIComponent(symbol)}`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(drawings[symbol] || []),
+    }).catch(() => {});
+  }
+  // Ergebnis einer Position: erste Kerze ab Einstieg, die Stop oder Ziel berührt (Stop zuerst geprüft)
+  function positionStatus(p, candles) {
+    const long = p.type === "long";
+    let reached = false;
+    for (const k of candles) {
+      if (k.time < p.t0) continue;
+      if (!reached) { // Einstieg muss erst erreicht werden
+        if (k.low <= p.entry && k.high >= p.entry) reached = true; else continue;
+      }
+      if (long ? k.low <= p.stop : k.high >= p.stop) return { state: "stop", time: k.time };
+      if (long ? k.high >= p.target : k.low <= p.target) return { state: "target", time: k.time };
+    }
+    return { state: reached ? "open" : "waiting" };
+  }
+  const pctOf = (a, b) => ((a / b - 1) * 100);
+  function positionText(p) {
+    const risk = Math.abs(p.entry - p.stop), reward = Math.abs(p.target - p.entry);
+    return { rr: risk ? reward / risk : 0, tp: pctOf(p.target, p.entry), sl: pctOf(p.stop, p.entry) };
+  }
+  function positionSize(p) {
+    const risk = Math.abs(p.entry - p.stop);
+    const money = paperOpt.capital * paperOpt.risk / 100;
+    if (!risk || !money) return null;
+    const qty = money / risk;
+    return { qty, value: qty * p.entry, money };
+  }
+
+  class DrawPrimitive {
+    constructor() {
+      this.items = []; this.times = []; this.candles = []; this.big = false; this.chart = null; this.series = null; this.req = null;
+      const self = this;
+      this.view = { zOrder: () => "top", renderer: () => ({ draw: (t) => self.draw(t) }) };
+    }
+    attached(p) { this.chart = p.chart; this.series = p.series; this.req = p.requestUpdate; }
+    detached() { this.chart = null; }
+    paneViews() { return [this.view]; }
+    updateAllViews() {}
+    set(candles, items, big) {
+      this.candles = candles; this.times = candles.map((k) => k.time); this.items = items || []; this.big = big;
+      if (this.req) this.req();
+    }
+    geom(it) {
+      const x = timeMapper(this.chart, this.times), y = (p) => this.series.priceToCoordinate(p);
+      if (it.type === "hline") return { y: y(it.price) };
+      return { x0: x(it.t0), x1: x(it.t1), yE: y(it.entry), yS: y(it.stop), yT: y(it.target) };
+    }
+    // Welcher Griff liegt unter der Maus? (Koordinaten relativ zum Chart)
+    hit(mx, my) {
+      if (!this.chart || this.times.length < 2) return null;
+      for (let i = this.items.length - 1; i >= 0; i--) {
+        const it = this.items[i], g = this.geom(it);
+        if (it.type === "hline") { if (g.y != null && Math.abs(my - g.y) <= 6) return { it, part: "price" }; continue; }
+        if (g.x0 == null || g.x1 == null) continue;
+        if (mx < g.x0 - 6 || mx > g.x1 + 6) continue;
+        if (Math.abs(my - g.yT) <= 6) return { it, part: "target" };
+        if (Math.abs(my - g.yS) <= 6) return { it, part: "stop" };
+        if (Math.abs(mx - g.x1) <= 6 && my >= Math.min(g.yT, g.yS) && my <= Math.max(g.yT, g.yS)) return { it, part: "end" };
+        if (my >= Math.min(g.yT, g.yS) && my <= Math.max(g.yT, g.yS)) return { it, part: "move" };
+      }
+      return null;
+    }
+    draw(target) {
+      if (!this.chart || !this.series || this.times.length < 2 || !this.items.length) return;
+      target.useBitmapCoordinateSpace(({ context: ctx, bitmapSize, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
+        const W = bitmapSize.width;
+        const label = (txt, x, y, color, bg, align = "left") => {
+          ctx.font = `${(this.big ? 11 : 9) * vr}px "Segoe UI", system-ui, sans-serif`;
+          const w = ctx.measureText(txt).width + 8 * hr, h = (this.big ? 16 : 13) * vr;
+          const lx = align === "right" ? x - w : x;
+          ctx.fillStyle = bg; ctx.fillRect(lx, y - h / 2, w, h);
+          ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.fillText(txt, lx + 4 * hr, y);
+        };
+        for (const it of this.items) {
+          const g = this.geom(it), selected = draw.sel === it.id;
+          if (it.type === "hline") {
+            if (g.y == null) continue;
+            const y = g.y * vr;
+            ctx.strokeStyle = it.color || "#f2b84b"; ctx.lineWidth = (selected ? 2 : 1.5) * hr;
+            ctx.setLineDash([6 * hr, 4 * hr]); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.setLineDash([]);
+            if (this.big) label(fmt(it.price), W - 4 * hr, y, "#0e1117", it.color || "#f2b84b", "right");
+            continue;
+          }
+          if (g.x0 == null || g.x1 == null || g.yE == null) continue;
+          const x0 = g.x0 * hr, x1 = g.x1 * hr, yE = g.yE * vr, yS = g.yS * vr, yT = g.yT * vr;
+          const st = positionStatus(it, this.candles);
+          const dim = st.state === "stop" || st.state === "target" ? 0.6 : 1;
+          ctx.fillStyle = `rgba(38,166,154,${0.22 * dim})`; ctx.fillRect(x0, Math.min(yE, yT), x1 - x0, Math.abs(yT - yE));
+          ctx.fillStyle = `rgba(239,83,80,${0.22 * dim})`; ctx.fillRect(x0, Math.min(yE, yS), x1 - x0, Math.abs(yS - yE));
+          ctx.lineWidth = (selected ? 2 : 1) * hr;
+          [[yT, "#26a69a"], [yS, "#ef5350"], [yE, "#e6edf3"]].forEach(([y, c]) => {
+            ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+          });
+          if (selected) { // Griffe
+            ctx.fillStyle = "#4f9cf9";
+            [[x0, yT], [x0, yS], [x1, yE]].forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 4 * hr, 0, 7); ctx.fill(); });
+          }
+          if (!this.big && !selected) continue;
+          const t = positionText(it);
+          const sgn = (v) => (v >= 0 ? "+" : "") + v.toFixed(2).replace(".", ",") + " %";
+          label(`Ziel ${fmt(it.target)} (${sgn(t.tp)})`, x0 + 2 * hr, yT + (yT < yE ? -9 : 9) * vr, "#fff", "rgba(38,166,154,.9)");
+          label(`Stop ${fmt(it.stop)} (${sgn(t.sl)})`, x0 + 2 * hr, yS + (yS > yE ? 9 : -9) * vr, "#fff", "rgba(239,83,80,.9)");
+          const status = { stop: " · Stop getroffen", target: " · Ziel erreicht", open: " · läuft", waiting: " · wartet auf Einstieg" }[st.state];
+          label(`${it.type === "long" ? "Long" : "Short"} ${fmt(it.entry)} · CRV 1:${t.rr.toFixed(1).replace(".", ",")}${status}`,
+            x0 + 2 * hr, yE + (it.type === "long" ? 9 : -9) * vr, "#0e1117", "rgba(230,237,243,.92)");
+        }
+      });
+    }
+  }
+
+  function setTool(t) {
+    draw.tool = draw.tool === t ? null : t;
+    document.querySelectorAll("#draw-tools [data-tool]").forEach((b) => b.classList.toggle("active", b.dataset.tool === draw.tool));
+    $("#focus-chart").style.cursor = draw.tool ? "crosshair" : "";
+  }
+  function focusItems() { return state.focus ? (drawings[state.focus.symbol] = drawings[state.focus.symbol] || []) : []; }
+  function redrawDrawings() {
+    if (state.focus) { const d = state.data.get(state.focus.symbol + "|" + state.tf); if (d) renderFocus(d); }
+    state.tiles.forEach((t, sym) => { const d = state.data.get(sym + "|" + state.tf); if (d) t.chart.draws.set(d.candles, drawings[sym], false); });
+  }
+  function deleteSelected() {
+    if (!state.focus || !draw.sel) return;
+    drawings[state.focus.symbol] = focusItems().filter((x) => x.id !== draw.sel);
+    draw.sel = null; saveDrawings(state.focus.symbol); redrawDrawings();
+  }
+
+  function setupDrawing(c, el) {
+    // Klick mit gewähltem Werkzeug: neue Zeichnung; ohne Werkzeug: auswählen
+    c.chart.subscribeClick((param) => {
+      if (!param.point || !state.focus) return;
+      const data = state.data.get(state.focus.symbol + "|" + state.tf);
+      if (!data || !data.candles.length) return;
+      if (!draw.tool) {
+        const h = c.draws.hit(param.point.x, param.point.y);
+        draw.sel = h ? h.it.id : null; redrawDrawings(); return;
+      }
+      const price = c.candles.coordinateToPrice(param.point.y);
+      if (price == null) return;
+      const k = data.candles, step = k[k.length - 1].time - k[k.length - 2].time;
+      const t0 = param.time != null ? param.time - TZ : k[k.length - 1].time;
+      const items = focusItems();
+      let it;
+      if (draw.tool === "hline") it = { id: uid(), type: "hline", price };
+      else {
+        // Stop-Abstand: 1,5 × durchschnittliche Kerzenspanne der letzten 14 Kerzen, Ziel = 2 × Risiko
+        const rec = k.slice(-14), atr = rec.reduce((s, x) => s + (x.high - x.low), 0) / rec.length;
+        const risk = 1.5 * atr, long = draw.tool === "long";
+        it = { id: uid(), type: draw.tool, t0, t1: t0 + 30 * step, entry: price,
+          stop: long ? price - risk : price + risk, target: long ? price + 2 * risk : price - 2 * risk };
+      }
+      items.push(it); draw.sel = it.id; setTool(null);
+      saveDrawings(state.focus.symbol); redrawDrawings();
+    });
+    // Ziehen mit der Maus
+    el.addEventListener("mousedown", (e) => {
+      if (draw.tool || e.button !== 0 || !state.focus) return;
+      const r = el.getBoundingClientRect(), h = c.draws.hit(e.clientX - r.left, e.clientY - r.top);
+      if (!h) return;
+      e.preventDefault(); e.stopPropagation();
+      draw.sel = h.it.id;
+      const t2x = timeMapper(c.chart, c.draws.times);
+      draw.drag = { ...h, y0: e.clientY - r.top, x0: e.clientX - r.left, orig: { ...h.it }, rect: r, t2x };
+      c.chart.applyOptions({ handleScroll: false, handleScale: false });
+      redrawDrawings();
+    }, true);
+    window.addEventListener("mousemove", (e) => {
+      const d = draw.drag;
+      if (!d) return;
+      const y = e.clientY - d.rect.top, x = e.clientX - d.rect.left;
+      const price = c.candles.coordinateToPrice(y), price0 = c.candles.coordinateToPrice(d.y0);
+      if (price == null || price0 == null) return;
+      const it = d.it, o = d.orig, dp = price - price0;
+      const T = c.draws.times, step = T[T.length - 1] - T[T.length - 2];
+      const ox0 = d.t2x(o.t0), pxPerSec = ox0 != null && d.t2x(o.t0 + step) != null ? (d.t2x(o.t0 + step) - ox0) / step : 0;
+      const dt = pxPerSec ? Math.round((x - d.x0) / pxPerSec / step) * step : 0;
+      if (d.part === "price") it.price = price;
+      else if (d.part === "target") it.target = price;
+      else if (d.part === "stop") it.stop = price;
+      else if (d.part === "end") it.t1 = Math.max(o.t0 + step, o.t1 + dt);
+      else if (d.part === "move") { it.entry = o.entry + dp; it.stop = o.stop + dp; it.target = o.target + dp; it.t0 = o.t0 + dt; it.t1 = o.t1 + dt; }
+      // Stop und Ziel müssen auf der richtigen Seite bleiben
+      if (it.type === "long") { it.stop = Math.min(it.stop, it.entry * 0.9999); it.target = Math.max(it.target, it.entry * 1.0001); }
+      if (it.type === "short") { it.stop = Math.max(it.stop, it.entry * 1.0001); it.target = Math.min(it.target, it.entry * 0.9999); }
+      c.draws.set(c.draws.candles, c.draws.items, true);
+    });
+    window.addEventListener("mouseup", () => {
+      if (!draw.drag) return;
+      draw.drag = null;
+      c.chart.applyOptions({ handleScroll: true, handleScale: true });
+      if (state.focus) saveDrawings(state.focus.symbol);
+      redrawDrawings();
+    });
+    // Mauszeiger über Griffen ändern
+    el.addEventListener("mousemove", (e) => {
+      if (draw.drag || draw.tool) return;
+      const r = el.getBoundingClientRect(), h = c.draws.hit(e.clientX - r.left, e.clientY - r.top);
+      el.style.cursor = !h ? "" : h.part === "move" ? "move" : h.part === "end" ? "ew-resize" : "ns-resize";
+    });
+    // Werkzeugleiste links im Chart
+    const bar = document.createElement("div");
+    bar.id = "draw-tools"; bar.className = "draw-tools";
+    bar.innerHTML = `<button data-tool="long" title="Long-Position einzeichnen (Klick in den Chart)">📈<span>Long</span></button>
+      <button data-tool="short" title="Short-Position einzeichnen (Klick in den Chart)">📉<span>Short</span></button>
+      <button data-tool="hline" title="Horizontale Linie (Klick in den Chart)">➖<span>Linie</span></button>
+      <button data-act="del" title="Ausgewählte Zeichnung löschen (Entf)">🗑<span>Löschen</span></button>`;
+    el.appendChild(bar);
+    bar.addEventListener("mousedown", (e) => e.stopPropagation());
+    bar.querySelectorAll("[data-tool]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); setTool(b.dataset.tool); }));
+    bar.querySelector("[data-act=del]").addEventListener("click", (e) => { e.stopPropagation(); deleteSelected(); });
+  }
+
   const stratInfo = (key) => key === "regime" ? { name: "Trendampel", short: "A", color: "#26a69a" }
     : state.strategies.find((x) => x.key === key) || { name: key, short: "?", color: "#8b949e" };
   // Ohne eigene Auswahl: nur Strategien, die im Backtest nicht klar verloren haben
@@ -340,6 +563,7 @@
       priceLines: [], big, fitted: false, zones: (() => { const z = new ZonesPrimitive(); candles.attachPrimitive(z); return z; })(),
       sessions: (() => { const z = new SessionsPrimitive(); candles.attachPrimitive(z); return z; })(),
       heat: (() => { const z = new HeatmapPrimitive(); candles.attachPrimitive(z); return z; })(),
+      draws: (() => { const z = new DrawPrimitive(); candles.attachPrimitive(z); return z; })(),
     };
   }
 
@@ -371,6 +595,7 @@
     c.sessions.set(data.candles.map((k) => k.time), L.sessions && data.tf !== "1d", c.big);
     const hm = state.heatmap !== "off" && data.heatmap && data.heatmap.range === state.heatmap ? data.heatmap : null;
     c.heat.set(data.candles.map((k) => k.time), hm);
+    c.draws.set(data.candles, drawings[data.symbol], c.big);
 
     // Signal-Pfeile, Farbe je Strategie
     const markers = L.signals ? data.setups.filter((s) => stratEnabled(s.strategy)).map((s) => {
@@ -654,7 +879,8 @@
     state.focus = { symbol, tf: state.tf };
     const box = $("#focus");
     box.classList.remove("hidden");
-    if (!focusChart) focusChart = buildChart($("#focus-chart"), true);
+    if (!focusChart) { focusChart = buildChart($("#focus-chart"), true); setupDrawing(focusChart, $("#focus-chart")); }
+    draw.sel = null; setTool(null);
     focusChart.fitted = false;
     $("#focus-title").textContent = symbol.includes("/") ? symbol : `${coinName(symbol)} · ${symbol}`;
     renderFocusStrats();
@@ -685,6 +911,18 @@
         <table>${row("Tagesschluss", fmt(r.close))}${row("50-Tage-Schnitt", fmt(r.sma))}${row("Abstand", pct(r.distance), r.distance >= 0 ? "up" : "down")}
         ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
         <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
+    }
+    const sel = (drawings[data.symbol] || []).find((x) => x.id === draw.sel && x.type !== "hline");
+    if (sel) {
+      const t = positionText(sel), ps = positionSize(sel), st = positionStatus(sel, data.candles);
+      html += `<h3>Deine ${sel.type === "long" ? "Long" : "Short"}-Position</h3><div class="light-card ${sel.type === "long" ? "long" : ""}"><table>
+        ${row("Einstieg", fmt(sel.entry))}${row("Ziel", `${fmt(sel.target)} (${pct(t.tp)})`, "up")}${row("Stop", `${fmt(sel.stop)} (${pct(t.sl)})`, "down")}
+        ${row("Chance/Risiko", "1 : " + t.rr.toFixed(2).replace(".", ","))}
+        ${row("Status", { stop: "Stop getroffen", target: "Ziel erreicht", open: "läuft", waiting: "wartet auf Einstieg" }[st.state])}
+        ${ps ? row(`Positionsgröße bei ${String(paperOpt.risk).replace(".", ",")} % Risiko`, `${ps.qty.toLocaleString("de-DE", { maximumSignificantDigits: 4 })} ${coinName(data.symbol)}`) +
+          row("Wert der Position", ps.value.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })) +
+          row("Verlust beim Stop", "−" + ps.money.toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }), "down") : ""}
+        </table><p class="muted">Ziehen: obere/untere Linie = Ziel/Stop, Fläche = ganze Position verschieben, rechter Rand = Länge. Entf löscht. Kapital und Risiko stellst du im Papier-Test ein.</p></div>`;
     }
     const H = state.heatmap !== "off" && data.heatmap ? data.heatmap : null;
     if (H) {
@@ -1029,7 +1267,9 @@
   $("#strat-btn").addEventListener("click", (e) => { e.stopPropagation(); $("#strat-panel").classList.toggle("hidden"); });
   document.addEventListener("click", (e) => { if (!e.target.closest("#strat-panel") && !e.target.closest("#strat-btn")) $("#strat-panel").classList.add("hidden"); });
   document.addEventListener("keydown", (e) => {
+    if ((e.key === "Delete" || e.key === "Backspace") && state.focus && draw.sel && !e.target.closest("input")) { deleteSelected(); return; }
     if (e.key !== "Escape") return;
+    if (state.focus && (draw.tool || draw.sel)) { setTool(null); draw.sel = null; redrawDrawings(); return; }
     if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
     else if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
     else if (state.focus) closeFocus();
@@ -1044,6 +1284,7 @@
   (async () => {
     renderTfButtons();
     renderHeatButtons();
+    await loadDrawings();
     await refreshState();
     await loadAllCharts();
     state.started = true;

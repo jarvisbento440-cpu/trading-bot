@@ -138,3 +138,11 @@ table.bt th { color: var(--muted); font-weight: 500; }
 .paper-kpis b { font-size: 20px; font-variant-numeric: tabular-nums; }
 .paper-curve { width: 100%; height: 120px; display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; }
 table.bt th.l, table.bt td.l { text-align: left; }
+.focus-chart { position: relative; }
+.draw-tools { position: absolute; left: 8px; top: 40px; z-index: 5; display: flex; flex-direction: column; gap: 4px;
+  background: rgba(22,27,34,.92); border: 1px solid var(--border); border-radius: 8px; padding: 4px; }
+.draw-tools button { display: flex; flex-direction: column; align-items: center; gap: 1px; background: transparent; border: 1px solid transparent;
+  border-radius: 6px; color: var(--text); padding: 4px 6px; cursor: pointer; font-size: 16px; line-height: 1; }
+.draw-tools button span { font-size: 10px; color: var(--muted); }
+.draw-tools button:hover { border-color: var(--border); background: var(--panel-2); }
+.draw-tools button.active { border-color: var(--accent); background: rgba(79,156,249,.18); }

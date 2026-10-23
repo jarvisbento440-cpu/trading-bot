@@ -65,6 +65,8 @@ pip install pytest && python -m pytest
 
 ## Strategien und Backtest
 
+**Eigene Einstiege einzeichnen:** Im Vollbild links die Werkzeugleiste: 📈 Long, 📉 Short, ➖ Linie. Werkzeug wählen und in den Chart klicken. Ziel und Stop ziehst du an den Linien, die Fläche verschiebt die ganze Position, der rechte Rand ändert die Länge. Rechts stehen Chance/Risiko, Status (wartet/läuft/Ziel/Stop) und die Positionsgröße für dein Risiko. Entf löscht die ausgewählte Zeichnung. Alles wird pro Coin gespeichert (data/drawings.json).
+
 **Papier-Test:** Button „📝 Papier-Test“. Jedes Signal wird automatisch als virtueller Trade mitgeschrieben (Einstieg zur nächsten Kerze, Stop, Ziel, Ergebnis in R nach Gebühren) und ausgewertet, solange das Programm läuft. Filter „nur mit Trendampel“ und „nur eingeschaltete Strategien“, Umrechnung in Euro über Kapital und Risiko pro Trade. Es wird nichts wirklich gehandelt.
 
 **Eigene Märkte:** Kachel „＋ Markt hinzufügen“ mit Suchfeld. Krypto kommt von der Börse (alle Paare), Aktien, Indizes (S&P 500, DAX …), Rohstoffe (Gold, Silber, Öl) und Devisen kostenlos von Yahoo Finance. ✕ oben rechts entfernt die Kachel. Im Vollbild lassen sich die Strategien oben direkt ein- und ausschalten.

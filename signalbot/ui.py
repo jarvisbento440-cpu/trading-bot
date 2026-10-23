@@ -102,6 +102,7 @@ class Api:
         self.bt_running, self.bt_error = False, None
         self._hm_cache: dict = {}
         self.loading: set[str] = set()
+        self._lock = threading.Lock()
         self._ex = None
 
     def _db(self) -> Database:
@@ -241,6 +242,32 @@ class Api:
         out["curve"] = {"all": curve(ts), "light": curve([t for t in ts if t["follows_light"]])}
         return out
 
+    # ---------- eigene Zeichnungen (Long/Short-Positionen, Linien) ----------
+    def _drawings_path(self) -> Path:
+        return Path(self.cfg.database).parent / "drawings.json"
+
+    def drawings(self) -> dict:
+        try:
+            data = json.loads(self._drawings_path().read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except (OSError, ValueError):
+            return {}
+
+    def save_drawings(self, symbol: str, items: list) -> bool:
+        if not symbol or not isinstance(items, list):
+            return False
+        with self._lock:
+            data = self.drawings()
+            data[symbol] = [x for x in items if isinstance(x, dict)][:200]
+            if not data[symbol]:
+                data.pop(symbol)
+            p = self._drawings_path()
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            tmp.replace(p)
+        return True
+
     def backtest_result(self) -> dict | None:
         r = backtest.latest_result(self.cfg)
         if r:
@@ -365,6 +392,8 @@ def make_handler(api: Api):
                     return self._json({"ok": api.watch_add(q.get("symbol", ""), q.get("name", ""), q.get("type", ""))})
                 if url.path == "/api/watch/remove":
                     return self._json({"ok": api.watch_remove(q.get("symbol", ""))})
+                if url.path == "/api/drawings":
+                    return self._json(api.drawings())
                 if url.path == "/api/paper":
                     return self._json(api.paper())
                 if url.path == "/api/heatmap":
@@ -376,6 +405,22 @@ def make_handler(api: Api):
                 if WEB.resolve() not in f.parents or not f.is_file():
                     return self._send(404, b"not found", "text/plain")
                 self._send(200, f.read_bytes(), CONTENT_TYPES.get(f.suffix, "application/octet-stream"))
+            except Exception as e:
+                log.exception("Fehler bei %s", self.path)
+                self._send(500, json.dumps({"error": str(e)}).encode(), "application/json")
+
+        def do_POST(self) -> None:
+            url = urlparse(self.path)
+            q = {k: v[0] for k, v in parse_qs(url.query).items()}
+            origin = self.headers.get("Origin")
+            if origin and urlparse(origin).netloc != self.headers.get("Host"):
+                return self._send(403, b"forbidden", "text/plain")  # nur die eigene Oberflaeche darf speichern
+            try:
+                n = min(int(self.headers.get("Content-Length", 0)), 1_000_000)
+                body = json.loads(self.rfile.read(n) or b"null")
+                if url.path == "/api/drawings":
+                    return self._json({"ok": api.save_drawings(q.get("symbol", ""), body)})
+                self._send(404, b"not found", "text/plain")
             except Exception as e:
                 log.exception("Fehler bei %s", self.path)
                 self._send(500, json.dumps({"error": str(e)}).encode(), "application/json")

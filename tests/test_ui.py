@@ -56,3 +56,15 @@ def test_api_chart_json(tmp_path):
     assert state["coins"][0]["symbol"] == "SOL/USDT"
     assert "regime" in state["coins"][0] and state["trend_light"]["rows"]
     assert "sma50" in data
+
+
+def test_drawings_saved_per_symbol(tmp_path):
+    cfg = Config(symbols=["BTC/USDT"], database=str(tmp_path / "t.db"))
+    api = Api(cfg, Worker(cfg, sync=False))
+    pos = {"id": "a", "type": "long", "t0": 1, "t1": 2, "entry": 100, "stop": 95, "target": 110}
+    assert api.save_drawings("BTC/USDT", [pos, "kaputt"])
+    assert api.save_drawings("ETH/USDT", [{"id": "b", "type": "hline", "price": 5}])
+    assert api.drawings()["BTC/USDT"] == [pos]
+    api.save_drawings("ETH/USDT", [])
+    assert "ETH/USDT" not in api.drawings()
+    assert not api.save_drawings("", [pos])
