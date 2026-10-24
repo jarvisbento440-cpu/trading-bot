@@ -115,6 +115,11 @@ def evaluate(feats: dict) -> dict:
         x["rs30"] = x["ret30"] - bret
         x["date"] = t
         x["rank"] = x["score"].rank(ascending=False, method="first")
+        # Gegenprobe "Rücksetzer im Aufwärtstrend": grün, aber nah am 50-Tage-Schnitt und schwächer als BTC
+        g = x[x["on"]]
+        pull = ((1 - g["distance"].rank(pct=True)) + (1 - g["rs30"].rank(pct=True))) / 2
+        x["pull_rank"] = pull.rank(ascending=False, method="first").reindex(x.index)
+        x["btc_on"] = bool(btc.loc[t, "on"]) if t in btc.index else False
         recs.append(x.rename_axis("symbol").reset_index())
     r = pd.concat(recs, ignore_index=True)
     r["year"] = pd.to_datetime(r["date"], unit="ms").dt.year
@@ -167,6 +172,23 @@ def report(r: pd.DataFrame) -> dict:
         ics = ics.dropna()
         out["components"][label] = {"ic": float(ics.mean()), "t": float(ics.mean() / ics.std() * np.sqrt(len(ics))),
                                     "weeks": int(len(ics))}
+    # Varianten getrennt nach Entwicklungs- (bis 2024) und Prüfzeitraum (ab 2025)
+    split = int(pd.Timestamp("2025-01-01", tz="UTC").timestamp() * 1000)
+    variants = {
+        "Ampel grün (alle)": r["on"],
+        "Scanner Top 5": r["rank"] <= 5,
+        "Rücksetzer Top 5": r["pull_rank"] <= 5,
+        "Rücksetzer Top 5, nur wenn BTC grün": (r["pull_rank"] <= 5) & r["btc_on"],
+        "Nur BTC": r["symbol"] == "BTC/USD",
+        "BTC nur wenn Ampel grün": (r["symbol"] == "BTC/USD") & r["btc_on"],
+    }
+    out["variants"] = {}
+    for name, m in variants.items():
+        out["variants"][name] = {}
+        for per, pm in (("bis 2024", r["date"] < split), ("ab 2025", r["date"] >= split)):
+            rp = r[pm]
+            out["variants"][name][per] = {"fwd7": stats(rp.loc[m[pm], "fwd7"]), "fwd28": stats(rp.loc[m[pm], "fwd28"]),
+                                          "curve": weekly_curve(rp, m[pm])}
     return out
 
 
@@ -199,6 +221,16 @@ def to_markdown(o: dict) -> str:
         ic, t = (f"{v['ic']:+.3f}", f"{v['t']:+.1f}")
         lines.append(f"| {k} | {ic.replace('.', ',')} | {t.replace('.', ',')} |")
     lines += ["", "Korrelation über 0 = höherer Wert ging mit besserer Rendite einher. |t| unter 2 ist meist Zufall."]
+    if o.get("variants"):
+        lines += ["", "## Varianten: Entwicklung (bis 2024) gegen Prüfung (ab 2025)", "",
+                  "| Variante | Ø 7 T. bis 2024 | gehalten bis 2024 | Ø 7 T. ab 2025 | gehalten ab 2025 | Max. Rückgang ab 2025 |",
+                  "|---|---:|---:|---:|---:|---:|"]
+        for name, v in o["variants"].items():
+            a, b = v["bis 2024"], v["ab 2025"]
+            lines.append(f"| {name} | {p(a['fwd7']['avg'])} | {p(a['curve']['total'])} | {p(b['fwd7']['avg'])} | "
+                         f"{p(b['curve']['total'])} | {p(b['curve']['maxdd'])} |")
+        lines += ["", "'Gehalten' = jede Woche gleich gewichtet die ausgewählten Coins kaufen und 7 Tage halten, "
+                      "in Wochen ohne Auswahl Bargeld."]
     return "\n".join(lines) + "\n"
 
 
