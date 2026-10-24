@@ -1,0 +1,37 @@
+name: News/On-Chain-Historie
+
+on:
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: "Wochen Schlagzeilen"
+        default: "104"
+  push:
+    branches: [claude/project-thread-1iwdna]
+    paths: [scripts/fetch_context_history.py, .github/workflows/context-history.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}"
+      - name: In Branch "context-history" speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan context-history
+          git rm -rq --cached .
+          rm -rf ./* .github .gitignore .gitattributes .env.example 2>/dev/null || true
+          mkdir -p ctxhist && cp /tmp/ctxhist/* ctxhist/
+          git add ctxhist
+          git commit -qm "News/On-Chain-Historie"
+          git push -f origin context-history
