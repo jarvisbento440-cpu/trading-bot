@@ -16,7 +16,7 @@
 
   const state = {
     tf: store.get("tf", "4h"),
-    layers: Object.assign({ sessions: true, light: true, signals: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
+    layers: Object.assign({ sessions: true, light: true, signals: true, boxes: true, ema: true, fib: false, zones: true, bb: false, st: false }, store.get("layers", {})),
     strategies: [],
     stratOn: store.get("stratOn", null), // null = alle an
     sound: store.get("sound", true),
@@ -342,9 +342,34 @@
     return { qty, value: qty * p.entry, money };
   }
 
+  // Long/Short-Fenster für Strategie-Signale: Einstieg zum Schlusskurs der Signal-Kerze, Ziel = Ziel 1.
+  // Das Fenster läuft ab der nächsten Kerze, bis Stop oder Ziel berührt wird (beides in einer Kerze: Stop zuerst, wie im Backtest).
+  function signalPositions(data) {
+    if (!state.layers.signals || !state.layers.boxes || !data.setups) return [];
+    const k = data.candles, n = k.length;
+    if (n < 2) return [];
+    const step = k[n - 1].time - k[n - 2].time;
+    const out = [];
+    let i = 0;
+    for (const s of data.setups.slice().sort((a, b) => a.time - b.time)) {
+      if (!stratEnabled(s.strategy) || s.stop == null || s.target1 == null) continue;
+      while (i < n && k[i].time < s.time) i++;
+      if (i >= n) break;
+      const long = s.side === "long";
+      let res = { state: "open", time: k[n - 1].time };
+      for (let j = i + 1; j < n; j++) {
+        if (long ? k[j].low <= s.stop : k[j].high >= s.stop) { res = { state: "stop", time: k[j].time }; break; }
+        if (long ? k[j].high >= s.target1 : k[j].low <= s.target1) { res = { state: "target", time: k[j].time }; break; }
+      }
+      out.push({ auto: true, id: "sig-" + s.strategy + "-" + s.time + "-" + s.side, type: s.side, strategy: s.strategy,
+        t0: s.time, t1: res.time + step, entry: s.entry, stop: s.stop, target: s.target1, result: res });
+    }
+    return out;
+  }
+
   class DrawPrimitive {
     constructor() {
-      this.items = []; this.times = []; this.candles = []; this.big = false; this.chart = null; this.series = null; this.req = null;
+      this.items = []; this.auto = []; this.times = []; this.candles = []; this.big = false; this.chart = null; this.series = null; this.req = null;
       const self = this;
       this.view = { zOrder: () => "top", renderer: () => ({ draw: (t) => self.draw(t) }) };
     }
@@ -352,8 +377,9 @@
     detached() { this.chart = null; }
     paneViews() { return [this.view]; }
     updateAllViews() {}
-    set(candles, items, big) {
+    set(candles, items, big, auto) {
       this.candles = candles; this.times = candles.map((k) => k.time); this.items = items || []; this.big = big;
+      if (auto !== undefined) this.auto = auto;
       if (this.req) this.req();
     }
     geom(it) {
@@ -377,16 +403,38 @@
       return null;
     }
     draw(target) {
-      if (!this.chart || !this.series || this.times.length < 2 || !this.items.length) return;
+      if (!this.chart || !this.series || this.times.length < 2 || (!this.items.length && !this.auto.length)) return;
       target.useBitmapCoordinateSpace(({ context: ctx, bitmapSize, horizontalPixelRatio: hr, verticalPixelRatio: vr }) => {
         const W = bitmapSize.width;
         const label = (txt, x, y, color, bg, align = "left") => {
           ctx.font = `${(this.big ? 11 : 9) * vr}px "Segoe UI", system-ui, sans-serif`;
           const w = ctx.measureText(txt).width + 8 * hr, h = (this.big ? 16 : 13) * vr;
-          const lx = align === "right" ? x - w : x;
+          const lx = Math.min(align === "right" ? x - w : x, W - w); // nicht über den Rand hinaus
           ctx.fillStyle = bg; ctx.fillRect(lx, y - h / 2, w, h);
           ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.fillText(txt, lx + 4 * hr, y);
         };
+        // Fenster der Strategie-Signale: unter den eigenen Zeichnungen, nicht verschiebbar
+        for (const it of this.auto) {
+          const g = this.geom(it);
+          if (g.x0 == null || g.x1 == null || g.yE == null || g.yS == null || g.yT == null) continue;
+          const x0 = g.x0 * hr, x1 = g.x1 * hr, yE = g.yE * vr, yS = g.yS * vr, yT = g.yT * vr, st = it.result.state;
+          const a = st === "open" ? 0.2 : 0.09;
+          ctx.fillStyle = `rgba(38,166,154,${a})`; ctx.fillRect(x0, Math.min(yE, yT), x1 - x0, Math.abs(yT - yE));
+          ctx.fillStyle = `rgba(239,83,80,${a})`; ctx.fillRect(x0, Math.min(yE, yS), x1 - x0, Math.abs(yS - yE));
+          ctx.lineWidth = hr;
+          [[yT, "rgba(38,166,154,.8)"], [yS, "rgba(239,83,80,.8)"], [yE, "rgba(230,237,243,.6)"]].forEach(([y, c]) => {
+            ctx.strokeStyle = c; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+          });
+          ctx.strokeStyle = stratInfo(it.strategy).color; ctx.lineWidth = 2 * hr; // linke Kante in Strategie-Farbe
+          ctx.beginPath(); ctx.moveTo(x0, Math.min(yS, yT)); ctx.lineTo(x0, Math.max(yS, yT)); ctx.stroke();
+          if (!this.big) continue;
+          const res = { stop: "✗ Stop", target: "✓ Ziel", open: "läuft" }[st];
+          const yL = st === "stop" ? yS : yT;
+          // Laufende Fenster enden an der letzten Kerze: Beschriftung innen, sonst rechts daneben
+          label(`${stratInfo(it.strategy).short} ${res}`, st === "open" ? x1 - 2 * hr : x1 + 2 * hr, yL, "#fff",
+            st === "stop" ? "rgba(239,83,80,.85)" : st === "target" ? "rgba(38,166,154,.85)" : "rgba(79,156,249,.85)",
+            st === "open" ? "right" : "left");
+        }
         for (const it of this.items) {
           const g = this.geom(it), selected = draw.sel === it.id;
           if (it.type === "hline") {
@@ -595,7 +643,7 @@
     c.sessions.set(data.candles.map((k) => k.time), L.sessions && data.tf !== "1d", c.big);
     const hm = state.heatmap !== "off" && data.heatmap && data.heatmap.range === state.heatmap ? data.heatmap : null;
     c.heat.set(data.candles.map((k) => k.time), hm);
-    c.draws.set(data.candles, drawings[data.symbol], c.big);
+    c.draws.set(data.candles, drawings[data.symbol], c.big, signalPositions(data));
 
     // Signal-Pfeile, Farbe je Strategie
     const markers = L.signals ? data.setups.filter((s) => stratEnabled(s.strategy)).map((s) => {
@@ -964,7 +1012,15 @@
       html += `<h3>Fibonacci (${data.fib.direction === "up" ? "Aufwärtsimpuls" : "Abwärtsimpuls"})</h3><table>` +
         data.fib.levels.map((l) => row((l.ratio * 100).toFixed(1).replace(".", ",") + " %", fmt(l.price))).join("") + "</table>";
     }
-    html += `<h3>Signale im Chart</h3><p class="muted">${data.setups.filter((s) => stratEnabled(s.strategy)).length} Signale. Buchstabe = Strategie (siehe „Strategien“). Mausrad = Zoom, Ziehen = Verschieben.</p>
+    html += `<h3>Signale im Chart</h3><p class="muted">${data.setups.filter((s) => stratEnabled(s.strategy)).length} Signale. Buchstabe = Strategie (siehe „Strategien“). Mausrad = Zoom, Ziehen = Verschieben.</p>`;
+    const boxes = signalPositions(data);
+    if (boxes.length) {
+      const cnt = (k) => boxes.filter((b) => b.result.state === k).length;
+      html += `<p class="muted">Long/Short-Fenster: ${cnt("target")} × Ziel erreicht, ${cnt("stop")} × Stop getroffen, ${cnt("open")} laufen noch.
+        Grün = bis Ziel 1, rot = bis Stop. Jedes Fenster läuft bis Stop oder Ziel berührt wird (Einstieg zum Schlusskurs der Signal-Kerze, ohne Gebühren).
+        Ein- und ausschalten mit „Long/Short-Fenster“.</p>`;
+    }
+    html += `
       <p class="disclaimer">Trefferquoten stammen aus der Vergangenheit und sind keine Garantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.</p>`;
     $("#focus-info").innerHTML = html;
   }
@@ -1011,6 +1067,17 @@
   function renderFocusStrats() {
     const box = $("#focus-strats");
     box.innerHTML = "";
+    const tb = document.createElement("button");
+    tb.className = "chip" + (state.layers.boxes ? " on" : "");
+    tb.style.setProperty("--c", "#4f9cf9");
+    tb.title = "Long/Short-Fenster für jedes Signal ein- oder ausblenden";
+    tb.innerHTML = `<span class="dot" style="background:#4f9cf9">▭</span>Long/Short-Fenster`;
+    tb.addEventListener("click", () => {
+      state.layers.boxes = !state.layers.boxes; store.set("layers", state.layers);
+      const cb = document.querySelector("[data-layer=boxes]"); if (cb) cb.checked = state.layers.boxes;
+      renderFocusStrats(); rerenderAll();
+    });
+    box.appendChild(tb);
     state.strategies.forEach((st) => {
       const b = document.createElement("button");
       const on = stratEnabled(st.key);
@@ -1246,7 +1313,7 @@
 
   document.querySelectorAll("[data-layer]").forEach((cb) => {
     cb.checked = !!state.layers[cb.dataset.layer];
-    cb.addEventListener("change", () => { state.layers[cb.dataset.layer] = cb.checked; store.set("layers", state.layers); rerenderAll(); });
+    cb.addEventListener("change", () => { state.layers[cb.dataset.layer] = cb.checked; store.set("layers", state.layers); if (state.focus) renderFocusStrats(); rerenderAll(); });
   });
 
   const soundBtn = $("#sound-btn");

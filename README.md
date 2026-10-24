@@ -65,6 +65,8 @@ pip install pytest && python -m pytest
 
 ## Strategien und Backtest
 
+**Long/Short-Fenster der Strategien:** Zu jedem Signal zeichnet der Chart ein Fenster wie bei TradingView: grün vom Einstieg bis Ziel 1, rot bis zum Stop, linke Kante in der Farbe der Strategie. Das Fenster zieht sich nach rechts, bis Stop oder Ziel berührt wird (berührt eine Kerze beides, zählt der Stop, wie im Backtest); laufende Fenster reichen bis zur letzten Kerze. Im Vollbild steht am Ende „✓ Ziel“, „✗ Stop“ oder „läuft“, rechts die Zählung. Blendest du eine Strategie aus, verschwinden auch ihre Fenster. Ein- und ausschalten oben mit „Long/Short-Fenster“ oder im Vollbild mit dem ersten Knopf.
+
 **Eigene Einstiege einzeichnen:** Im Vollbild links die Werkzeugleiste: 📈 Long, 📉 Short, ➖ Linie. Werkzeug wählen und in den Chart klicken. Ziel und Stop ziehst du an den Linien, die Fläche verschiebt die ganze Position, der rechte Rand ändert die Länge. Rechts stehen Chance/Risiko, Status (wartet/läuft/Ziel/Stop) und die Positionsgröße für dein Risiko. Entf löscht die ausgewählte Zeichnung. Alles wird pro Coin gespeichert (data/drawings.json).
 
 **Papier-Test:** Button „📝 Papier-Test“. Jedes Signal wird automatisch als virtueller Trade mitgeschrieben (Einstieg zur nächsten Kerze, Stop, Ziel, Ergebnis in R nach Gebühren) und ausgewertet, solange das Programm läuft. Filter „nur mit Trendampel“ und „nur eingeschaltete Strategien“, Umrechnung in Euro über Kapital und Risiko pro Trade. Es wird nichts wirklich gehandelt.
