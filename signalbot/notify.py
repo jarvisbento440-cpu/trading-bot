@@ -14,7 +14,8 @@ def fmt_price(p: float) -> str:
     return f"{p:,.{digits}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None) -> str:
+def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None,
+                  context: list[str] | None = None, warn: list[str] | None = None) -> str:
     icon = "🟢" if s.side == "long" else "🔴"
     rr = abs(s.target1 - s.entry) / abs(s.entry - s.stop)
     if hist and hist.get("trades"):
@@ -32,6 +33,8 @@ def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Mo
         quote,
         "Gründe:",
         *[f"• {r}" for r in s.reasons],
+        *(["News & On-Chain:", *[f"• {r}" for r in context]] if context else []),
+        *(["⚠️ Gegenwind:", *[f"• {w}" for w in warn]] if warn else []),
         "",
         DISCLAIMER,
     ]

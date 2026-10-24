@@ -22,7 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import heatmap, markets, paper, regime
+from . import context, heatmap, markets, news, onchain, paper, regime
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -49,11 +49,13 @@ class Worker(threading.Thread):
         ex = make_exchange(self.cfg.exchange)
         notifier = Notifier(self.cfg.telegram_token, self.cfg.telegram_chat_id)
         first = db.last_ts(ex.id, self.cfg.symbols[0], self.cfg.store_timeframes[0]) is None
+        updater = context.Updater(self.cfg)
         while True:
             try:
                 self.status = "Lade Kurs-Historie (erster Start, einige Minuten)…" if first else "Aktualisiere…"
                 sync_all(ex, db, self.cfg.symbols, self.cfg.store_timeframes, self.cfg.backfill_days)
                 markets.sync_extra(self.cfg, ex, db)
+                updater.run(db, notifier)
                 scan(self.cfg, ex, db, notifier)
                 paper.update(self.cfg, db)
                 first = False
@@ -129,7 +131,8 @@ class Api:
             if self.cfg.trend_light and self.cfg.trend_timeframe == "1d" and len(daily):
                 light = regime.current(daily.drop(columns=["time"]), int(time.time() * 1000))
             info = extra.get(sym, {})
-            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light,
+            ctx = self._ctx_badge(db, sym)
+            coins.append({"context": ctx,"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light,
                           "name": info.get("name") or sym.split("/")[0], "kind": info.get("type", "Krypto"),
                           "extra": sym in extra, "loading": sym in self.loading})
         rows = db.conn.execute(
@@ -151,6 +154,39 @@ class Api:
             "backtest_running": self.bt_running,
             "backtest_error": self.bt_error,
         }
+
+    def _ctx_badge(self, db: Database, sym: str) -> dict | None:
+        """Kurzfassung für die Kachel: News-Stimmung und News-Filter."""
+        if "/" not in sym or not self.cfg.news:
+            return None
+        n = news.summary(db, sym)
+        return {"news3": n["news3"], "n": n["news3_n"], "label": n["label"], "filter": n["filter"],
+                "strong_neg": len(n["strong_neg"]), "strong_pos": len(n["strong_pos"])}
+
+    def context(self, symbol: str) -> dict:
+        """News, Fear & Greed und On-Chain für einen Coin (Vollbild) bzw. den ganzen Markt."""
+        db = self._db()
+        out = context.coin_context(db, self.cfg, symbol) if "/" in symbol else {}
+        st, ts = db.get_context("news_status", with_ts=True)
+        out["news_status"] = st
+        out["enabled"] = {"news": self.cfg.news, "onchain": self.cfg.onchain, "filter": self.cfg.context_filter}
+        return out
+
+    def news_list(self, coin: str = "", hours: int = 48) -> dict:
+        db = self._db()
+        rows = db.news_since(int(time.time() * 1000) - hours * 3_600_000, coin.upper() or None, limit=300)
+        seen, out = set(), []
+        for r in rows:
+            k = "".join(ch for ch in r["title"].lower() if ch.isalnum())[:80]
+            if k not in seen:
+                seen.add(k)
+                out.append(r)
+        snap = db.get_context("onchain")
+        coins = [s for s in markets.all_symbols(self.cfg) if "/" in s]
+        return {"items": out[:150], "fear_greed": news.fear_greed_now(db), "status": db.get_context("news_status"),
+                "coins": [{"symbol": s, "news": self._ctx_badge(db, s), "onchain": onchain.view(snap, s)} for s in coins],
+                "market": (snap or {}).get("market"), "onchain_ts": (snap or {}).get("ts"),
+                "onchain_failed": (snap or {}).get("failed", [])}
 
     def strategies(self) -> list[dict]:
         bt = backtest.latest_result(self.cfg)
@@ -394,6 +430,10 @@ def make_handler(api: Api):
                     return self._json({"ok": api.watch_remove(q.get("symbol", ""))})
                 if url.path == "/api/drawings":
                     return self._json(api.drawings())
+                if url.path == "/api/context":
+                    return self._json(api.context(q.get("symbol", "")))
+                if url.path == "/api/news":
+                    return self._json(api.news_list(q.get("coin", ""), int(q.get("hours", 48))))
                 if url.path == "/api/paper":
                     return self._json(api.paper())
                 if url.path == "/api/heatmap":

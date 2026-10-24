@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [claude/project-thread-1iwdna]
-    paths: [scripts/check_context.py, .github/workflows/context-check.yml]
+    paths: [scripts/check_context.py, scripts/check_news_live.py, .github/workflows/context-check.yml]
 
 permissions:
   contents: write
@@ -20,6 +20,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       - run: python scripts/check_context.py /tmp/ctx
+      - run: python scripts/check_news_live.py /tmp/ctx
       - name: In Branch "context-check" speichern
         run: |
           git config user.name "github-actions"
