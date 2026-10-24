@@ -129,13 +129,24 @@ def format_news_filter(symbol: str, n: dict, on: bool) -> str:
     return f"📰 {symbol}: News nicht mehr negativ ({v}) – Trendampel gilt wieder normal (grün = halten)."
 
 
+def _scanner(cfg: Config, ex, db: Database, notifier: Notifier) -> None:
+    """Coin-Scanner; ein Fehler dort darf den Rest nicht aufhalten."""
+    from . import scanner
+    try:
+        scanner.maybe_run(cfg, ex, db, notifier)
+    except Exception:
+        log.exception("Coin-Scanner fehlgeschlagen, nächster Versuch beim nächsten Durchlauf")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
-    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest", "bericht"], nargs="?", default="ui",
+    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest", "bericht", "scanner"], nargs="?",
+                   default="ui",
                    help="ui = Oberfläche (Standard), backfill = Historie laden, "
                         "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche, "
                         "backtest = Strategien an der Vergangenheit testen, "
-                        "bericht = Wochenbericht jetzt erstellen und schicken")
+                        "bericht = Wochenbericht jetzt erstellen und schicken, "
+                        "scanner = Coin-Scanner einmal ausführen")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--offline", action="store_true", help="Oberfläche ohne Kurs-Aktualisierung")
@@ -182,6 +193,15 @@ def main() -> None:
         text = tracking.weekly_report(cfg, db)
         log.info("Bericht gespeichert: %s", tracking.save_report(cfg, text))
         notifier.send(text)
+    if args.command == "scanner":
+        from . import scanner
+        if args.exchange:
+            ex = make_exchange(args.exchange)
+        if args.quote:
+            cfg.symbols = [s.split("/")[0] + "/" + args.quote for s in cfg.symbols]
+        result = scanner.run(cfg, ex)
+        scanner.save(cfg, result)
+        print(scanner.format_report(result, 10))
         return
 
     if args.command == "backfill":
@@ -193,6 +213,7 @@ def main() -> None:
         from .context import Updater
         Updater(cfg).run(db, notifier)
         log.info("%d Signal(e) verschickt", scan(cfg, ex, db, notifier))
+        _scanner(cfg, ex, db, notifier)
         return
 
     from .context import Updater
@@ -204,6 +225,7 @@ def main() -> None:
             sync_extra(cfg, ex, db)
             updater.run(db, notifier)
             scan(cfg, ex, db, notifier)
+            _scanner(cfg, ex, db, notifier)
             from .tracking import after_update
             after_update(cfg, db, notifier)
         except Exception:

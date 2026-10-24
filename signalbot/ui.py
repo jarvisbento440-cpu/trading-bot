@@ -20,9 +20,9 @@ from .data import make_exchange, sync_all
 from .db import Database
 from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
-from .main import closed_candles, scan
+from .main import _scanner, closed_candles, scan
 from .notify import Notifier
-from . import context, heatmap, hitrates, learn, markets, news, onchain, paper, regime, tracking
+from . import context, heatmap, hitrates, learn, markets, news, onchain, paper, regime, scanner, tracking
 from .yahoo import is_yahoo
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
@@ -43,6 +43,11 @@ class Worker(threading.Thread):
         self.last_update: float | None = None
         self.error: str | None = None
 
+    def _scan_due(self) -> bool:
+        last = scanner.load(self.cfg)
+        return self.cfg.scanner.enabled and (
+            not last or time.time() * 1000 - last.get("created_at", 0) >= self.cfg.scanner.every_hours * 3_600_000)
+
     def run(self) -> None:
         if not self.sync:
             return
@@ -59,6 +64,8 @@ class Worker(threading.Thread):
                 updater.run(db, notifier)
                 scan(self.cfg, ex, db, notifier)
                 tracking.after_update(self.cfg, db, notifier)
+                self.status = "Coin-Scanner…" if self._scan_due() else self.status
+                _scanner(self.cfg, ex, db, notifier)
                 first = False
                 self.error = None
                 self.last_update = time.time()
@@ -103,6 +110,7 @@ class Api:
     def __init__(self, cfg: Config, worker: Worker):
         self.cfg, self.worker = cfg, worker
         self.bt_running, self.bt_error = False, None
+        self.scan_running, self.scan_error = False, None
         self._hm_cache: dict = {}
         self.loading: set[str] = set()
         self._lock = threading.Lock()
@@ -287,6 +295,33 @@ class Api:
         out["report"] = tracking.weekly_report(self.cfg, db)
         return out
 
+    def scanner(self) -> dict:
+        r = scanner.load(self.cfg) or {}
+        if r:  # eigene Liste kann sich seit dem Scan geändert haben
+            watched = set(markets.all_symbols(self.cfg))
+            for c in r.get("coins", []):
+                c["watched"] = c["symbol"] in watched
+        return {"result": r or None, "test": scanner.test_result(), "running": self.scan_running,
+                "error": self.scan_error, "enabled": self.cfg.scanner.enabled, "online": self.worker.sync,
+                "every_hours": self.cfg.scanner.every_hours}
+
+    def start_scanner(self) -> bool:
+        if self.scan_running or not self.worker.sync:
+            return False
+        self.scan_running, self.scan_error = True, None
+
+        def job():
+            try:
+                scanner.save(self.cfg, scanner.run(self.cfg, make_exchange(self.cfg.exchange)))
+            except Exception as e:
+                log.exception("Coin-Scanner fehlgeschlagen")
+                self.scan_error = str(e)
+            finally:
+                self.scan_running = False
+
+        threading.Thread(target=job, daemon=True).start()
+        return True
+
     # ---------- eigene Zeichnungen (Long/Short-Positionen, Linien) ----------
     def _drawings_path(self) -> Path:
         return Path(self.cfg.database).parent / "drawings.json"
@@ -463,6 +498,10 @@ def make_handler(api: Api):
                     return self._json(api.backtest_result())
                 if url.path == "/api/backtest/run":
                     return self._json({"started": api.start_backtest(int(q.get("days", 365)))})
+                if url.path == "/api/scanner":
+                    return self._json(api.scanner())
+                if url.path == "/api/scanner/run":
+                    return self._json({"started": api.start_scanner()})
                 if url.path == "/api/search":
                     return self._json(api.search(q.get("q", "")))
                 if url.path == "/api/watch/add":

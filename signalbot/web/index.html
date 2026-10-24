@@ -31,6 +31,7 @@
     <button id="bt-open" class="btn">📊 Backtest</button>
     <button id="paper-open" class="btn">📝 Papier-Test</button>
     <button id="news-open" class="btn">📰 News &amp; On-Chain</button>
+    <button id="scan-open" class="btn" title="Weitere Coins mit grüner Trendampel">🔍 Scanner</button>
     <button id="sound-btn" class="btn" title="Ton bei neuen Signalen">🔔 Ton an</button>
   </div>
 </header>
@@ -81,6 +82,13 @@
     <button id="news-close" class="btn">✕ Schließen (Esc)</button>
   </div>
   <div id="news-body" class="bt-body"></div>
+<div id="scan" class="focus hidden" role="dialog" aria-modal="true">
+  <div class="focus-head">
+    <div class="focus-title">Coin-Scanner: Welche anderen Coins sind gerade stark?</div>
+    <button id="scan-run" class="btn">Jetzt neu scannen</button>
+    <button id="scan-close" class="btn">✕ Schließen (Esc)</button>
+  </div>
+  <div id="scan-body" class="bt-body"></div>
 </div>
 
 <script src="vendor/lightweight-charts.standalone.production.js"></script>

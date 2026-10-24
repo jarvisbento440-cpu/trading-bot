@@ -82,6 +82,8 @@ pip install pytest && python -m pytest
 
 **News & On-Chain:** Button „📰 News & On-Chain“ und Abzeichen 📰 auf jeder Kachel. Schlagzeilen aus 8 Krypto-Newsseiten und Google News (bewertet −2 … +2 per Wortliste), Fear & Greed, Funding und Open Interest (Hyperliquid), Stablecoins/TVL/DEX-Umsatz (DefiLlama), Bitcoin-Gebühren und Hashrate. Alles kostenlos, kein Schlüssel nötig. Getestet hat nur eine Regel geholfen: Trendampel pausieren, solange die News der letzten 3 Tage negativ sind (kleiner Vorteil). Signale bekommen News-Zeilen und einen ⚠️-Hinweis bei Gegenwind, sehr starke Meldungen kommen per Telegram. Details und alle Testergebnisse: [docs/news-onchain.md](docs/news-onchain.md).
 
+**Coin-Scanner:** Button „🔍 Scanner“. Prüft alle 4 Stunden die 150 meistgehandelten Coins der Börse, zeigt alle mit grüner Trendampel, die Marktbreite und die BTC-Ampel; ＋ Chart fügt einen Coin als Kachel hinzu. Einmal am Tag kommen die besten 5 per Telegram. Im historischen Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen, der Scanner ist eine Beobachtungsliste: [docs/scanner.md](docs/scanner.md).
+
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
 
 **Lernmodell (aus Fehlsignalen lernen):** schätzt für jedes Signal die Trefferchance aus 45.000 vergangenen Signalen und meldet schwache Signale nicht mehr per Telegram (`learn_filter` in `config.yaml`). Im Prüfjahr sank der Verlust pro Trade von −0,12 R auf etwa 0 R, profitabel werden die Strategien dadurch aber nicht. Im Papier-Test steht bei jedem Trade, was dafür und dagegen sprach. Details: [docs/lernen.md](docs/lernen.md).
@@ -96,4 +98,4 @@ pip install pytest && python -m pytest
 
 4. ~~Backtest → echte Trefferquoten pro Score~~ (erledigt)
 5. ~~Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht~~ (erledigt)
-6. ~~News-Modul~~, 7. ~~On-Chain-Modul~~ (fertig, siehe docs/news-onchain.md), 8. Coin-Scanner
+6. ~~News-Modul~~, 7. ~~On-Chain-Modul~~ (fertig, siehe docs/news-onchain.md), 8. ~~Coin-Scanner~~ (fertig, siehe docs/scanner.md)

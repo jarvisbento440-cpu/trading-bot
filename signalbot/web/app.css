@@ -167,3 +167,9 @@ table.bt th.l, table.bt td.l { text-align: left; }
   background: linear-gradient(90deg, #ef5350, #f2b84b 50%, #26a69a); }
 .fng-bar i { position: absolute; top: -4px; width: 4px; height: 16px; background: var(--text, #fff); border-radius: 2px; transform: translateX(-2px); }
 .oc-sig { font-weight: 600; }
+
+.scan-opts { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin: 4px 0 10px; }
+table.bt td.add button { font-size: 12px; padding: 2px 8px; }
+table.bt tr.mine td { opacity: .6; }
+.flag { display: inline-block; font-size: 11px; padding: 0 5px; margin-left: 4px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); }
+.flag.new { border-color: var(--up); color: var(--up); }

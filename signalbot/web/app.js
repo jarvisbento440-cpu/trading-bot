@@ -1330,6 +1330,77 @@
     $("#po-risk").addEventListener("change", (e) => { paperOpt.risk = Math.min(10, Math.max(0.1, +e.target.value || 1)); save(); });
   }
 
+  // ---------- Coin-Scanner ----------
+  const scanOpt = Object.assign({ all: false }, store.get("scanOpt", {}));
+  let scanTimer = null;
+  async function openScanner() {
+    $("#scan").classList.remove("hidden");
+    const body = $("#scan-body");
+    let r;
+    try { r = await getJSON("/api/scanner"); } catch (e) { body.innerHTML = '<p class="muted">Konnte den Scanner nicht laden.</p>'; return; }
+    const btn = $("#scan-run");
+    btn.disabled = r.running || !r.online;
+    btn.textContent = r.running ? "Scanne… (etwa eine Minute)" : "Jetzt neu scannen";
+    clearTimeout(scanTimer);
+    if (r.running) scanTimer = setTimeout(() => { if (!$("#scan").classList.contains("hidden")) openScanner(); }, 4000);
+    const res = r.result;
+    const num = (x, d = 0) => x == null ? "–" : x.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+    const sp = (x) => x == null ? "–" : (x > 0 ? "+" : "") + num(x) + " %";
+    const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
+    const money = (x) => x == null ? "–" : x >= 1e9 ? num(x / 1e9, 1) + " Mrd." : num(x / 1e6, 0) + " Mio.";
+    let html = "";
+    if (r.error) html += `<p class="down">Letzter Scan fehlgeschlagen: ${r.error}</p>`;
+    if (!res) {
+      html += r.online ? `<p>Noch kein Scan vorhanden. Der erste läuft kurz nach dem Start automatisch, danach alle ${num(r.every_hours)} Stunden.</p>`
+        : `<p>Noch kein Scan vorhanden (Offline-Modus).</p>`;
+      body.innerHTML = html + scanHelp(r.test); return;
+    }
+    const when = new Date(res.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const rows = res.coins.filter((c) => scanOpt.all || c.on);
+    html += `<p class="muted">Stand ${when} · ${res.scanned} Coins mit dem höchsten 24h-Volumen auf ${res.exchange} (${res.quote}) · BTC 30 Tage ${sp(res.btc_ret30)}.
+      Neu gescannt wird alle ${num(r.every_hours)} Stunden.</p>
+      ${res.btc_on === false ? '<p class="down">⚠️ Die BTC-Trendampel steht auf RAUS. In dieser Lage haben im historischen Test auch Altcoins mit grüner Ampel meist verloren.</p>' : ""}
+      <div class="paper-kpis">
+        <div><span class="muted">Marktbreite</span><b>${num(res.breadth)} %</b><span>${res.green} von ${res.scanned} Coins mit grüner Trendampel</span></div>
+        <div><span class="muted">BTC-Trendampel</span><b>${res.btc_on == null ? "–" : res.btc_on ? "🟢 grün" : "⚪ raus"}</b></div>
+        <div><span class="muted">Platz 1 außerhalb deiner Liste</span><b>${(res.coins.find((c) => c.on && !c.watched) || {}).name || "–"}</b></div>
+      </div>
+      <div class="scan-opts"><label><input type="checkbox" id="so-all" ${scanOpt.all ? "checked" : ""}> Auch Coins mit roter Ampel zeigen</label></div>
+      <div class="table-wrap"><table class="bt"><thead><tr><th>#</th><th class="l">Coin</th><th>Score</th><th>Kurs</th><th>24 h</th><th>7 Tage</th><th>30 T vs. BTC</th>
+      <th>Volumen 24 h</th><th>Volumen-Schub</th><th>Ampel</th><th>Abstand 50-T.</th><th>Anteil</th><th></th></tr></thead><tbody>` +
+      rows.map((c, i) => {
+        const flags = (c.on && c.days_on != null && c.days_on <= 5 ? `<span class="flag new">${c.days_on ? "frisch grün" : "heute grün"}</span>` : "") +
+          (c.high20 ? '<span class="flag">20-Tage-Hoch</span>' : "") + (c.focus ? '<span class="flag">Haupt-Coin</span>' : "");
+        const light = c.on ? `🟢 seit ${c.days_on + 1} T.` : "⚪ raus";
+        return `<tr class="${c.watched ? "mine" : ""}"><td>${i + 1}</td><td class="l"><strong>${c.name}</strong>${flags}</td><td>${c.score ?? "–"}</td>
+          <td>${fmt(c.price)}</td><td class="${cls(c.change24h)}">${sp(c.change24h)}</td><td class="${cls(c.ret7)}">${sp(c.ret7)}</td>
+          <td class="${cls(c.rs30)}">${sp(c.rs30)}</td><td>${money(c.volume24h)}</td><td>${c.vol_surge == null ? "–" : "×" + num(c.vol_surge, 1)}</td>
+          <td>${light}</td><td>${sp(c.distance)}</td><td>${c.on ? num(c.size * 100) + " %" : "–"}</td>
+          <td class="add">${c.watched ? '<span class="muted">im Chart</span>' : `<button class="btn" data-add="${c.symbol}">＋ Chart</button>`}</td></tr>`;
+      }).join("") + `</tbody></table></div>`;
+    body.innerHTML = html + scanHelp(r.test);
+    $("#so-all").addEventListener("change", (e) => { scanOpt.all = e.target.checked; store.set("scanOpt", scanOpt); openScanner(); });
+    body.querySelectorAll("[data-add]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true; b.textContent = "…";
+      const sym = b.dataset.add;
+      await getJSON(`/api/watch/add?symbol=${encodeURIComponent(sym)}&name=${encodeURIComponent(sym.split("/")[0])}&type=Krypto`).catch(() => {});
+      await refreshState();
+      openScanner();
+    }));
+  }
+  function scanHelp(t) {
+    let html = `<h3>So liest du das</h3><ul>
+      <li><strong>Trendampel grün</strong>: Tagesschluss über dem 50-Tage-Schnitt, dieselbe Regel wie bei deinen Haupt-Coins. Nur grüne Coins bekommen einen Score.</li>
+      <li><strong>Score</strong> (0–100) vergleicht die grünen Coins untereinander: „Rücksetzer im Aufwärtstrend“, je zur Hälfte nah am 50-Tage-Schnitt und
+        in den letzten 30 Tagen nicht schon stärker als BTC gelaufen. Coins, die schon davongelaufen waren, fielen im Test danach im Schnitt zurück. Der Score ist eine Rangliste, keine Trefferwahrscheinlichkeit.</li>
+      <li><strong>Marktbreite</strong>: Anteil der Coins mit grüner Ampel. Über 50 % ist der Gesamtmarkt eher stark, unter 30 % eher schwach.</li>
+      <li><strong>Anteil</strong>: wie viel deines Budgets für diesen Coin die Trendampel nach seiner Schwankung empfehlen würde.</li>
+      <li><strong>Volumen-Schub</strong>: Handelsvolumen der letzten 3 Tage gegen die 30 davor. Nur zur Info, im Test kein Vorteil.</li>
+      <li>Kleine Coins schwanken stark und können schnell abstürzen. Im Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen. Der Scanner ist eine Beobachtungsliste, kein Kaufsignal.</li></ul>`;
+    if (t && t.summary) html += `<h3>Historischer Test</h3><p class="muted">${t.summary}</p>`;
+    return html;
+  }
+
   // ---------- Backtest-Ansicht ----------
   async function openBacktest() {
     const box = $("#backtest");
@@ -1480,6 +1551,9 @@
   $("#news-open").addEventListener("click", () => openNews());
   $("#news-close").addEventListener("click", () => $("#news").classList.add("hidden"));
   $("#paper-close").addEventListener("click", () => $("#paper").classList.add("hidden"));
+  $("#scan-open").addEventListener("click", openScanner);
+  $("#scan-close").addEventListener("click", () => $("#scan").classList.add("hidden"));
+  $("#scan-run").addEventListener("click", async () => { await getJSON("/api/scanner/run").catch(() => {}); openScanner(); });
   $("#bt-close").addEventListener("click", () => $("#backtest").classList.add("hidden"));
   $("#bt-run").addEventListener("click", runBacktest);
   $("#strat-btn").addEventListener("click", (e) => { e.stopPropagation(); $("#strat-panel").classList.toggle("hidden"); });
@@ -1489,6 +1563,7 @@
     if (e.key !== "Escape") return;
     if (state.focus && (draw.tool || draw.sel)) { setTool(null); draw.sel = null; redrawDrawings(); return; }
     if (!$("#news").classList.contains("hidden")) $("#news").classList.add("hidden");
+    if (!$("#scan").classList.contains("hidden")) $("#scan").classList.add("hidden");
     else if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
     else if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
     else if (state.focus) closeFocus();
