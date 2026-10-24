@@ -34,6 +34,13 @@ trend_light: true
 # (sie erscheinen weiter im Chart und im Papier-Test, damit man sieht, ob der Filter recht hatte).
 learn_filter: true
 
+# Signal-Tracking: Telegram, sobald ein Signal Ziel 1 oder den Stop erreicht
+track_results: true
+# Wochenbericht per Telegram (Ergebnis der Woche, je Strategie, offene Trades, Trendampel)
+weekly_report: true
+report_weekday: 6    # 0 = Montag ... 6 = Sonntag
+report_hour: 18      # Uhrzeit (Ortszeit des Rechners)
+
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
 
 # Risiko-Management

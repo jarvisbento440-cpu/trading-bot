@@ -22,7 +22,7 @@ from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
 from .main import closed_candles, scan
 from .notify import Notifier
-from . import heatmap, learn, markets, paper, regime
+from . import heatmap, hitrates, learn, markets, paper, regime, tracking
 from .yahoo import is_yahoo
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
@@ -56,7 +56,7 @@ class Worker(threading.Thread):
                 sync_all(ex, db, self.cfg.symbols, self.cfg.store_timeframes, self.cfg.backfill_days)
                 markets.sync_extra(self.cfg, ex, db)
                 scan(self.cfg, ex, db, notifier)
-                paper.update(self.cfg, db)
+                tracking.after_update(self.cfg, db, notifier)
                 first = False
                 self.error = None
                 self.last_update = time.time()
@@ -248,6 +248,7 @@ class Api:
                 pts.append([t["exit_ts"], eq])
             return pts
         out["curve"] = {"all": curve(ts), "light": curve([t for t in ts if t["follows_light"]])}
+        out["report"] = tracking.weekly_report(self.cfg, db)
         return out
 
     # ---------- eigene Zeichnungen (Long/Short-Positionen, Linien) ----------
@@ -280,6 +281,13 @@ class Api:
         r = backtest.latest_result(self.cfg)
         if r:
             r = {k: v for k, v in r.items() if k != "trades"}
+        table = hitrates.load(self.cfg)
+        if r and table:  # echte Trefferquoten je Score-Stufe aus der langen Historie
+            g = table["groups"]
+            keys = [k for k in g if k.count("|") == 0 or (k.count("|") == 1 and k.split("|")[1] in table["buckets"])]
+            r["hitrates"] = {"buckets": table["buckets"], "from": table["from"], "to": table["to"],
+                             "source": table.get("source", ""), "min_n": table.get("min_n", hitrates.MIN_N),
+                             "groups": {k: g[k] for k in keys}}
         return r
 
     def start_backtest(self, days: int = 365) -> bool:
@@ -335,12 +343,16 @@ class Api:
         if btc and not is_yahoo(symbol):
             btc_daily = db.candles(markets.exchange_for(self.cfg, btc), btc, "1d", 400).drop(columns=["time"])
         judge = learn.Assessor(db, d, daily if self.cfg.trend_timeframe == "1d" else None, btc_daily, symbol, tf, tf_ms)
+        table = hitrates.load(self.cfg)
         last_ts = int(d["ts"].iloc[-1]) if len(d) else 0
 
         def pack(s):
             st = backtest.stats_for(bt, s.strategy, tf, s.score if s.strategy == "score" else None)
+            setup, hr = tracking.expected_for(table, d, s.i, s.strategy, tf, s.side, s.score)
+            if hr:
+                hr["verdict"] = hitrates.verdict(hr)
             return {"time": s.bar_ts // 1000, "strategy": s.strategy, "name": BY_KEY[s.strategy].name,
-                    "side": s.side, "score": s.score, "entry": s.entry, "stop": s.stop,
+                    "side": s.side, "score": s.score, "setup": setup, "hitrate": hr, "entry": s.entry, "stop": s.stop,
                     "target1": s.target1, "target2": s.target2, "reasons": s.reasons,
                     "winrate": st.get("winrate") if st else None, "trades": st.get("trades") if st else None,
                     "avg_r": st.get("avg_r") if st else None, "ai": ai_pack(s)}
