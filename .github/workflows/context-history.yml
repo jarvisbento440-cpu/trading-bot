@@ -6,6 +6,9 @@ on:
       weeks:
         description: "Wochen Schlagzeilen"
         default: "104"
+      parts:
+        description: "Teile: all oder z. B. funding,news"
+        default: "all"
   push:
     branches: [claude/project-thread-1iwdna]
     paths: [scripts/fetch_context_history.py, .github/workflows/context-history.yml]
@@ -23,15 +26,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}"
+      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}" "${{ inputs.parts || 'funding' }}"
       - name: In Branch "context-history" speichern
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git checkout --orphan context-history
-          git rm -rq --cached .
-          rm -rf ./* .github .gitignore .gitattributes .env.example 2>/dev/null || true
+          # vorhandene Daten behalten, neue darüberlegen
+          if git fetch -q origin context-history; then
+            git checkout -qf -B context-history FETCH_HEAD
+          else
+            git checkout --orphan context-history && git rm -rq --cached . && rm -rf ./* .github .gitignore .gitattributes .env.example
+          fi
           mkdir -p ctxhist && cp /tmp/ctxhist/* ctxhist/
           git add ctxhist
-          git commit -qm "News/On-Chain-Historie"
+          git commit -qm "News/On-Chain-Historie" || true
           git push -f origin context-history

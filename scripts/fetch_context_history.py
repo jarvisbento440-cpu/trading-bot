@@ -54,17 +54,19 @@ def save(o: Path, name: str, text: str) -> None:
         f.write(text)
 
 
-def main(out: str, weeks: int = 104) -> None:
+def main(out: str, weeks: int = 104, parts: str = "all") -> None:
     o = Path(out)
     o.mkdir(parents=True, exist_ok=True)
-    for key, url in GET.items():
+    if parts == "all":
+        parts = "basis,funding,news"
+    for key, url in GET.items() if "basis" in parts else []:
         r = get(url)
         print(key, r.status_code if r is not None else "-", len(r.text) if r is not None else 0)
         if r is not None and r.ok:
             save(o, key + ".json", r.text)
 
     # Ondo-Protokolle finden (TVL der tokenisierten Anleihen)
-    r = get("https://api.llama.fi/protocols")
+    r = get("https://api.llama.fi/protocols") if "basis" in parts else None
     if r is not None and r.ok:
         ondo = [p for p in r.json() if "ondo" in (p.get("name", "") + p.get("slug", "")).lower()]
         save(o, "ondo_protocols.json", json.dumps(ondo))
@@ -74,28 +76,33 @@ def main(out: str, weeks: int = 104) -> None:
                 save(o, f"protocol_{p['slug']}.json", rp.text)
             print("protocol", p["slug"], rp.status_code if rp is not None else "-")
 
-    # Funding-Historie (Hyperliquid, stündlich, seit Mai 2023)
-    for coin in HL_COINS:
-        start, rows = 1683000000000, []
-        while True:
+    # Funding-Historie (Hyperliquid, stündlich, seit Mai 2023; je Abfrage höchstens 500 Werte)
+    for coin in HL_COINS if "funding" in parts else []:
+        start, rows, tries = 1683000000000, [], 0
+        now_ms = int(time.time() * 1000)
+        while start < now_ms - 3_600_000 and tries < 8:
             try:
                 r = requests.post(HL, json={"type": "fundingHistory", "coin": coin, "startTime": start}, timeout=30)
-                batch = r.json() if r.ok else []
+                batch = r.json() if r.ok else None
             except (requests.RequestException, ValueError):
-                batch = []
-            if not batch:
-                break
+                batch = None
+            if batch is None:  # Limit erreicht: kurz warten, nochmal
+                tries += 1
+                time.sleep(5 * tries)
+                continue
+            tries = 0
+            if not batch:  # Coin gab es damals noch nicht: einen Monat weiter
+                start += 30 * 86_400_000
+                continue
             rows += batch
             start = batch[-1]["time"] + 1
-            if len(batch) < 500:
-                break
-            time.sleep(0.3)
+            time.sleep(0.6)
         print("funding", coin, len(rows))
         save(o, f"funding_{coin}.json", json.dumps(rows))
 
     # Schlagzeilen der letzten Wochen (Google News, wochenweise je Coin)
     end = date.today()
-    for coin, q in NEWS.items():
+    for coin, q in NEWS.items() if "news" in parts else []:
         items = []
         for w in range(weeks):
             d1 = end - timedelta(days=7 * w)
@@ -111,4 +118,5 @@ def main(out: str, weeks: int = 104) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "context-history", int(sys.argv[2]) if len(sys.argv) > 2 else 104)
+    main(sys.argv[1] if len(sys.argv) > 1 else "context-history", int(sys.argv[2]) if len(sys.argv) > 2 else 104,
+         sys.argv[3] if len(sys.argv) > 3 else "all")
