@@ -29,6 +29,13 @@ min_score: 65
 # Trendampel: Tages-Trendfilter (50-Tage-Schnitt), meldet Wechsel per Telegram
 trend_light: true
 
+# Signal-Tracking: Telegram, sobald ein Signal Ziel 1 oder den Stop erreicht
+track_results: true
+# Wochenbericht per Telegram (Ergebnis der Woche, je Strategie, offene Trades, Trendampel)
+weekly_report: true
+report_weekday: 6    # 0 = Montag ... 6 = Sonntag
+report_hour: 18      # Uhrzeit (Ortszeit des Rechners)
+
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
 
 # Risiko-Management

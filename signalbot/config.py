@@ -31,6 +31,10 @@ class Config:
     strategies: list[str] = field(default_factory=lambda: [
         "score", "donchian", "supertrend", "macd", "rsi", "squeeze", "fib", "sweep"])
     trend_light: bool = True  # Trendampel (Tages-Trendfilter) anzeigen und melden
+    track_results: bool = True  # Telegram, wenn ein Signal Ziel oder Stop erreicht
+    weekly_report: bool = True  # Wochenbericht per Telegram
+    report_weekday: int = 6     # 0 = Montag … 6 = Sonntag
+    report_hour: int = 18       # Ortszeit
     telegram_token: str = ""
     telegram_chat_id: str = ""
 

@@ -1,0 +1,31 @@
+name: Trefferquoten
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 1 * *"  # jeden Monatsersten mit den neuesten Kursen neu berechnen
+
+permissions:
+  contents: write
+
+jobs:
+  hitrates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      # GitHub-Server stehen in den USA, dort ist Binance gesperrt -> Coinbase (USD-Paare)
+      - run: python scripts/fetch_history.py --since 2021-01-01 --out /tmp/history
+      - run: python scripts/trefferquoten.py /tmp/history results/trefferquoten
+      - name: Ergebnis speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add results/trefferquoten
+          git commit -m "Trefferquoten neu berechnet" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

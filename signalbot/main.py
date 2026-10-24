@@ -24,11 +24,13 @@ def closed_candles(df, tf_ms: int, now_ms: int):
 
 def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     """Prüft alle Strategien auf der letzten abgeschlossenen Kerze und verschickt neue Signale."""
+    from . import hitrates, tracking
     from .backtest import latest_result, stats_for
     from .strategies import BY_KEY, prepare, signals_at
 
     now = ex.milliseconds()
     bt = latest_result(cfg)
+    table = hitrates.load(cfg)
     sent = 0
     from .markets import all_symbols
     from .yahoo import EXCHANGE as YAHOO, is_yahoo
@@ -57,8 +59,10 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                     "reasons": "; ".join(sig.reasons),
                 })
                 if is_new:
-                    hist = stats_for(bt, sig.strategy, tf, sig.score if sig.strategy == "score" else None)
-                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist))
+                    setup, hr = tracking.expected_for(table, d, len(d) - 1, sig.strategy, tf, sig.side, sig.score)
+                    tracking.remember(db, sig.strategy, symbol, tf, sig.bar_ts, sig.side, setup, hr)
+                    hist = None if hr else stats_for(bt, sig.strategy, tf, sig.score if sig.strategy == "score" else None)
+                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist, hr, setup))
                     sent += 1
     return sent
 
@@ -78,10 +82,11 @@ def _trend_light(symbol: str, daily, now: int, db: Database, notifier: Notifier)
 
 def main() -> None:
     p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
-    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest"], nargs="?", default="ui",
+    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest", "bericht"], nargs="?", default="ui",
                    help="ui = Oberfläche (Standard), backfill = Historie laden, "
                         "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche, "
-                        "backtest = Strategien an der Vergangenheit testen")
+                        "backtest = Strategien an der Vergangenheit testen, "
+                        "bericht = Wochenbericht jetzt erstellen und schicken")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--offline", action="store_true", help="Oberfläche ohne Kurs-Aktualisierung")
@@ -122,6 +127,14 @@ def main() -> None:
         log.info("Ergebnis gespeichert: %s", path)
         return
 
+    if args.command == "bericht":
+        from . import paper, tracking
+        paper.update(cfg, db)
+        text = tracking.weekly_report(cfg, db)
+        log.info("Bericht gespeichert: %s", tracking.save_report(cfg, text))
+        notifier.send(text)
+        return
+
     if args.command == "backfill":
         sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
         return
@@ -137,8 +150,8 @@ def main() -> None:
             sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
             sync_extra(cfg, ex, db)
             scan(cfg, ex, db, notifier)
-            from .paper import update as paper_update
-            paper_update(cfg, db)
+            from .tracking import after_update
+            after_update(cfg, db, notifier)
         except Exception:
             log.exception("Fehler im Durchlauf, nächster Versuch beim nächsten Intervall")
         time.sleep(cfg.poll_minutes * 60)

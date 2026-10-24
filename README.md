@@ -3,7 +3,7 @@
 Beobachtet BTC, ETH, SOL, XRP und ONDO rund um die Uhr und schickt Einstiegs-Signale per Telegram.
 **Der Bot handelt nicht selbst** und braucht keine Börsen-API-Keys: Kursdaten sind öffentlich.
 
-> ⚠️ Der Setup-Score ist keine Gewinnwahrscheinlichkeit und keine Garantie. Echte Trefferquoten kommen erst mit dem Backtest (nächster Schritt). Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.
+> ⚠️ Der Setup-Score ist keine Gewinnwahrscheinlichkeit. Bei jedem Signal steht die echte Trefferquote ähnlicher Signale seit 2021 ([docs/trefferquoten.md](docs/trefferquoten.md)), aber auch das ist keine Garantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.
 
 ## Was er macht
 
@@ -13,7 +13,8 @@ Beobachtet BTC, ETH, SOL, XRP und ONDO rund um die Uhr und schickt Einstiegs-Sig
    - EMA 20/50/200, Ausbruch aus 20-Kerzen-Spanne, Rücksetzer an EMA20, RSI, MACD, Volumen
    - daraus ein Score von 0 bis 100
 3. Ab Score 65 (einstellbar) kommt ein Signal mit Einstieg, Stop (1,5 × ATR) und zwei Zielen.
-4. Jedes Signal wird gespeichert, damit es später ausgewertet werden kann.
+4. Zu jedem Signal die echte Trefferquote ähnlicher Signale aus 5 Jahren Kursdaten und die Gewinnschwelle.
+5. Jedes Signal läuft als virtueller Trade mit: Telegram-Nachricht, wenn Ziel oder Stop erreicht ist, und jeden Sonntag ein Wochenbericht.
 
 ## Starten unter Windows (mit Oberfläche)
 
@@ -69,6 +70,8 @@ pip install pytest && python -m pytest
 
 **Papier-Test:** Button „📝 Papier-Test“. Jedes Signal wird automatisch als virtueller Trade mitgeschrieben (Einstieg zur nächsten Kerze, Stop, Ziel, Ergebnis in R nach Gebühren) und ausgewertet, solange das Programm läuft. Filter „nur mit Trendampel“ und „nur eingeschaltete Strategien“, Umrechnung in Euro über Kapital und Risiko pro Trade. Es wird nichts wirklich gehandelt.
 
+**Echte Trefferquoten, Signal-Tracking, Wochenbericht:** Bei jedem Signal steht, wie oft ähnliche Signale (gleiche Strategie, Zeitebene, Richtung, Score-Stufe) seit 2021 ihr Ziel erreicht haben, mit Spanne und Gewinnschwelle. Erreicht ein Signal Ziel oder Stop, kommt eine Telegram-Nachricht; sonntags um 18 Uhr ein Wochenbericht (einstellbar in `config.yaml`, sofort: `python -m signalbot bericht`). Ergebnis und Details: [docs/trefferquoten.md](docs/trefferquoten.md).
+
 **Eigene Märkte:** Kachel „＋ Markt hinzufügen“ mit Suchfeld. Krypto kommt von der Börse (alle Paare), Aktien, Indizes (S&P 500, DAX …), Rohstoffe (Gold, Silber, Öl) und Devisen kostenlos von Yahoo Finance. ✕ oben rechts entfernt die Kachel. Im Vollbild lassen sich die Strategien oben direkt ein- und ausschalten.
 
 **Börsenzeiten:** oben eine Uhr, welche Börse gerade offen ist (Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New York), in deiner Ortszeit mit automatischer Sommer-/Winterzeit. In den 1h- und 4h-Charts zeigen farbige Streifen, wann welche Börse offen war (Schalter „Börsenzeiten“).
@@ -85,6 +88,6 @@ pip install pytest && python -m pytest
 
 ## Nächste Schritte
 
-4. Backtest → echte Trefferquoten pro Score
-5. Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht
+4. ~~Backtest → echte Trefferquoten pro Score~~ (erledigt)
+5. ~~Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht~~ (erledigt)
 6. News-Modul, 7. On-Chain-Modul, 8. Coin-Scanner

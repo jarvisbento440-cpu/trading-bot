@@ -534,6 +534,7 @@
     return !st || !st.stats || st.stats.avg_r >= -0.03;
   };
   const pctDe = (x) => x == null ? "–" : Math.round(x * 100) + " %";
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const rDe = (x) => x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
 
   // ---------- Chart ----------
@@ -942,7 +943,12 @@
     acts.forEach((a, idx) => {
       const st = stratInfo(a.strategy);
       const rr = Math.abs(a.target1 - a.entry) / Math.abs(a.entry - a.stop);
-      const hist = a.trades ? `Trefferquote im Backtest: <strong>${pctDe(a.winrate)}</strong> (${a.trades} Trades, Ø ${rDe(a.avg_r)})`
+      const h = a.hitrate;
+      const hist = h ? `Echte Trefferquote: <strong>${pctDe(h.winrate)}</strong> (Spanne ${pctDe(h.lo)}–${pctDe(h.hi)}, ${h.n} ähnliche Signale seit 2021)` +
+          (h.breakeven != null ? `<br>Gewinnschwelle ${pctDe(h.breakeven)}: <span class="${h.lo > h.breakeven ? "up" : h.winrate > h.breakeven ? "" : "down"}">${h.verdict}</span> (Ø ${rDe(h.avg_r)})` : "") +
+          (h.test && h.test.n ? `<br>Letztes Jahr: ${pctDe(h.test.winrate)} aus ${h.test.n} Signalen` : "") +
+          (a.setup != null ? `<br>Setup-Score ${a.setup}/100` : "")
+        : a.trades ? `Trefferquote im Backtest: <strong>${pctDe(a.winrate)}</strong> (${a.trades} Trades, Ø ${rDe(a.avg_r)})`
         : "Noch kein Backtest für diese Strategie";
       html += `<div class="sig-card" style="border-left-color:${st.color}">
         <div class="row"><span class="badge sig-${a.side}">${sideDe(a.side)}</span><strong style="color:${st.color}">${st.name}</strong></div>
@@ -1120,7 +1126,9 @@
             <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.target1)}</td><td>${status}</td>
             <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td></tr>`;
         }).join("") + `</tbody></table></div>
-        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>`;
+        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>` +
+        (r.report ? `<h3>Wochenbericht (letzte 7 Tage)</h3><pre class="report">${esc(r.report)}</pre>
+        <p class="muted">Kommt automatisch per Telegram (Standard: sonntags 18 Uhr, einstellbar in config.yaml). Sobald ein Signal Ziel oder Stop erreicht, kommt außerdem eine kurze Nachricht.</p>` : "");
       body.innerHTML = html; bindPaper(draw);
     };
     draw();
@@ -1179,8 +1187,27 @@
     html += `<h3>Je Coin</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th>${r.symbols.map((x) => `<th>${coinName(x)}</th>`).join("")}</tr></thead><tbody>` +
       rows.map(([key, s]) => `<tr><td>${s.name}</td>${r.symbols.map((x) => `<td>${cell(s.by_symbol[x])}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>`;
     html += `<h3>Score-Modell: Trefferquote je Score</h3><table class="bt"><thead><tr><th>Score</th><th>Trades</th><th>Trefferquote</th><th>Ø pro Trade</th></tr></thead><tbody>` +
-      r.score_buckets.map((b) => `<tr><td>${b.from}–${b.to}</td><td>${b.trades || 0}</td><td>${b.trades ? pctDe(b.winrate) : "–"}</td><td>${b.trades ? rDe(b.avg_r) : "–"}</td></tr>`).join("") + `</tbody></table>
-      <h3>So liest du das</h3><ul>
+      r.score_buckets.map((b) => `<tr><td>${b.from}–${b.to}</td><td>${b.trades || 0}</td><td>${b.trades ? pctDe(b.winrate) : "–"}</td><td>${b.trades ? rDe(b.avg_r) : "–"}</td></tr>`).join("") + `</tbody></table>`;
+    const H = r.hitrates;
+    if (H) {
+      const hc = (g) => {
+        const a = g && g.all;
+        if (!a || !a.n) return "–";
+        const ok = a.breakeven != null && a.n >= H.min_n && a.lo > a.breakeven;
+        return `<span class="${a.breakeven == null ? "" : a.winrate > a.breakeven ? "up" : "down"}">${pctDe(a.winrate)}</span> <span class="muted">(${a.n})</span>${ok ? " ✔" : ""}`;
+      };
+      const lab = (b) => b.replace("-", "–");
+      html += `<h3>Echte Trefferquoten je Setup-Score (${new Date(H.from).getFullYear()}–${new Date(H.to).getFullYear()})</h3>
+        <p class="muted">${esc(H.source)}. Jedes Signal bekommt den Setup-Score, auch wenn es von einer anderen Strategie kommt. Grün = über der Gewinnschwelle der Strategie, rot = darunter. ✔ = auch mit Messungenauigkeit sicher darüber (mind. ${H.min_n} Trades).</p>
+        <div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th>${H.buckets.map((b) => `<th>${lab(b)}</th>`).join("")}<th>alle</th><th>Gewinnschwelle</th></tr></thead><tbody>` +
+        [{ key: "*", name: "Alle zusammen", short: "∑", color: "var(--muted)" }, ...state.strategies].map((st) => {
+          const all = H.groups[st.key];
+          if (!all) return "";
+          return `<tr><td><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td>${H.buckets.map((b) => `<td>${hc(H.groups[st.key + "|" + b])}</td>`).join("")}
+            <td>${hc(all)}</td><td>${pctDe(all.all.breakeven)}</td></tr>`;
+        }).join("") + `</tbody></table></div>`;
+    }
+    html += `<h3>So liest du das</h3><ul>
       <li><strong>R</strong> = dein Risiko pro Trade (Abstand Einstieg–Stop). +0,30 R heißt: im Schnitt 30 % des Risikos gewonnen.</li>
       <li><strong>Ø pro Trade über 0</strong> heißt: nach Gebühren profitabel. Eine hohe Trefferquote allein reicht nicht, wenn die Gewinne klein sind.</li>
       <li><strong>Profit-Faktor</strong> = Gewinne / Verluste. Über 1,2 ist brauchbar, unter 1 verliert Geld.</li>
