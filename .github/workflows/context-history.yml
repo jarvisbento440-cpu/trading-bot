@@ -1,0 +1,40 @@
+name: News/On-Chain-Historie
+
+on:
+  workflow_dispatch:
+    inputs:
+      weeks:
+        description: "Wochen Schlagzeilen"
+        default: "104"
+      parts:
+        description: "Teile: all oder z. B. funding,news"
+        default: "all"
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}" "${{ inputs.parts || 'all' }}"
+      - name: In Branch "context-history" speichern
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          # vorhandene Daten behalten, neue darüberlegen
+          if git fetch -q origin context-history; then
+            git checkout -qf -B context-history FETCH_HEAD
+          else
+            git checkout --orphan context-history && git rm -rq --cached . && rm -rf ./* .github .gitignore .gitattributes .env.example
+          fi
+          mkdir -p ctxhist && cp /tmp/ctxhist/* ctxhist/
+          git add ctxhist
+          git commit -qm "News/On-Chain-Historie" || true
+          git push -f origin context-history

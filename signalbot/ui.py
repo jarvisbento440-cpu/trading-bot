@@ -20,9 +20,10 @@ from .data import make_exchange, sync_all
 from .db import Database
 from . import backtest
 from .indicators import bollinger, fibonacci, liquidity_zones, trend_series
-from .main import closed_candles, scan
+from .main import _scanner, closed_candles, scan
 from .notify import Notifier
-from . import heatmap, markets, paper, regime
+from . import context, heatmap, hitrates, learn, markets, news, onchain, paper, regime, scanner, tracking
+from .yahoo import is_yahoo
 from .strategies import BY_KEY, STRATEGIES, prepare, scan_history
 
 log = logging.getLogger(__name__)
@@ -42,6 +43,11 @@ class Worker(threading.Thread):
         self.last_update: float | None = None
         self.error: str | None = None
 
+    def _scan_due(self) -> bool:
+        last = scanner.load(self.cfg)
+        return self.cfg.scanner.enabled and (
+            not last or time.time() * 1000 - last.get("created_at", 0) >= self.cfg.scanner.every_hours * 3_600_000)
+
     def run(self) -> None:
         if not self.sync:
             return
@@ -49,13 +55,17 @@ class Worker(threading.Thread):
         ex = make_exchange(self.cfg.exchange)
         notifier = Notifier(self.cfg.telegram_token, self.cfg.telegram_chat_id)
         first = db.last_ts(ex.id, self.cfg.symbols[0], self.cfg.store_timeframes[0]) is None
+        updater = context.Updater(self.cfg)
         while True:
             try:
                 self.status = "Lade Kurs-Historie (erster Start, einige Minuten)…" if first else "Aktualisiere…"
                 sync_all(ex, db, self.cfg.symbols, self.cfg.store_timeframes, self.cfg.backfill_days)
                 markets.sync_extra(self.cfg, ex, db)
+                updater.run(db, notifier)
                 scan(self.cfg, ex, db, notifier)
-                paper.update(self.cfg, db)
+                tracking.after_update(self.cfg, db, notifier)
+                self.status = "Coin-Scanner…" if self._scan_due() else self.status
+                _scanner(self.cfg, ex, db, notifier)
                 first = False
                 self.error = None
                 self.last_update = time.time()
@@ -100,6 +110,7 @@ class Api:
     def __init__(self, cfg: Config, worker: Worker):
         self.cfg, self.worker = cfg, worker
         self.bt_running, self.bt_error = False, None
+        self.scan_running, self.scan_error = False, None
         self._hm_cache: dict = {}
         self.loading: set[str] = set()
         self._lock = threading.Lock()
@@ -129,7 +140,8 @@ class Api:
             if self.cfg.trend_light and self.cfg.trend_timeframe == "1d" and len(daily):
                 light = regime.current(daily.drop(columns=["time"]), int(time.time() * 1000))
             info = extra.get(sym, {})
-            coins.append({"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light,
+            ctx = self._ctx_badge(db, sym)
+            coins.append({"context": ctx,"symbol": sym, "price": price, "change24h": change, "trend": trend, "regime": light,
                           "name": info.get("name") or sym.split("/")[0], "kind": info.get("type", "Krypto"),
                           "extra": sym in extra, "loading": sym in self.loading})
         rows = db.conn.execute(
@@ -151,6 +163,39 @@ class Api:
             "backtest_running": self.bt_running,
             "backtest_error": self.bt_error,
         }
+
+    def _ctx_badge(self, db: Database, sym: str) -> dict | None:
+        """Kurzfassung für die Kachel: News-Stimmung und News-Filter."""
+        if "/" not in sym or not self.cfg.news:
+            return None
+        n = news.summary(db, sym)
+        return {"news3": n["news3"], "n": n["news3_n"], "label": n["label"], "filter": n["filter"],
+                "strong_neg": len(n["strong_neg"]), "strong_pos": len(n["strong_pos"])}
+
+    def context(self, symbol: str) -> dict:
+        """News, Fear & Greed und On-Chain für einen Coin (Vollbild) bzw. den ganzen Markt."""
+        db = self._db()
+        out = context.coin_context(db, self.cfg, symbol) if "/" in symbol else {}
+        st, ts = db.get_context("news_status", with_ts=True)
+        out["news_status"] = st
+        out["enabled"] = {"news": self.cfg.news, "onchain": self.cfg.onchain, "filter": self.cfg.context_filter}
+        return out
+
+    def news_list(self, coin: str = "", hours: int = 48) -> dict:
+        db = self._db()
+        rows = db.news_since(int(time.time() * 1000) - hours * 3_600_000, coin.upper() or None, limit=300)
+        seen, out = set(), []
+        for r in rows:
+            k = "".join(ch for ch in r["title"].lower() if ch.isalnum())[:80]
+            if k not in seen:
+                seen.add(k)
+                out.append(r)
+        snap = db.get_context("onchain")
+        coins = [s for s in markets.all_symbols(self.cfg) if "/" in s]
+        return {"items": out[:150], "fear_greed": news.fear_greed_now(db), "status": db.get_context("news_status"),
+                "coins": [{"symbol": s, "news": self._ctx_badge(db, s), "onchain": onchain.view(snap, s)} for s in coins],
+                "market": (snap or {}).get("market"), "onchain_ts": (snap or {}).get("ts"),
+                "onchain_failed": (snap or {}).get("failed", [])}
 
     def strategies(self) -> list[dict]:
         bt = backtest.latest_result(self.cfg)
@@ -226,7 +271,14 @@ class Api:
         db = self._db()
         paper.update(self.cfg, db)  # auch im Offline-Modus mit vorhandenen Kerzen weiterrechnen
         ts = paper.trades(db)
+        for t in ts:  # Fehler-Analyse: was sprach laut Lernmodell dafür/dagegen?
+            if t["status"] in ("win", "loss", "timeout"):
+                t["why"] = learn.mistake_analysis(t)
+            t.pop("features", None)
         out = {"all": paper.stats(ts), "light": paper.stats([t for t in ts if t["follows_light"]]),
+               "learn": {"model": learn.model_info(), "take": paper.stats([t for t in ts if t["take"] is True]),
+                         "dropped": paper.stats([t for t in ts if t["take"] is False]),
+                         "filter": self.cfg.learn_filter, "research": _learn_research()},
                "by_strategy": {}, "trades": ts[:2000], "since": min((t["bar_ts"] for t in ts), default=None)}
         for st in STRATEGIES:
             mine = [t for t in ts if t["strategy"] == st.key]
@@ -240,7 +292,35 @@ class Api:
                 pts.append([t["exit_ts"], eq])
             return pts
         out["curve"] = {"all": curve(ts), "light": curve([t for t in ts if t["follows_light"]])}
+        out["report"] = tracking.weekly_report(self.cfg, db)
         return out
+
+    def scanner(self) -> dict:
+        r = scanner.load(self.cfg) or {}
+        if r:  # eigene Liste kann sich seit dem Scan geändert haben
+            watched = set(markets.all_symbols(self.cfg))
+            for c in r.get("coins", []):
+                c["watched"] = c["symbol"] in watched
+        return {"result": r or None, "test": scanner.test_result(), "running": self.scan_running,
+                "error": self.scan_error, "enabled": self.cfg.scanner.enabled, "online": self.worker.sync,
+                "every_hours": self.cfg.scanner.every_hours}
+
+    def start_scanner(self) -> bool:
+        if self.scan_running or not self.worker.sync:
+            return False
+        self.scan_running, self.scan_error = True, None
+
+        def job():
+            try:
+                scanner.save(self.cfg, scanner.run(self.cfg, make_exchange(self.cfg.exchange)))
+            except Exception as e:
+                log.exception("Coin-Scanner fehlgeschlagen")
+                self.scan_error = str(e)
+            finally:
+                self.scan_running = False
+
+        threading.Thread(target=job, daemon=True).start()
+        return True
 
     # ---------- eigene Zeichnungen (Long/Short-Positionen, Linien) ----------
     def _drawings_path(self) -> Path:
@@ -272,6 +352,13 @@ class Api:
         r = backtest.latest_result(self.cfg)
         if r:
             r = {k: v for k, v in r.items() if k != "trades"}
+        table = hitrates.load(self.cfg)
+        if r and table:  # echte Trefferquoten je Score-Stufe aus der langen Historie
+            g = table["groups"]
+            keys = [k for k in g if k.count("|") == 0 or (k.count("|") == 1 and k.split("|")[1] in table["buckets"])]
+            r["hitrates"] = {"buckets": table["buckets"], "from": table["from"], "to": table["to"],
+                             "source": table.get("source", ""), "min_n": table.get("min_n", hitrates.MIN_N),
+                             "groups": {k: g[k] for k in keys}}
         return r
 
     def start_backtest(self, days: int = 365) -> bool:
@@ -322,15 +409,28 @@ class Api:
         first = int(d.index[d["ts"] >= view_from][0]) if len(dv) else len(d)
         setups = scan_history(d, trends, min_score=self.cfg.min_score, start=first)
         bt = backtest.latest_result(self.cfg)
+        btc = learn.btc_symbol(self.cfg.symbols)
+        btc_daily = None
+        if btc and not is_yahoo(symbol):
+            btc_daily = db.candles(markets.exchange_for(self.cfg, btc), btc, "1d", 400).drop(columns=["time"])
+        judge = learn.Assessor(db, d, daily if self.cfg.trend_timeframe == "1d" else None, btc_daily, symbol, tf, tf_ms)
+        table = hitrates.load(self.cfg)
         last_ts = int(d["ts"].iloc[-1]) if len(d) else 0
 
         def pack(s):
             st = backtest.stats_for(bt, s.strategy, tf, s.score if s.strategy == "score" else None)
+            setup, hr = tracking.expected_for(table, d, s.i, s.strategy, tf, s.side, s.score)
+            if hr:
+                hr["verdict"] = hitrates.verdict(hr)
             return {"time": s.bar_ts // 1000, "strategy": s.strategy, "name": BY_KEY[s.strategy].name,
-                    "side": s.side, "score": s.score, "entry": s.entry, "stop": s.stop,
+                    "side": s.side, "score": s.score, "setup": setup, "hitrate": hr, "entry": s.entry, "stop": s.stop,
                     "target1": s.target1, "target2": s.target2, "reasons": s.reasons,
                     "winrate": st.get("winrate") if st else None, "trades": st.get("trades") if st else None,
-                    "avg_r": st.get("avg_r") if st else None}
+                    "avg_r": st.get("avg_r") if st else None, "ai": ai_pack(s)}
+
+        def ai_pack(s):
+            a = judge(s)
+            return a and {"p_win": a["p_win"], "exp_r": a["exp_r"], "take": a["take"], "why": a["why"]}
 
         # Aktuelle Signale: höchstens 6 Kerzen alt
         active = [pack(s) for s in setups if last_ts - s.bar_ts <= 6 * tf_ms]
@@ -363,6 +463,18 @@ class Api:
         }
 
 
+def _learn_research() -> dict | None:
+    """Kurzfassung der Lern-Forschung (scripts/learn_research.py) für die Anzeige."""
+    p = learn.MODEL_FILE.parent / "lern-ergebnis.json"
+    try:
+        r = json.loads(p.read_text(encoding="utf-8"))
+        run = r["runs"]["l2=3 schwelle=0"]
+        return {"trades": r["trades"], "pruefjahr": run["pruefjahr"], "pruefjahr_fokus": run["pruefjahr_fokus"],
+                "monate_besser": run.get("monate_besser")}
+    except (OSError, ValueError, KeyError):
+        return None
+
+
 def make_handler(api: Api):
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *args):  # Konsole ruhig halten
@@ -386,6 +498,10 @@ def make_handler(api: Api):
                     return self._json(api.backtest_result())
                 if url.path == "/api/backtest/run":
                     return self._json({"started": api.start_backtest(int(q.get("days", 365)))})
+                if url.path == "/api/scanner":
+                    return self._json(api.scanner())
+                if url.path == "/api/scanner/run":
+                    return self._json({"started": api.start_scanner()})
                 if url.path == "/api/search":
                     return self._json(api.search(q.get("q", "")))
                 if url.path == "/api/watch/add":
@@ -394,6 +510,10 @@ def make_handler(api: Api):
                     return self._json({"ok": api.watch_remove(q.get("symbol", ""))})
                 if url.path == "/api/drawings":
                     return self._json(api.drawings())
+                if url.path == "/api/context":
+                    return self._json(api.context(q.get("symbol", "")))
+                if url.path == "/api/news":
+                    return self._json(api.news_list(q.get("coin", ""), int(q.get("hours", 48))))
                 if url.path == "/api/paper":
                     return self._json(api.paper())
                 if url.path == "/api/heatmap":

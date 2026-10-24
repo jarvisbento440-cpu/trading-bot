@@ -139,12 +139,17 @@ def update(cfg: Config, db: Database, now_ms: int | None = None) -> int:
 
 
 def trades(db: Database, limit: int = 2000) -> list[dict]:
+    from .learn import LEARN_SCHEMA
     ensure(db)
-    cur = db.conn.execute("SELECT * FROM paper_trades ORDER BY bar_ts DESC LIMIT ?", (limit,))
+    db.conn.executescript(LEARN_SCHEMA)
+    cur = db.conn.execute(
+        "SELECT p.*, l.p_win, l.exp_r, l.take, l.features FROM paper_trades p "
+        "LEFT JOIN signal_learn l ON l.signal_id = p.signal_id ORDER BY p.bar_ts DESC LIMIT ?", (limit,))
     cols = [d[0] for d in cur.description]
     out = [dict(zip(cols, r)) for r in cur.fetchall()]
     for t in out:
         t["follows_light"] = follows_light(t)
+        t["take"] = None if t["take"] is None else bool(t["take"])
     return out
 
 

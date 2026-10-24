@@ -29,7 +29,38 @@ min_score: 65
 # Trendampel: Tages-Trendfilter (50-Tage-Schnitt), meldet Wechsel per Telegram
 trend_light: true
 
+# Lernmodell (docs/lernen.md): schätzt für jedes Signal die Trefferchance aus ~45.000 vergangenen Signalen.
+# true = Signale mit erwartetem Ergebnis unter 0 R werden nicht per Telegram gemeldet
+# (sie erscheinen weiter im Chart und im Papier-Test, damit man sieht, ob der Filter recht hatte).
+learn_filter: true
+
+# Signal-Tracking: Telegram, sobald ein Signal Ziel 1 oder den Stop erreicht
+track_results: true
+# Wochenbericht per Telegram (Ergebnis der Woche, je Strategie, offene Trades, Trendampel)
+weekly_report: true
+report_weekday: 6    # 0 = Montag ... 6 = Sonntag
+report_hour: 18      # Uhrzeit (Ortszeit des Rechners)
+
+# News (Schlagzeilen aus RSS + Google News, Fear & Greed) und On-Chain (DefiLlama, mempool.space,
+# Hyperliquid-Funding). Alles kostenlos und ohne API-Schlüssel. Erklärung: docs/news-onchain.md
+news: true
+news_minutes: 10
+news_alerts: true        # sehr starke Meldung zu einem deiner Coins (Hack, Delisting, ETF ...) per Telegram
+onchain: true
+onchain_minutes: 30
+context_filter: warn     # warn = Hinweis im Signal, block = Signal bei starkem Gegenwind nicht senden, off = aus
+
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
+
+# Coin-Scanner: sucht unter den meistgehandelten Coins der Börse weitere mit grüner Trendampel
+# (Erklärung: docs/scanner.md). Ergebnis in der Oberfläche unter "🔍 Scanner" und einmal am Tag per Telegram.
+scanner:
+  enabled: true
+  top: 150              # so viele Coins mit dem höchsten 24h-Volumen prüfen
+  min_volume: 2000000   # Mindest-Tagesvolumen (USDT)
+  every_hours: 4        # so oft neu scannen
+  telegram_daily: true  # einmal am Tag die besten 5 per Telegram
+  telegram_top: 5
 
 # Risiko-Management
 risk:

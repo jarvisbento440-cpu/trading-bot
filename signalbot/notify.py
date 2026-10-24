@@ -14,10 +14,15 @@ def fmt_price(p: float) -> str:
     return f"{p:,.{digits}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None) -> str:
+def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None,
+                  ai: dict | None = None, hitrate: dict | None = None, setup: int | None = None,
+                  context: list[str] | None = None, warn: list[str] | None = None) -> str:
+    from .hitrates import format_line
     icon = "🟢" if s.side == "long" else "🔴"
     rr = abs(s.target1 - s.entry) / abs(s.entry - s.stop)
-    if hist and hist.get("trades"):
+    if hitrate:
+        quote = format_line(hitrate)
+    elif hist and hist.get("trades"):
         quote = (f"Trefferquote im Backtest: {hist['winrate'] * 100:.0f} % "
                  f"({hist['trades']} Trades, Ø {hist['avg_r']:+.2f} R)").replace(".", ",")
     else:
@@ -28,14 +33,25 @@ def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Mo
         f"Stop: {fmt_price(s.stop)}",
         f"Ziel 1: {fmt_price(s.target1)}   Ziel 2: {fmt_price(s.target2)}",
         f"Chance/Risiko (Ziel 1): 1 : {rr:.1f}".replace(".", ","),
-        *([f"Setup-Score: {s.score}/100"] if getattr(s, "score", 0) else []),
+        *([f"Setup-Score: {setup if setup is not None else s.score}/100"]
+          if (setup if setup is not None else getattr(s, "score", 0)) else []),
         quote,
+        *([_ai_line(ai)] if ai else []),
         "Gründe:",
         *[f"• {r}" for r in s.reasons],
+        *(["News & On-Chain:", *[f"• {r}" for r in context]] if context else []),
+        *(["⚠️ Gegenwind:", *[f"• {w}" for w in warn]] if warn else []),
         "",
         DISCLAIMER,
     ]
     return "\n".join(lines)
+
+
+def _ai_line(ai: dict) -> str:
+    from .learn import why_text
+    head = (f"Lernmodell: {ai['p_win'] * 100:.0f} % Trefferchance, erwartet {ai['exp_r']:+.2f} R").replace(".", ",")
+    why = why_text(ai.get("why", []))
+    return head + (f" ({why})" if why else "")
 
 
 class Notifier:

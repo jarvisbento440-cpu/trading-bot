@@ -3,7 +3,7 @@
 Beobachtet BTC, ETH, SOL, XRP und ONDO rund um die Uhr und schickt Einstiegs-Signale per Telegram.
 **Der Bot handelt nicht selbst** und braucht keine Börsen-API-Keys: Kursdaten sind öffentlich.
 
-> ⚠️ Der Setup-Score ist keine Gewinnwahrscheinlichkeit und keine Garantie. Echte Trefferquoten kommen erst mit dem Backtest (nächster Schritt). Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.
+> ⚠️ Der Setup-Score ist keine Gewinnwahrscheinlichkeit. Bei jedem Signal steht die echte Trefferquote ähnlicher Signale seit 2021 ([docs/trefferquoten.md](docs/trefferquoten.md)), aber auch das ist keine Garantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.
 
 ## Was er macht
 
@@ -13,7 +13,8 @@ Beobachtet BTC, ETH, SOL, XRP und ONDO rund um die Uhr und schickt Einstiegs-Sig
    - EMA 20/50/200, Ausbruch aus 20-Kerzen-Spanne, Rücksetzer an EMA20, RSI, MACD, Volumen
    - daraus ein Score von 0 bis 100
 3. Ab Score 65 (einstellbar) kommt ein Signal mit Einstieg, Stop (1,5 × ATR) und zwei Zielen.
-4. Jedes Signal wird gespeichert, damit es später ausgewertet werden kann.
+4. Zu jedem Signal die echte Trefferquote ähnlicher Signale aus 5 Jahren Kursdaten und die Gewinnschwelle.
+5. Jedes Signal läuft als virtueller Trade mit: Telegram-Nachricht, wenn Ziel oder Stop erreicht ist, und jeden Sonntag ein Wochenbericht.
 
 ## Starten unter Windows (mit Oberfläche)
 
@@ -71,13 +72,21 @@ pip install pytest && python -m pytest
 
 **Papier-Test:** Button „📝 Papier-Test“. Jedes Signal wird automatisch als virtueller Trade mitgeschrieben (Einstieg zur nächsten Kerze, Stop, Ziel, Ergebnis in R nach Gebühren) und ausgewertet, solange das Programm läuft. Filter „nur mit Trendampel“ und „nur eingeschaltete Strategien“, Umrechnung in Euro über Kapital und Risiko pro Trade. Es wird nichts wirklich gehandelt.
 
+**Echte Trefferquoten, Signal-Tracking, Wochenbericht:** Bei jedem Signal steht, wie oft ähnliche Signale (gleiche Strategie, Zeitebene, Richtung, Score-Stufe) seit 2021 ihr Ziel erreicht haben, mit Spanne und Gewinnschwelle. Erreicht ein Signal Ziel oder Stop, kommt eine Telegram-Nachricht; sonntags um 18 Uhr ein Wochenbericht (einstellbar in `config.yaml`, sofort: `python -m signalbot bericht`). Ergebnis und Details: [docs/trefferquoten.md](docs/trefferquoten.md).
+
 **Eigene Märkte:** Kachel „＋ Markt hinzufügen“ mit Suchfeld. Krypto kommt von der Börse (alle Paare), Aktien, Indizes (S&P 500, DAX …), Rohstoffe (Gold, Silber, Öl) und Devisen kostenlos von Yahoo Finance. ✕ oben rechts entfernt die Kachel. Im Vollbild lassen sich die Strategien oben direkt ein- und ausschalten.
 
 **Börsenzeiten:** oben eine Uhr, welche Börse gerade offen ist (Asien = Tokio/Hongkong, Europa = London/Frankfurt, USA = New York), in deiner Ortszeit mit automatischer Sommer-/Winterzeit. In den 1h- und 4h-Charts zeigen farbige Streifen, wann welche Börse offen war (Schalter „Börsenzeiten“).
 
 **Liquidations-Heatmap:** Buttons „Heatmap: 3 Tage / 1 Woche“ oben. Farbfläche im Chart, wo gehebelte Trader (10x–100x) liquidiert würden (geschätzt aus Kursen und Volumen, ähnlich Coinglass). Gelb = viel Liquidität; wird der Preis erreicht, verschwindet die Zone. Im Vollbild stehen die stärksten Zonen ober- und unterhalb des Kurses.
 
+**News & On-Chain:** Button „📰 News & On-Chain“ und Abzeichen 📰 auf jeder Kachel. Schlagzeilen aus 8 Krypto-Newsseiten und Google News (bewertet −2 … +2 per Wortliste), Fear & Greed, Funding und Open Interest (Hyperliquid), Stablecoins/TVL/DEX-Umsatz (DefiLlama), Bitcoin-Gebühren und Hashrate. Alles kostenlos, kein Schlüssel nötig. Getestet hat nur eine Regel geholfen: Trendampel pausieren, solange die News der letzten 3 Tage negativ sind (kleiner Vorteil). Signale bekommen News-Zeilen und einen ⚠️-Hinweis bei Gegenwind, sehr starke Meldungen kommen per Telegram. Details und alle Testergebnisse: [docs/news-onchain.md](docs/news-onchain.md).
+
+**Coin-Scanner:** Button „🔍 Scanner“. Prüft alle 4 Stunden die 150 meistgehandelten Coins der Börse, zeigt alle mit grüner Trendampel, die Marktbreite und die BTC-Ampel; ＋ Chart fügt einen Coin als Kachel hinzu. Einmal am Tag kommen die besten 5 per Telegram. Im historischen Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen, der Scanner ist eine Beobachtungsliste: [docs/scanner.md](docs/scanner.md).
+
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
+
+**Lernmodell (aus Fehlsignalen lernen):** schätzt für jedes Signal die Trefferchance aus 45.000 vergangenen Signalen und meldet schwache Signale nicht mehr per Telegram (`learn_filter` in `config.yaml`). Im Prüfjahr sank der Verlust pro Trade von −0,12 R auf etwa 0 R, profitabel werden die Strategien dadurch aber nicht. Im Papier-Test steht bei jedem Trade, was dafür und dagegen sprach. Details: [docs/lernen.md](docs/lernen.md).
 
 8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
 
@@ -87,6 +96,6 @@ pip install pytest && python -m pytest
 
 ## Nächste Schritte
 
-4. Backtest → echte Trefferquoten pro Score
-5. Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht
-6. News-Modul, 7. On-Chain-Modul, 8. Coin-Scanner
+4. ~~Backtest → echte Trefferquoten pro Score~~ (erledigt)
+5. ~~Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht~~ (erledigt)
+6. ~~News-Modul~~, 7. ~~On-Chain-Modul~~ (fertig, siehe docs/news-onchain.md), 8. ~~Coin-Scanner~~ (fertig, siehe docs/scanner.md)

@@ -30,6 +30,9 @@
     regimeSeen: store.get("regimeSeen", {}),
     heatmap: store.get("heatmap", "off"),
     trendLight: null,
+    ctxHtml: {},
+    ctxAt: {},
+    newsCoin: "",
   };
 
   const $ = (s, el = document) => el.querySelector(s);
@@ -582,7 +585,14 @@
     return !st || !st.stats || st.stats.avg_r >= -0.03;
   };
   const pctDe = (x) => x == null ? "–" : Math.round(x * 100) + " %";
-  const rDe = (x) => x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
+  const rDe = (x) => x == null ? "–" : Math.abs(x) < 0.005 ? "±0,00 R" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
+  const whyHtml = (why) => (why || []).map((w) => `<span class="${w.effect > 0 ? "up" : "down"}">${w.effect > 0 ? "▲" : "▼"} ${w.name}</span>`).join(" · ");
+  function aiHtml(ai) {
+    if (!ai) return "";
+    return `<div class="ai-line"><span class="badge ${ai.take ? "up" : "down"}">🧠 ${ai.take ? "Lernfilter: durch" : "Lernfilter: schwach"}</span>
+      ${pctDe(ai.p_win)} Trefferchance · erwartet <span class="${ai.exp_r >= 0 ? "up" : "down"}">${rDe(ai.exp_r)}</span>
+      ${ai.why && ai.why.length ? `<div class="muted small">${whyHtml(ai.why)}</div>` : ""}</div>`;
+  }
 
   // ---------- Chart ----------
   function buildChart(el, big) {
@@ -704,7 +714,7 @@
       <div class="tile-head">
         <span class="tile-sym">${coinName(coin.symbol)}</span>${coin.extra ? `<span class="badge">${coin.kind || ""}</span>` : ""}
         <span class="tile-price"></span><span class="tile-chg"></span>
-        <span class="badge tile-light" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
+        <span class="badge tile-light" hidden></span><span class="badge tile-news" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
       </div>
       <div class="tile-chart"></div>
       <div class="tile-empty">Lade Daten…</div>
@@ -733,10 +743,18 @@
     tr.textContent = { up: "Tagestrend ↑", down: "Tagestrend ↓", flat: "Seitwärts" }[coin.trend];
     tr.className = "badge tile-trend " + (coin.trend === "flat" ? "" : coin.trend);
     el.classList.toggle("alert", state.alerts.has(coin.symbol));
+    const nb = $(".tile-news", el), cx = coin.context;
+    nb.hidden = !cx || cx.news3 == null;
+    if (cx && cx.news3 != null) {
+      nb.textContent = (cx.strong_neg ? "🚨 " : "📰 ") + (cx.news3 >= 0 ? "+" : "") + cx.news3.toFixed(2).replace(".", ",");
+      nb.className = "badge tile-news " + (cx.filter ? "news-warn" : cx.news3 >= 0.2 ? "news-pos" : cx.news3 <= -0.2 ? "news-neg" : "");
+      nb.title = `News der letzten 3 Tage: ${cx.label} (${cx.n} Meldungen)` +
+        (cx.filter ? " · News-Filter: Trendampel pausieren" : "") + (cx.strong_neg ? ` · ${cx.strong_neg} sehr negative Meldung(en)` : "");
+    }
     const lt = $(".tile-light", el), r = coin.regime;
     lt.hidden = !r;
     if (r) {
-      lt.textContent = r.state === "long" ? `🚦 Halten · ${Math.round(r.size * 100)} %` : "🚦 Raus";
+      lt.textContent = r.state === "long" ? (cx && cx.filter ? "🚦 Grün · News ⚠ pausieren" : `🚦 Halten · ${Math.round(r.size * 100)} %`) : "🚦 Raus";
       lt.className = "badge tile-light light-" + r.state;
       lt.title = lightText(r);
     }
@@ -960,6 +978,7 @@
         ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
         <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
     }
+    html += `<div id="focus-ctx">${state.ctxHtml[data.symbol] || ""}</div>`;
     const sel = (drawings[data.symbol] || []).find((x) => x.id === draw.sel && x.type !== "hline");
     if (sel) {
       const t = positionText(sel), ps = positionSize(sel), st = positionStatus(sel, data.candles);
@@ -990,11 +1009,17 @@
     acts.forEach((a, idx) => {
       const st = stratInfo(a.strategy);
       const rr = Math.abs(a.target1 - a.entry) / Math.abs(a.entry - a.stop);
-      const hist = a.trades ? `Trefferquote im Backtest: <strong>${pctDe(a.winrate)}</strong> (${a.trades} Trades, Ø ${rDe(a.avg_r)})`
+      const h = a.hitrate;
+      const hist = h ? `Echte Trefferquote: <strong>${pctDe(h.winrate)}</strong> (Spanne ${pctDe(h.lo)}–${pctDe(h.hi)}, ${h.n} ähnliche Signale seit 2021)` +
+          (h.breakeven != null ? `<br>Gewinnschwelle ${pctDe(h.breakeven)}: <span class="${h.lo > h.breakeven ? "up" : h.winrate > h.breakeven ? "" : "down"}">${h.verdict}</span> (Ø ${rDe(h.avg_r)})` : "") +
+          (h.test && h.test.n ? `<br>Letztes Jahr: ${pctDe(h.test.winrate)} aus ${h.test.n} Signalen` : "") +
+          (a.setup != null ? `<br>Setup-Score ${a.setup}/100` : "")
+        : a.trades ? `Trefferquote im Backtest: <strong>${pctDe(a.winrate)}</strong> (${a.trades} Trades, Ø ${rDe(a.avg_r)})`
         : "Noch kein Backtest für diese Strategie";
       html += `<div class="sig-card" style="border-left-color:${st.color}">
         <div class="row"><span class="badge sig-${a.side}">${sideDe(a.side)}</span><strong style="color:${st.color}">${st.name}</strong></div>
         <div class="muted">${hist}</div>
+        ${aiHtml(a.ai)}
         ${idx === 0 ? `<table>${row("Einstieg", fmt(a.entry))}${row("Stop", fmt(a.stop), "down")}${row("Ziel 1", fmt(a.target1), "up")}
         ${row("Ziel 2", fmt(a.target2), "up")}${row("Chance/Risiko", "1 : " + rr.toFixed(1).replace(".", ","))}</table>` :
         `<div class="muted">Einstieg ${fmt(a.entry)} · Stop ${fmt(a.stop)} · Ziel ${fmt(a.target1)}</div>`}
@@ -1023,6 +1048,85 @@
     html += `
       <p class="disclaimer">Trefferquoten stammen aus der Vergangenheit und sind keine Garantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.</p>`;
     $("#focus-info").innerHTML = html;
+    loadFocusContext(data.symbol);
+  }
+
+  // ---------- News & On-Chain ----------
+  const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const numDe = (x, d = 2) => x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(d).replace(".", ",");
+  const scoreCls = (x) => x == null ? "" : x >= 0.2 ? "up" : x <= -0.2 ? "down" : "";
+  const agoDe = (ms) => { const m = Math.round((Date.now() - ms) / 6e4); return m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; };
+  function fngHtml(fg) {
+    if (!fg) return '<p class="muted">Fear & Greed noch nicht geladen.</p>';
+    return `<div class="fng"><b>${fg.value}</b><span>${esc(fg.label)}</span><div class="fng-bar"><i style="left:${fg.value}%"></i></div>
+      <span class="muted">Ø 7 Tage ${String(fg.avg7).replace(".", ",")}</span></div>`;
+  }
+  function newsItemsHtml(items) {
+    if (!items || !items.length) return '<p class="muted">Keine Meldungen im Zeitraum.</p>';
+    return `<ul class="news-list">` + items.map((r) => `<li><span class="news-score ${scoreCls(r.score)}">${numDe(r.score, 1)}</span>
+      <span>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)}</a>` : esc(r.title)}
+      <span class="news-meta"> · ${esc(r.source)} · ${agoDe(r.ts)}${r.coins ? " · " + esc(r.coins) : ""}</span></span></li>`).join("") + `</ul>`;
+  }
+  function onchainHtml(oc) {
+    if (!oc || !oc.rows || !oc.rows.length) return '<p class="muted">Noch keine On-Chain-Daten (werden alle 30 Minuten geholt).</p>';
+    const row = (k, v, cls = "") => `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`;
+    return `<table>` + oc.rows.map((r) => row(esc(r.name), `${esc(r.value)}<div class="muted">${esc(r.note)}</div>`,
+      r.signal > 0 ? "up" : r.signal < 0 ? "down" : "")).join("") + `</table>`;
+  }
+  async function loadFocusContext(symbol) {
+    if (!symbol.includes("/")) return;
+    const now = Date.now();
+    if (state.ctxAt[symbol] && now - state.ctxAt[symbol] < 60000) return;
+    state.ctxAt[symbol] = now;
+    let c;
+    try { c = await getJSON(`/api/context?symbol=${encodeURIComponent(symbol)}`); } catch (e) { return; }
+    const n = c.news;
+    let html = "";
+    if (n) {
+      html += `<h3>News (3 Tage)</h3><div class="light-card ${n.filter ? "" : n.news3 >= 0.2 ? "long" : ""}">
+        <div class="row"><span class="badge ${n.filter ? "news-warn" : scoreCls(n.news3) === "up" ? "news-pos" : scoreCls(n.news3) === "down" ? "news-neg" : ""}">📰 ${esc(n.label)}</span>
+        <span class="muted">Schnitt ${numDe(n.news3)} aus ${n.news3_n} Meldungen · ${n.pos} positiv / ${n.neg} negativ</span></div>
+        ${n.filter ? `<p><strong>News-Filter aktiv:</strong> Im Test (2 Jahre) lief die Trendampel besser, wenn sie bei negativen News (Schnitt unter −0,2) pausierte. Kleiner Vorteil, statistisch nicht sicher.</p>` : ""}
+        ${newsItemsHtml((n.latest || []).slice(0, 5))}
+        <p class="muted">Bewertung automatisch per Wortliste (−2 … +2), kein Lesen „zwischen den Zeilen“. Alle Meldungen: Knopf „📰 News &amp; On-Chain“.</p></div>`;
+    }
+    if (c.fear_greed) html += `<h3>Fear &amp; Greed (ganzer Markt)</h3>${fngHtml(c.fear_greed)}<p class="muted">Nur zur Info: Als Kauf-/Verkaufsregel hat der Index im Test nicht funktioniert.</p>`;
+    if (c.onchain) html += `<h3>On-Chain &amp; Derivate</h3>${onchainHtml(c.onchain)}<p class="muted">Nur zur Info: Keiner dieser Werte hat im Prüfjahr als Regel geholfen (siehe docs/news-onchain.md).</p>`;
+    state.ctxHtml[symbol] = html;
+    const box = $("#focus-ctx");
+    if (box && state.focus && state.focus.symbol === symbol) box.innerHTML = html;
+  }
+
+  async function openNews(coin) {
+    if (coin !== undefined) state.newsCoin = coin;
+    $("#news").classList.remove("hidden");
+    const body = $("#news-body");
+    let r;
+    try { r = await getJSON(`/api/news?coin=${encodeURIComponent(state.newsCoin || "")}`); }
+    catch (e) { body.innerHTML = '<p class="muted">Konnte News nicht laden.</p>'; return; }
+    const coins = r.coins.map((c) => c.symbol.split("/")[0]);
+    $("#news-coins").innerHTML = ["", ...coins].map((c) => `<button class="btn${(state.newsCoin || "") === c ? " active" : ""}" data-c="${c}">${c || "Alle"}</button>`).join("");
+    $("#news-coins").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => openNews(b.dataset.c)));
+    const st = r.status;
+    let html = `<h3>Markt-Stimmung</h3>${fngHtml(r.fear_greed)}`;
+    const stab = r.market && r.market.stables;
+    if (stab) html += `<p class="muted">Stablecoins (alle Chains): ${(stab.value / 1e9).toFixed(1).replace(".", ",")} Mrd. $ · 30 Tage ${numDe(stab.chg30 * 100, 1)} %</p>`;
+    html += `<h3>Je Coin</h3><div class="table-wrap"><table class="bt"><thead><tr><th class="l">Coin</th><th>News 3 T</th><th>Meldungen</th><th class="l">Bewertung</th><th>Funding (Ø 7 T)</th><th class="l">Weitere On-Chain-Werte</th></tr></thead><tbody>` +
+      r.coins.map((c) => {
+        const n = c.news || {}, rows = (c.onchain && c.onchain.rows) || [];
+        const f = rows.find((x) => x.name.startsWith("Funding"));
+        const other = rows.filter((x) => x !== f && !x.name.startsWith("Stablecoins (alle")).slice(0, 3).map((x) => `${esc(x.name)}: ${esc(x.value)}`).join("<br>");
+        return `<tr><td class="l">${coinName(c.symbol)}</td><td class="${scoreCls(n.news3)}">${numDe(n.news3)}</td><td>${n.n || 0}</td>
+          <td class="l">${n.filter ? '<span class="badge news-warn">⚠ Filter: pausieren</span>' : esc(n.label || "–")}</td>
+          <td>${f ? esc(f.value) + `<div class="muted">${esc(f.note)}</div>` : "–"}</td><td class="l muted">${other || "–"}</td></tr>`;
+      }).join("") + `</tbody></table></div>`;
+    html += `<h3>Schlagzeilen (48 h${state.newsCoin ? ", " + esc(state.newsCoin) : ""})</h3>${newsItemsHtml(r.items)}`;
+    const failed = [...((st && st.failed) || []), ...(r.onchain_failed || [])];
+    html += `<p class="muted">Quellen: CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine, CryptoSlate, crypto.news, U.Today, Google News; Fear &amp; Greed (alternative.me);
+      DefiLlama, mempool.space, Blockchair, Hyperliquid, Solana-RPC. Alles kostenlos, ohne Schlüssel.${st ? " Stand News: " + agoDe(st.ts) + "." : ""}
+      ${r.onchain_ts ? " Stand On-Chain: " + agoDe(r.onchain_ts) + "." : ""}${failed.length ? " Gerade nicht erreichbar: " + esc(failed.join(", ")) + "." : ""}</p>
+      <p class="disclaimer">Die Bewertung ist eine einfache Wortliste. Getestet ist nur eine Regel: Trendampel pausieren, solange die News der letzten 3 Tage im Schnitt unter −0,2 liegen – kleiner Vorteil, statistisch nicht sicher.</p>`;
+    body.innerHTML = html;
   }
 
   // ---------- Kachel „Markt hinzufügen“ ----------
@@ -1118,7 +1222,7 @@
 
 
   // ---------- Papier-Test ----------
-  const paperOpt = Object.assign({ light: false, enabledOnly: true, capital: 1000, risk: 1 }, store.get("paperOpt", {}));
+  const paperOpt = Object.assign({ light: false, enabledOnly: true, ai: false, capital: 1000, risk: 1 }, store.get("paperOpt", {}));
   function paperStats(ts) {
     const closed = ts.filter((t) => ["win", "loss", "timeout"].includes(t.status)).sort((a, b) => a.exit_ts - b.exit_ts);
     const open = ts.filter((t) => t.status === "open");
@@ -1148,6 +1252,8 @@
       let ts = r.trades.filter((t) => t.status !== "skipped" && t.status !== "waiting");
       if (paperOpt.enabledOnly) ts = ts.filter((t) => stratEnabled(t.strategy));
       if (paperOpt.light) ts = ts.filter((t) => t.follows_light);
+      const all = ts;
+      if (paperOpt.ai) ts = ts.filter((t) => t.take === true);
       const s = paperStats(ts);
       const eur = (R) => (R * paperOpt.capital * paperOpt.risk / 100).toLocaleString("de-DE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
       const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
@@ -1155,6 +1261,7 @@
       let html = `<div class="paper-opts">
         <label><input type="checkbox" id="po-light" ${paperOpt.light ? "checked" : ""}> Nur Trades, für die die Trendampel sprach</label>
         <label><input type="checkbox" id="po-en" ${paperOpt.enabledOnly ? "checked" : ""}> Nur eingeschaltete Strategien</label>
+        <label><input type="checkbox" id="po-ai" ${paperOpt.ai ? "checked" : ""}> Nur Signale, die der Lernfilter durchlässt</label>
         <label>Kapital <input type="number" id="po-cap" min="0" step="100" value="${paperOpt.capital}"> €</label>
         <label>Risiko pro Trade <input type="number" id="po-risk" min="0.1" max="10" step="0.1" value="${paperOpt.risk}"> %</label></div>`;
       if (!r.trades.length) {
@@ -1170,6 +1277,7 @@
           <div><span class="muted">Größter Rückgang</span><b>${s.n ? "−" + s.dd.toFixed(1).replace(".", ",") + " R" : "–"}</b><span>${s.n ? eur(-s.dd) : ""}</span></div>
           <div><span class="muted">Offen</span><b>${s.open}</b><span class="${cls(s.openR)}">${s.open ? rDe(s.openR) : ""}</span></div>
         </div>${curveSvg(s.curve)}
+        ${learnHtml(r.learn, all)}
         <h3>Je Strategie</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th><th>Trades</th><th>Trefferquote</th><th>Ergebnis</th><th>Ø pro Trade</th><th>Offen</th></tr></thead><tbody>` +
         state.strategies.map((st) => {
           const m = paperStats(ts.filter((t) => t.strategy === st.key));
@@ -1177,7 +1285,7 @@
           return `<tr><td><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td><td>${m.n}</td><td>${m.winrate == null ? "–" : pctDe(m.winrate)}</td>
             <td class="${cls(m.total)}">${rDe(m.total)}</td><td class="${cls(m.avg)}">${m.avg == null ? "–" : rDe(m.avg)}</td><td>${m.open}</td></tr>`;
         }).join("") + `</tbody></table></div>
-        <h3>Trades</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Signal</th><th class="l">Markt</th><th class="l">Strategie</th><th>Richtung</th><th>Ampel</th><th>Einstieg</th><th>Stop</th><th>Ziel</th><th>Status</th><th>Ergebnis</th></tr></thead><tbody>` +
+        <h3>Trades</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Signal</th><th class="l">Markt</th><th class="l">Strategie</th><th>Richtung</th><th>Ampel</th><th>Einstieg</th><th>Stop</th><th>Ziel</th><th>Status</th><th>Ergebnis</th><th>Lernmodell</th><th class="l">Was dafür (▲) / dagegen (▼) sprach</th></tr></thead><tbody>` +
         ts.slice(0, 200).map((t) => {
           const st = stratInfo(t.strategy);
           const status = { open: "offen", win: "Ziel erreicht", loss: "Stop", timeout: "Zeit abgelaufen" }[t.status] || t.status;
@@ -1185,19 +1293,112 @@
           return `<tr><td>${when} · ${t.timeframe}</td><td class="l">${coinName(t.symbol)}</td><td class="l"><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td>
             <td class="${t.side === "long" ? "up" : "down"}">${sideDe(t.side)}</td><td>${t.light == null ? "–" : t.follows_light ? "✓" : "✗"}</td>
             <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.target1)}</td><td>${status}</td>
-            <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td></tr>`;
+            <td class="${cls(t.r)}">${t.r == null ? "–" : rDe(t.r)}</td>
+            <td>${t.p_win == null ? "–" : `<span class="${t.take ? "up" : "down"}">${t.take ? "✓" : "✗"}</span> ${pctDe(t.p_win)}`}</td>
+            <td class="l small">${whyHtml(t.why)}</td></tr>`;
         }).join("") + `</tbody></table></div>
-        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>`;
+        <p class="muted">Ampel ✓ = Long bei grüner Trendampel bzw. Short bei ausgeschalteter Ampel. Lernmodell ✓ = Filter hätte das Signal gemeldet, ✗ = als schwach aussortiert; die Prozentzahl ist die geschätzte Trefferchance. Erst nach einigen Wochen und mindestens 30–50 Trades sagt das Ergebnis etwas aus.</p>` +
+        (r.report ? `<h3>Wochenbericht (letzte 7 Tage)</h3><pre class="report">${esc(r.report)}</pre>
+        <p class="muted">Kommt automatisch per Telegram (Standard: sonntags 18 Uhr, einstellbar in config.yaml). Sobald ein Signal Ziel oder Stop erreicht, kommt außerdem eine kurze Nachricht.</p>` : "");
       body.innerHTML = html; bindPaper(draw);
     };
     draw();
   }
+  function learnHtml(L, ts) {
+    if (!L || !L.model || !L.model.trained_on) return "";
+    const known = ts.filter((t) => t.take != null);
+    const a = paperStats(known.filter((t) => t.take)), b = paperStats(known.filter((t) => !t.take));
+    const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
+    const R = L.research;
+    const res = R ? `<p class="muted">Geprüft an ${R.trades.toLocaleString("de-DE")} vergangenen Signalen (2021–2026, jeden Monat nur mit älteren Trades neu trainiert).
+      Im Prüfjahr: alle Signale Ø ${rDe(R.pruefjahr.alle.avg_r)}, durchgelassene Ø ${rDe(R.pruefjahr.genommen.avg_r)}, aussortierte Ø ${rDe(R.pruefjahr.aussortiert.avg_r)}
+      ${R.monate_besser ? `(in ${R.monate_besser.replace("/", " von ")} Monaten besser)` : ""}. Der Filter vermeidet also viele Verlierer, macht die Strategien aber noch nicht profitabel.</p>` : "";
+    return `<h3>🧠 Lernmodell</h3>
+      <p class="muted">Schätzt für jedes Signal die Trefferchance aus Merkmalen wie Trendampel, Schwankung, RSI, Abstand zu den Durchschnitten und wie die Strategie zuletzt lief.
+      ${L.filter ? "Signale mit erwartetem Ergebnis unter 0 R werden nicht per Telegram gemeldet, aber hier weiter mitgeschrieben." : "Filter ausgeschaltet (config.yaml: learn_filter), alle Signale werden gemeldet."}</p>
+      <div class="table-wrap"><table class="bt"><thead><tr><th class="l">Hier im Papier-Test</th><th>Trades</th><th>Trefferquote</th><th>Ø pro Trade</th><th>Summe</th></tr></thead><tbody>
+      <tr><td class="l">Vom Filter durchgelassen</td><td>${a.n}</td><td>${a.winrate == null ? "–" : pctDe(a.winrate)}</td><td class="${cls(a.avg)}">${a.avg == null ? "–" : rDe(a.avg)}</td><td class="${cls(a.total)}">${rDe(a.total)}</td></tr>
+      <tr><td class="l">Als schwach aussortiert</td><td>${b.n}</td><td>${b.winrate == null ? "–" : pctDe(b.winrate)}</td><td class="${cls(b.avg)}">${b.avg == null ? "–" : rDe(b.avg)}</td><td class="${cls(b.total)}">${rDe(b.total)}</td></tr>
+      </tbody></table></div>${res}`;
+  }
   function bindPaper(draw) {
     const save = () => { store.set("paperOpt", paperOpt); draw(); };
+    $("#po-ai").addEventListener("change", (e) => { paperOpt.ai = e.target.checked; save(); });
     $("#po-light").addEventListener("change", (e) => { paperOpt.light = e.target.checked; save(); });
     $("#po-en").addEventListener("change", (e) => { paperOpt.enabledOnly = e.target.checked; save(); });
     $("#po-cap").addEventListener("change", (e) => { paperOpt.capital = Math.max(0, +e.target.value || 0); save(); });
     $("#po-risk").addEventListener("change", (e) => { paperOpt.risk = Math.min(10, Math.max(0.1, +e.target.value || 1)); save(); });
+  }
+
+  // ---------- Coin-Scanner ----------
+  const scanOpt = Object.assign({ all: false }, store.get("scanOpt", {}));
+  let scanTimer = null;
+  async function openScanner() {
+    $("#scan").classList.remove("hidden");
+    const body = $("#scan-body");
+    let r;
+    try { r = await getJSON("/api/scanner"); } catch (e) { body.innerHTML = '<p class="muted">Konnte den Scanner nicht laden.</p>'; return; }
+    const btn = $("#scan-run");
+    btn.disabled = r.running || !r.online;
+    btn.textContent = r.running ? "Scanne… (etwa eine Minute)" : "Jetzt neu scannen";
+    clearTimeout(scanTimer);
+    if (r.running) scanTimer = setTimeout(() => { if (!$("#scan").classList.contains("hidden")) openScanner(); }, 4000);
+    const res = r.result;
+    const num = (x, d = 0) => x == null ? "–" : x.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+    const sp = (x) => x == null ? "–" : (x > 0 ? "+" : "") + num(x) + " %";
+    const cls = (x) => x == null ? "" : x >= 0 ? "up" : "down";
+    const money = (x) => x == null ? "–" : x >= 1e9 ? num(x / 1e9, 1) + " Mrd." : num(x / 1e6, 0) + " Mio.";
+    let html = "";
+    if (r.error) html += `<p class="down">Letzter Scan fehlgeschlagen: ${r.error}</p>`;
+    if (!res) {
+      html += r.online ? `<p>Noch kein Scan vorhanden. Der erste läuft kurz nach dem Start automatisch, danach alle ${num(r.every_hours)} Stunden.</p>`
+        : `<p>Noch kein Scan vorhanden (Offline-Modus).</p>`;
+      body.innerHTML = html + scanHelp(r.test); return;
+    }
+    const when = new Date(res.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const rows = res.coins.filter((c) => scanOpt.all || c.on);
+    html += `<p class="muted">Stand ${when} · ${res.scanned} Coins mit dem höchsten 24h-Volumen auf ${res.exchange} (${res.quote}) · BTC 30 Tage ${sp(res.btc_ret30)}.
+      Neu gescannt wird alle ${num(r.every_hours)} Stunden.</p>
+      ${res.btc_on === false ? '<p class="down">⚠️ Die BTC-Trendampel steht auf RAUS. In dieser Lage haben im historischen Test auch Altcoins mit grüner Ampel meist verloren.</p>' : ""}
+      <div class="paper-kpis">
+        <div><span class="muted">Marktbreite</span><b>${num(res.breadth)} %</b><span>${res.green} von ${res.scanned} Coins mit grüner Trendampel</span></div>
+        <div><span class="muted">BTC-Trendampel</span><b>${res.btc_on == null ? "–" : res.btc_on ? "🟢 grün" : "⚪ raus"}</b></div>
+        <div><span class="muted">Platz 1 außerhalb deiner Liste</span><b>${(res.coins.find((c) => c.on && !c.watched) || {}).name || "–"}</b></div>
+      </div>
+      <div class="scan-opts"><label><input type="checkbox" id="so-all" ${scanOpt.all ? "checked" : ""}> Auch Coins mit roter Ampel zeigen</label></div>
+      <div class="table-wrap"><table class="bt"><thead><tr><th>#</th><th class="l">Coin</th><th>Score</th><th>Kurs</th><th>24 h</th><th>7 Tage</th><th>30 T vs. BTC</th>
+      <th>Volumen 24 h</th><th>Volumen-Schub</th><th>Ampel</th><th>Abstand 50-T.</th><th>Anteil</th><th></th></tr></thead><tbody>` +
+      rows.map((c, i) => {
+        const flags = (c.on && c.days_on != null && c.days_on <= 5 ? `<span class="flag new">${c.days_on ? "frisch grün" : "heute grün"}</span>` : "") +
+          (c.high20 ? '<span class="flag">20-Tage-Hoch</span>' : "") + (c.focus ? '<span class="flag">Haupt-Coin</span>' : "");
+        const light = c.on ? `🟢 seit ${c.days_on + 1} T.` : "⚪ raus";
+        return `<tr class="${c.watched ? "mine" : ""}"><td>${i + 1}</td><td class="l"><strong>${c.name}</strong>${flags}</td><td>${c.score ?? "–"}</td>
+          <td>${fmt(c.price)}</td><td class="${cls(c.change24h)}">${sp(c.change24h)}</td><td class="${cls(c.ret7)}">${sp(c.ret7)}</td>
+          <td class="${cls(c.rs30)}">${sp(c.rs30)}</td><td>${money(c.volume24h)}</td><td>${c.vol_surge == null ? "–" : "×" + num(c.vol_surge, 1)}</td>
+          <td>${light}</td><td>${sp(c.distance)}</td><td>${c.on ? num(c.size * 100) + " %" : "–"}</td>
+          <td class="add">${c.watched ? '<span class="muted">im Chart</span>' : `<button class="btn" data-add="${c.symbol}">＋ Chart</button>`}</td></tr>`;
+      }).join("") + `</tbody></table></div>`;
+    body.innerHTML = html + scanHelp(r.test);
+    $("#so-all").addEventListener("change", (e) => { scanOpt.all = e.target.checked; store.set("scanOpt", scanOpt); openScanner(); });
+    body.querySelectorAll("[data-add]").forEach((b) => b.addEventListener("click", async () => {
+      b.disabled = true; b.textContent = "…";
+      const sym = b.dataset.add;
+      await getJSON(`/api/watch/add?symbol=${encodeURIComponent(sym)}&name=${encodeURIComponent(sym.split("/")[0])}&type=Krypto`).catch(() => {});
+      await refreshState();
+      openScanner();
+    }));
+  }
+  function scanHelp(t) {
+    let html = `<h3>So liest du das</h3><ul>
+      <li><strong>Trendampel grün</strong>: Tagesschluss über dem 50-Tage-Schnitt, dieselbe Regel wie bei deinen Haupt-Coins. Nur grüne Coins bekommen einen Score.</li>
+      <li><strong>Score</strong> (0–100) vergleicht die grünen Coins untereinander: „Rücksetzer im Aufwärtstrend“, je zur Hälfte nah am 50-Tage-Schnitt und
+        in den letzten 30 Tagen nicht schon stärker als BTC gelaufen. Coins, die schon davongelaufen waren, fielen im Test danach im Schnitt zurück. Der Score ist eine Rangliste, keine Trefferwahrscheinlichkeit.</li>
+      <li><strong>Marktbreite</strong>: Anteil der Coins mit grüner Ampel. Über 50 % ist der Gesamtmarkt eher stark, unter 30 % eher schwach.</li>
+      <li><strong>Anteil</strong>: wie viel deines Budgets für diesen Coin die Trendampel nach seiner Schwankung empfehlen würde.</li>
+      <li><strong>Volumen-Schub</strong>: Handelsvolumen der letzten 3 Tage gegen die 30 davor. Nur zur Info, im Test kein Vorteil.</li>
+      <li>Kleine Coins schwanken stark und können schnell abstürzen. Im Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen. Der Scanner ist eine Beobachtungsliste, kein Kaufsignal.</li></ul>`;
+    if (t && t.summary) html += `<h3>Historischer Test</h3><p class="muted">${t.summary}</p>`;
+    return html;
   }
 
   // ---------- Backtest-Ansicht ----------
@@ -1246,8 +1447,27 @@
     html += `<h3>Je Coin</h3><div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th>${r.symbols.map((x) => `<th>${coinName(x)}</th>`).join("")}</tr></thead><tbody>` +
       rows.map(([key, s]) => `<tr><td>${s.name}</td>${r.symbols.map((x) => `<td>${cell(s.by_symbol[x])}</td>`).join("")}</tr>`).join("") + `</tbody></table></div>`;
     html += `<h3>Score-Modell: Trefferquote je Score</h3><table class="bt"><thead><tr><th>Score</th><th>Trades</th><th>Trefferquote</th><th>Ø pro Trade</th></tr></thead><tbody>` +
-      r.score_buckets.map((b) => `<tr><td>${b.from}–${b.to}</td><td>${b.trades || 0}</td><td>${b.trades ? pctDe(b.winrate) : "–"}</td><td>${b.trades ? rDe(b.avg_r) : "–"}</td></tr>`).join("") + `</tbody></table>
-      <h3>So liest du das</h3><ul>
+      r.score_buckets.map((b) => `<tr><td>${b.from}–${b.to}</td><td>${b.trades || 0}</td><td>${b.trades ? pctDe(b.winrate) : "–"}</td><td>${b.trades ? rDe(b.avg_r) : "–"}</td></tr>`).join("") + `</tbody></table>`;
+    const H = r.hitrates;
+    if (H) {
+      const hc = (g) => {
+        const a = g && g.all;
+        if (!a || !a.n) return "–";
+        const ok = a.breakeven != null && a.n >= H.min_n && a.lo > a.breakeven;
+        return `<span class="${a.breakeven == null ? "" : a.winrate > a.breakeven ? "up" : "down"}">${pctDe(a.winrate)}</span> <span class="muted">(${a.n})</span>${ok ? " ✔" : ""}`;
+      };
+      const lab = (b) => b.replace("-", "–");
+      html += `<h3>Echte Trefferquoten je Setup-Score (${new Date(H.from).getFullYear()}–${new Date(H.to).getFullYear()})</h3>
+        <p class="muted">${esc(H.source)}. Jedes Signal bekommt den Setup-Score, auch wenn es von einer anderen Strategie kommt. Grün = über der Gewinnschwelle der Strategie, rot = darunter. ✔ = auch mit Messungenauigkeit sicher darüber (mind. ${H.min_n} Trades).</p>
+        <div class="table-wrap"><table class="bt"><thead><tr><th>Strategie</th>${H.buckets.map((b) => `<th>${lab(b)}</th>`).join("")}<th>alle</th><th>Gewinnschwelle</th></tr></thead><tbody>` +
+        [{ key: "*", name: "Alle zusammen", short: "∑", color: "var(--muted)" }, ...state.strategies].map((st) => {
+          const all = H.groups[st.key];
+          if (!all) return "";
+          return `<tr><td><span class="dot" style="background:${st.color}">${st.short}</span> ${st.name}</td>${H.buckets.map((b) => `<td>${hc(H.groups[st.key + "|" + b])}</td>`).join("")}
+            <td>${hc(all)}</td><td>${pctDe(all.all.breakeven)}</td></tr>`;
+        }).join("") + `</tbody></table></div>`;
+    }
+    html += `<h3>So liest du das</h3><ul>
       <li><strong>R</strong> = dein Risiko pro Trade (Abstand Einstieg–Stop). +0,30 R heißt: im Schnitt 30 % des Risikos gewonnen.</li>
       <li><strong>Ø pro Trade über 0</strong> heißt: nach Gebühren profitabel. Eine hohe Trefferquote allein reicht nicht, wenn die Gewinne klein sind.</li>
       <li><strong>Profit-Faktor</strong> = Gewinne / Verluste. Über 1,2 ist brauchbar, unter 1 verliert Geld.</li>
@@ -1328,7 +1548,12 @@
   $("#focus-close").addEventListener("click", closeFocus);
   $("#bt-open").addEventListener("click", openBacktest);
   $("#paper-open").addEventListener("click", openPaper);
+  $("#news-open").addEventListener("click", () => openNews());
+  $("#news-close").addEventListener("click", () => $("#news").classList.add("hidden"));
   $("#paper-close").addEventListener("click", () => $("#paper").classList.add("hidden"));
+  $("#scan-open").addEventListener("click", openScanner);
+  $("#scan-close").addEventListener("click", () => $("#scan").classList.add("hidden"));
+  $("#scan-run").addEventListener("click", async () => { await getJSON("/api/scanner/run").catch(() => {}); openScanner(); });
   $("#bt-close").addEventListener("click", () => $("#backtest").classList.add("hidden"));
   $("#bt-run").addEventListener("click", runBacktest);
   $("#strat-btn").addEventListener("click", (e) => { e.stopPropagation(); $("#strat-panel").classList.toggle("hidden"); });
@@ -1337,7 +1562,9 @@
     if ((e.key === "Delete" || e.key === "Backspace") && state.focus && draw.sel && !e.target.closest("input")) { deleteSelected(); return; }
     if (e.key !== "Escape") return;
     if (state.focus && (draw.tool || draw.sel)) { setTool(null); draw.sel = null; redrawDrawings(); return; }
-    if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
+    if (!$("#news").classList.contains("hidden")) $("#news").classList.add("hidden");
+    if (!$("#scan").classList.contains("hidden")) $("#scan").classList.add("hidden");
+    else if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
     else if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
     else if (state.focus) closeFocus();
   });
