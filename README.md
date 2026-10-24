@@ -75,6 +75,8 @@ pip install pytest && python -m pytest
 
 **Liquidations-Heatmap:** Buttons „Heatmap: 3 Tage / 1 Woche“ oben. Farbfläche im Chart, wo gehebelte Trader (10x–100x) liquidiert würden (geschätzt aus Kursen und Volumen, ähnlich Coinglass). Gelb = viel Liquidität; wird der Preis erreicht, verschwindet die Zone. Im Vollbild stehen die stärksten Zonen ober- und unterhalb des Kurses.
 
+**Coin-Scanner:** Button „🔍 Scanner“. Prüft alle 4 Stunden die 150 meistgehandelten Coins der Börse, zeigt alle mit grüner Trendampel, die Marktbreite und die BTC-Ampel; ＋ Chart fügt einen Coin als Kachel hinzu. Einmal am Tag kommen die besten 5 per Telegram. Im historischen Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen, der Scanner ist eine Beobachtungsliste: [docs/scanner.md](docs/scanner.md).
+
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
 
 8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
@@ -87,4 +89,4 @@ pip install pytest && python -m pytest
 
 4. Backtest → echte Trefferquoten pro Score
 5. Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht
-6. News-Modul, 7. On-Chain-Modul, 8. Coin-Scanner
+6. News-Modul, 7. On-Chain-Modul (8. Coin-Scanner ist eingebaut)
