@@ -1,0 +1,13 @@
+🔍 Coin-Scanner · Top 27 nach Volumen (kraken)
+Marktbreite: 7 von 27 Coins (26 %) über dem 50-Tage-Schnitt
+
+Auffällig (Trendampel grün, nicht in deiner Liste):
+1. WLD 0,48220 · Score 73 · 30 T vs. BTC +23 % · Volumen ×1,9
+2. XMR 583,14 · Score 73 · 30 T vs. BTC +9 % · Volumen ×2,1
+3. PEPE 0,00000 · Score 51 · 30 T vs. BTC +9 % · Volumen ×0,9 · frisch grün
+4. QNT 181,31 · Score 46 · 30 T vs. BTC +161 % · Volumen ×0,3
+5. NEAR 4,6848 · Score 44 · 30 T vs. BTC +12 % · Volumen ×0,8
+6. AKE 0,03891 · Score 42 · 30 T vs. BTC -6 % · Volumen ×1,7 · frisch grün, 20-Tage-Hoch
+7. INJ 7,7810 · Score 33 · 30 T vs. BTC +4 % · Volumen ×0,9
+
+Das ist eine Beobachtungsliste, kein Kaufsignal. In der Oberfläche unter 🔍 Scanner kannst du einen Coin mit einem Klick zu deinen Charts hinzufügen.
