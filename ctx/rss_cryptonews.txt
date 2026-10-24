@@ -1,0 +1,1029 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="http://search.yahoo.com/mrss/" >
+
+<channel>
+	<title>crypto.news</title>
+	<atom:link href="https://crypto.news/feed/" rel="self" type="application/rss+xml" />
+	<link>https://crypto.news</link>
+	<description>Latest Cryptocurrency News</description>
+	<lastBuildDate>Fri, 23 Oct 2026 21:17:05 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.9.4</generator>
+
+<image>
+	<url>https://media.crypto.news/2024/11/cryptonews-icon-150x150.png</url>
+	<title>crypto.news</title>
+	<link>https://crypto.news</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+<atom:link rel="hub" href="https://pubsubhubbub.appspot.com"/>
+<atom:link rel="hub" href="https://pubsubhubbub.superfeedr.com"/>
+<atom:link rel="hub" href="https://websubhub.com/hub"/>
+<atom:link rel="self" href="https://crypto.news/feed/"/>
+	<item>
+		<title>China sets 2030 target for national blockchain network and regional hubs</title>
+		<link>https://crypto.news/china-national-blockchain-network-2030-plan/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 21:17:01 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Blockchain]]></category>
+		<category><![CDATA[China]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487552</guid>
+
+					<description><![CDATA[China has set a 2030 target to largely complete a national blockchain network, placing a central backbone, regional hubs, and distributed digital identity services in its latest five-year information technology plan. The Central Cyberspace Affairs Commission issued the National Informatization&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/11/crypto-news-AI-blockchain-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/11/crypto-news-AI-blockchain-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/11/crypto-news-AI-blockchain-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Initia halts blockchain and rollups after reported $2.6M exploit</title>
+		<link>https://crypto.news/initia-halts-blockchain-rollups-2-6m-exploit/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 20:54:15 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Blockchain]]></category>
+		<category><![CDATA[exploit]]></category>
+		<category><![CDATA[layer 1]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487548</guid>
+
+					<description><![CDATA[Initia has halted its layer-1 blockchain and rollups after security researcher Spreek reported unauthorized token minting and approximately $2.6 million cashed out by an attacker. Initia confirmed in its Oct. 23 statement that the suspension took effect at 3:41:30 p.m.&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2023/10/crypto-news-Platypus-regains-90-of-funds-from-exploit01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2023/10/crypto-news-Platypus-regains-90-of-funds-from-exploit01.webp"/>
+<enclosure url="https://media.crypto.news/2023/10/crypto-news-Platypus-regains-90-of-funds-from-exploit01.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>JPM Coin has zero Ethereum supply after launch, Sentora says</title>
+		<link>https://crypto.news/jpm-coin-ethereum-zero-supply-sentora/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 20:09:15 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Ethereum]]></category>
+		<category><![CDATA[Token]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487546</guid>
+
+					<description><![CDATA[JPMorgan’s JPM Coin has recorded zero supply and zero transfers on Ethereum in a contract review by Sentora, days after the bank announced the deposit token’s arrival on the network. Sentora said its review found exactly one allowlisted address in&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/11/crypto-news-Ethereum-community-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/11/crypto-news-Ethereum-community-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/11/crypto-news-Ethereum-community-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Bitcoin security debate turns to AI phishing after CZ’s warning</title>
+		<link>https://crypto.news/bitcoin-cz-ai-phishing-bank-encryption/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 19:42:45 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[Changpeng Zhao]]></category>
+		<category><![CDATA[Phishing]]></category>
+		<category><![CDATA[Security]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487543</guid>
+
+					<description><![CDATA[Binance founder Changpeng Zhao has warned that artificial intelligence can harm Bitcoin users through leaked personal data and social engineering without breaking the cryptocurrency’s cryptography, according to posts from CoinMarketCap and Bitcoin Archive. CoinMarketCap described Zhao’s warning as a concern&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/06/crypto-news-Changpeng-Zhao-CZ-ooption04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/06/crypto-news-Changpeng-Zhao-CZ-ooption04.webp"/>
+<enclosure url="https://media.crypto.news/2025/06/crypto-news-Changpeng-Zhao-CZ-ooption04.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Phantom brings Kalshi markets to US users with $0.02 contract fees</title>
+		<link>https://crypto.news/phantom-kalshi-prediction-markets-us/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 19:18:34 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[fees]]></category>
+		<category><![CDATA[Phantom Wallet]]></category>
+		<category><![CDATA[Prediction Markets]]></category>
+		<category><![CDATA[United States]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487539</guid>
+
+					<description><![CDATA[Phantom has opened access to Kalshi prediction markets for eligible US users through its mobile wallet, with its help center listing a combined trading fee of $0.02 per contract. Phantom’s US trading guide says customers can enter event markets through&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/07/crypto-news-What-are-prediction-markets-option04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/07/crypto-news-What-are-prediction-markets-option04.webp"/>
+<enclosure url="https://media.crypto.news/2024/07/crypto-news-What-are-prediction-markets-option04.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Bitcoin gets Saylor’s ‘closed doors’ tease after Strategy’s $22M buy</title>
+		<link>https://crypto.news/bitcoin-saylor-closed-doors-strategy-buy/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 18:55:59 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[michael saylor]]></category>
+		<category><![CDATA[Strategy]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487537</guid>
+
+					<description><![CDATA[Michael Saylor has posted a cryptic message about resolving Bitcoin matters behind closed doors after Strategy disclosed a $22.1 million purchase funded largely through common-share sales. In an Oct. 23 X post, Michael Saylor wrote, “Just resolving a few Bitcoin&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/07/Bitcoin2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/07/Bitcoin2.webp"/>
+<enclosure url="https://media.crypto.news/2026/07/Bitcoin2.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>NFT believers question the market as trading venues retreat in 2026</title>
+		<link>https://crypto.news/nft-believers-marketplace-closures-2026/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 18:28:47 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[NFT]]></category>
+		<category><![CDATA[Trading]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487534</guid>
+
+					<description><![CDATA[NFT supporters have reopened the debate over the sector’s future on X as Nifty Gateway’s closure, Binance’s centralized marketplace exit, and Magic Eden’s withdrawal from Bitcoin and EVM trading have reduced the services available to collectors. Mookie’s question, “Do you&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/06/crypto-news-AI-blockchain-NFT-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/06/crypto-news-AI-blockchain-NFT-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/06/crypto-news-AI-blockchain-NFT-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Tokenized stocks offer 24/7 price signals as Nasdaq plans longer hours</title>
+		<link>https://crypto.news/tokenized-stocks-bitfinex-nasdaq-24-7-trading/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 17:50:13 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[IMF]]></category>
+		<category><![CDATA[Nasdaq]]></category>
+		<category><![CDATA[securities]]></category>
+		<category><![CDATA[Tokenized Stocks]]></category>
+		<category><![CDATA[Wall Street]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487532</guid>
+
+					<description><![CDATA[Bitfinex has argued for 24/7 stock markets, citing IMF research that found 87–99% of overnight tokenized equity moves appeared in conventional securities within five minutes of the opening bell. Bitfinex said in an Oct. 23 article that tokenized equities already&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/07/crypto-news-tokenized-stocks-option09.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/07/crypto-news-tokenized-stocks-option09.webp"/>
+<enclosure url="https://media.crypto.news/2025/07/crypto-news-tokenized-stocks-option09.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Securitize confirms 12 stocks live on Solana with eligible US access</title>
+		<link>https://crypto.news/securitize-12-tokenized-stocks-solana-us-investors/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 16:34:59 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Solana]]></category>
+		<category><![CDATA[Tokenized Stocks]]></category>
+		<category><![CDATA[United States]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487530</guid>
+
+					<description><![CDATA[Securitize has confirmed that 12 tokenized U.S. stocks, including Apple, Nvidia and Tesla, are live on Solana for eligible investors, with each token backed by a share the company says is never lent out. In its Oct. 23 X post,&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/08/crypto-news-Tokenized-private-stocks-have-a-fundamental-problem-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/08/crypto-news-Tokenized-private-stocks-have-a-fundamental-problem-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/08/crypto-news-Tokenized-private-stocks-have-a-fundamental-problem-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Solana’s Yakovenko puts 5 major apps ahead of validators and developers</title>
+		<link>https://crypto.news/solana-yakovenko-apps-priority-validators-developers/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 16:14:19 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[developers]]></category>
+		<category><![CDATA[Solana]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487527</guid>
+
+					<description><![CDATA[Solana co-founder Anatoly Yakovenko has named five major applications as higher priorities for network optimization than validators, developers, market makers, or core engineers, arguing that products holding substantial assets and handling retail trading volume deserve the most attention. Anatoly Yakovenko&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Solana1.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Solana1.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Solana1.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Sky reports $30.8M revenue as Galaxy adds $100M sUSDS and burns begin</title>
+		<link>https://crypto.news/sky-september-revenue-galaxy-susds-first-burn/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 15:31:57 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Galaxy Digital]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487522</guid>
+
+					<description><![CDATA[Sky has reported $30.8 million in September gross revenue and its first 2.86 million SKY token burn, alongside Galaxy’s $100 million sUSDS treasury allocation. Sky Frontier Foundation’s September financial and operational update put total stablecoin supply at $9.70 billion and&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/09/crypto-news-For-stablecoins-to-win-retail-option04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/09/crypto-news-For-stablecoins-to-win-retail-option04.webp"/>
+<enclosure url="https://media.crypto.news/2025/09/crypto-news-For-stablecoins-to-win-retail-option04.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>SEC puts tokenization risks on its fiscal 2027 examination list</title>
+		<link>https://crypto.news/sec-tokenization-risks-2027-examination-priorities/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 15:08:58 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[SEC]]></category>
+		<category><![CDATA[Tokenization]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487519</guid>
+
+					<description><![CDATA[The U.S. Securities and Exchange Commission has included tokenization risks in its fiscal 2027 examination priorities, setting out areas of scrutiny across a program covering more than 34,000 registrants. The SEC announced the priorities on Oct. 23, identifying evolving market&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/07/sec1.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/07/sec1.webp"/>
+<enclosure url="https://media.crypto.news/2026/07/sec1.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Franklin Templeton moves closer to launching two Bitcoin DRIP ETFs on Nasdaq</title>
+		<link>https://crypto.news/franklin-templeton-moves-closer-to-launching-two-bitcoin-drip-etfs-on-nasdaq/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 13:59:14 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitcoin ETF]]></category>
+		<category><![CDATA[Nasdaq]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487515</guid>
+
+					<description><![CDATA[Franklin Templeton has registered two Bitcoin dividend reinvestment ETFs for Nasdaq trading, bringing the $1.8 trillion asset manager closer to launching funds that automatically convert stock dividends into Bitcoin exposure. According to an October 22 SEC filing, the Franklin US&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/03/crypto-news-Nasdaq-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/03/crypto-news-Nasdaq-option02.webp"/>
+<enclosure url="https://media.crypto.news/2025/03/crypto-news-Nasdaq-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>CLARITY Act: Lummis says Democrats blocked tougher rules against crypto crime</title>
+		<link>https://crypto.news/clarity-act-lummis-democrats-crypto-penalties/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 13:10:16 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Clarity Act]]></category>
+		<category><![CDATA[Crime]]></category>
+		<category><![CDATA[Cryptocurrency]]></category>
+		<category><![CDATA[Cynthia Lummis]]></category>
+		<category><![CDATA[Regulation]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487511</guid>
+
+					<description><![CDATA[Senator Cynthia Lummis accuses Democrats of blocking tougher crypto penalties and custody rules under the CLARITY Act after its failed Senate vote.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Clarityactnew2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Clarityactnew2.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Clarityactnew2.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>The CLARITY Act stalled. Can Congress pass crypto tax rules first?</title>
+		<link>https://crypto.news/the-clarity-act-stalled-can-congress-pass-crypto-tax-rules-first/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 13:00:00 +0000</pubDate>
+				<category><![CDATA[Feature]]></category>
+		<category><![CDATA[Clarity Act]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487472</guid>
+
+					<description><![CDATA[A new Senate tax proposal has joined a House bill already through committee. The measures address payments, fees and trading rules, but they have their own route to enactment and cannot settle market oversight. The Senate could not open debate&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/05/clarity-act-2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/05/clarity-act-2.webp"/>
+<enclosure url="https://media.crypto.news/2026/05/clarity-act-2.webp" length="1344" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Glamsterdam is off Hoodi’s October calendar as Ethereum checks contract risks</title>
+		<link>https://crypto.news/glamsterdam-is-off-hoodis-october-calendar-as-ethereum-checks-contract-risks/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 12:45:00 +0000</pubDate>
+				<category><![CDATA[Feature]]></category>
+		<category><![CDATA[Ethereum]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487460</guid>
+
+					<description><![CDATA[The October 26 Hoodi test has been pulled, including its planned 200 million gas limit. Developers are examining a repricing proposal against contracts already on mainnet. Ethereum has called off a test that was due to run next Monday. The&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/05/crypto-news-Ethereum-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/05/crypto-news-Ethereum-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/05/crypto-news-Ethereum-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Best no KYC crypto card for USA: What buyers should check</title>
+		<link>https://crypto.news/best-no-kyc-crypto-card-for-usa-what-to-should-check/</link>
+		
+		<dc:creator><![CDATA[Guest]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 12:30:25 +0000</pubDate>
+				<category><![CDATA[Best Picks]]></category>
+		<category><![CDATA[Cryptocurrency]]></category>
+		<category><![CDATA[KYC]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487507</guid>
+
+					<description><![CDATA[Compare no-KYC crypto cards for US residents, including WaldenPay, fees, privacy, card features, and important eligibility checks before applying.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/06/crypto-news-Best-crypto-debit-cards-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/06/crypto-news-Best-crypto-debit-cards-option01.webp"/>
+<enclosure url="https://media.crypto.news/2024/06/crypto-news-Best-crypto-debit-cards-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>SHR Miner’s 8th anniversary celebration begins: Popular cloud mining contracts are now live, with $88,800 in order-rebate rewards waiting for you to claim</title>
+		<link>https://crypto.news/shr-miner-8th-anniversary-celebration-begins-2/</link>
+		
+		<dc:creator><![CDATA[Guest]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 12:10:58 +0000</pubDate>
+				<category><![CDATA[Partner Content]]></category>
+		<category><![CDATA[Mining]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487504</guid>
+
+					<description><![CDATA[SHR Miner announces its 8th anniversary promotion, offering new-user bonuses, deposit rebates of up to 10%, referral rewards, and prizes for eligible users.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/05/ChatGPT-Image-May-14-2026-09_55_44-PM.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/05/ChatGPT-Image-May-14-2026-09_55_44-PM.webp"/>
+<enclosure url="https://media.crypto.news/2026/05/ChatGPT-Image-May-14-2026-09_55_44-PM.webp" length="1627" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Ethereum price prediction: Will ETH fall to $2,200 or recover to $2,800?</title>
+		<link>https://crypto.news/why-is-ethereum-price-down-today-etf-outflows/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 12:05:08 +0000</pubDate>
+				<category><![CDATA[Markets]]></category>
+		<category><![CDATA[Ethereum]]></category>
+		<category><![CDATA[ethereum ETF]]></category>
+		<category><![CDATA[outflows]]></category>
+		<category><![CDATA[Prediction]]></category>
+		<category><![CDATA[Price Analysis]]></category>
+		<category><![CDATA[whales]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487497</guid>
+
+					<description><![CDATA[Ethereum price trades near $2,400 amid reported $110.6M ETF outflows, whale selling and a delayed Glamsterdam testnet upgrade. Will ETH hold $2,350?]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/06/crypto-news-Alt-ZK-solutions-Ethereum-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/06/crypto-news-Alt-ZK-solutions-Ethereum-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/06/crypto-news-Alt-ZK-solutions-Ethereum-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>NEAR’s private perps now share margin. Who can see the risk?</title>
+		<link>https://crypto.news/nears-private-perps-now-share-margin-who-can-see-the-risk/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 12:00:00 +0000</pubDate>
+				<category><![CDATA[Feature]]></category>
+		<category><![CDATA[NEAR]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487468</guid>
+
+					<description><![CDATA[The new cross-margin option lets positions draw on one balance. NEAR describes a confidential route into a dedicated Hyperliquid account, while the exchange still has to price and liquidate the trades. NEAR&#8217;s perpetuals interface now lets multiple positions use a&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2023/05/Leveraged-crypto-trading-in-202303-1.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2023/05/Leveraged-crypto-trading-in-202303-1.webp"/>
+<enclosure url="https://media.crypto.news/2023/05/Leveraged-crypto-trading-in-202303-1.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>South Korea to require crypto firms to report overseas transfers from December</title>
+		<link>https://crypto.news/south-korea-crypto-transfer-rules-december-2026/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 11:18:53 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Cryptocurrency]]></category>
+		<category><![CDATA[Exchange]]></category>
+		<category><![CDATA[Regulation]]></category>
+		<category><![CDATA[South Korea]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487491</guid>
+
+					<description><![CDATA[South Korea will require registration and reporting for cross-border crypto transfers from December 3, including exchanges and private wallets.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/12/crypto-news-South-Koreas-Crypto-Trading-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/12/crypto-news-South-Koreas-Crypto-Trading-option02.webp"/>
+<enclosure url="https://media.crypto.news/2024/12/crypto-news-South-Koreas-Crypto-Trading-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>New York AG wants $1.3B from NovaTech founders over crypto scam</title>
+		<link>https://crypto.news/new-york-ag-wants-1-3b-from-novatech-founders-over-crypto-scam/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 11:03:20 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Crypto Scam]]></category>
+		<category><![CDATA[New York]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487488</guid>
+
+					<description><![CDATA[New York Attorney General Letitia James has secured nearly $6 million in settlements from four promoters of the NovaTech and AWS Mining crypto fraud schemes and asked a court to order an additional $1.3 billion in payments from the companies&#8217;&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2023/11/crypto-news-white-and-light-green-coins-down-New-York-background-low-poly-style.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2023/11/crypto-news-white-and-light-green-coins-down-New-York-background-low-poly-style.webp"/>
+<enclosure url="https://media.crypto.news/2023/11/crypto-news-white-and-light-green-coins-down-New-York-background-low-poly-style.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>PI coin is below $0.08 after Protocol 28. What has the upgrade changed?</title>
+		<link>https://crypto.news/pi-coin-is-below-0-08-after-protocol-28-what-has-the-upgrade-changed/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 11:00:00 +0000</pubDate>
+				<category><![CDATA[Feature]]></category>
+		<category><![CDATA[Pi Network]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487446</guid>
+
+					<description><![CDATA[Pi Network&#8217;s scheduled Mainnet transition has passed, but its price remains below eight cents. The change gives developers new tools; proof of use will take longer to show up. PI was changing hands around $0.0786 on October 23, according to&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/09/crypto-news-Pi-Network-option05.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/09/crypto-news-Pi-Network-option05.webp"/>
+<enclosure url="https://media.crypto.news/2025/09/crypto-news-Pi-Network-option05.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>XRP price prediction: Can XRP recover to $1.50 after October&#8217;s decline?</title>
+		<link>https://crypto.news/xrp-price-prediction-etf-inflows-wallet-growth/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 10:55:20 +0000</pubDate>
+				<category><![CDATA[Markets]]></category>
+		<category><![CDATA[ETF]]></category>
+		<category><![CDATA[Prediction]]></category>
+		<category><![CDATA[Price Analysis]]></category>
+		<category><![CDATA[XRP]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487482</guid>
+
+					<description><![CDATA[XRP price trades near $1.32 despite ETF inflows and record wallet growth, as bearish RSI and MACD readings keep $1.30 support in focus.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/03/crypto-news-XRP-bull-option04-1380x820-1.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/03/crypto-news-XRP-bull-option04-1380x820-1.webp"/>
+<enclosure url="https://media.crypto.news/2025/03/crypto-news-XRP-bull-option04-1380x820-1.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Singapore, Malaysia and Thailand team up to make stablecoin payments easier</title>
+		<link>https://crypto.news/malaysia-thailand-singapore-bloom-stablecoin/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 10:04:54 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Malaysia]]></category>
+		<category><![CDATA[payments]]></category>
+		<category><![CDATA[Singapore]]></category>
+		<category><![CDATA[Stablecoin]]></category>
+		<category><![CDATA[Thailand]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487479</guid>
+
+					<description><![CDATA[Malaysia and Thailand join Singapore's BLOOM initiative to coordinate stablecoin settlement, as Ripple, Visa and Mastercard expand industry participation.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/10/crypto-news-The-stablecoin-market-is-in-for-a-diversification-boom-option04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/10/crypto-news-The-stablecoin-market-is-in-for-a-diversification-boom-option04.webp"/>
+<enclosure url="https://media.crypto.news/2025/10/crypto-news-The-stablecoin-market-is-in-for-a-diversification-boom-option04.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>HSBC launches RedCoin stablecoin, plans HK$100 tokenized fund investments</title>
+		<link>https://crypto.news/hsbc-redcoin-stablecoin-payme-hong-kong-launch/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 09:30:20 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[HSBC]]></category>
+		<category><![CDATA[launch]]></category>
+		<category><![CDATA[Stablecoin]]></category>
+		<category><![CDATA[Tokenized Assets]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487473</guid>
+
+					<description><![CDATA[HSBC launches its HKD-backed RedCoin stablecoin for 3.3M PayMe users, with instant payments available and tokenized investments planned for 2026.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/08/crypto-news-Hong-Kong-stablecoin-law-AI-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/08/crypto-news-Hong-Kong-stablecoin-law-AI-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/08/crypto-news-Hong-Kong-stablecoin-law-AI-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Solana validators in Europe control 72.8% of staked SOL, Bitwise finds</title>
+		<link>https://crypto.news/solana-validator-stake-europe-72-8-percent-bitwise/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 08:52:56 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitwise]]></category>
+		<category><![CDATA[Europe]]></category>
+		<category><![CDATA[Solana]]></category>
+		<category><![CDATA[Staking]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487464</guid>
+
+					<description><![CDATA[Bitwise reports 72.8% of Solana stake sits with European validators, raising geographic resilience questions as 250ms slots expose regional voting gaps.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Solana2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Solana2.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Solana2.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>FOMO challenges Pump.fun with new bridge promising sub-second crypto swaps</title>
+		<link>https://crypto.news/fomo-cross-chain-bridge-pump-fun-competition/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 08:28:03 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Cryptocurrency]]></category>
+		<category><![CDATA[pump.fun]]></category>
+		<category><![CDATA[Trading]]></category>
+		<category><![CDATA[transactions]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487456</guid>
+
+					<description><![CDATA[FOMO launches its own cross-chain bridge and router after Pump.fun's rollout, claiming sub-second swaps, faster execution and better trading prices.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/11/crypto-news-FOMO-might-be-your-portfolios-worst-enemy-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/11/crypto-news-FOMO-might-be-your-portfolios-worst-enemy-option02.webp"/>
+<enclosure url="https://media.crypto.news/2024/11/crypto-news-FOMO-might-be-your-portfolios-worst-enemy-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Pump.fun KIMCHI token crashes 95% after co-founder Alon deletes repost</title>
+		<link>https://crypto.news/pump-fun-kimchi-token-crash-qr-code/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 07:57:00 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Markets]]></category>
+		<category><![CDATA[Meme Coin]]></category>
+		<category><![CDATA[pump.fun]]></category>
+		<category><![CDATA[Solana]]></category>
+		<category><![CDATA[Token]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487447</guid>
+
+					<description><![CDATA[KIMCHI token crashes after a QR code promotion linked to Pump.fun co-founder Alon disappears, as Lookonchain flags $385K in suspected trading profits.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/01/crypto-news-pump.fun-option06.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/01/crypto-news-pump.fun-option06.webp"/>
+<enclosure url="https://media.crypto.news/2025/01/crypto-news-pump.fun-option06.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Bank of Korea to track crypto holdings of users with overseas transfers</title>
+		<link>https://crypto.news/bank-of-korea-to-track-crypto-holdings-of-users-with-overseas-transfers/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 07:40:24 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[South Korea]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487444</guid>
+
+					<description><![CDATA[South Korea&#8217;s central bank has introduced new reporting requirements that will require domestic crypto exchanges to disclose the monthly holdings of users who have previously transferred digital assets overseas. According to an October 23 report by local media outlet Digital&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/12/crypto-news-South-Korea-judge-court-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/12/crypto-news-South-Korea-judge-court-option02.webp"/>
+<enclosure url="https://media.crypto.news/2024/12/crypto-news-South-Korea-judge-court-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>UK FCA opens DeFi consultations to clarify crypto rules ahead of 2027</title>
+		<link>https://crypto.news/uk-fca-opens-defi-consultations-to-clarify-crypto-rules-ahead-of-2027/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 07:18:09 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[legislation]]></category>
+		<category><![CDATA[United Kingdom]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487436</guid>
+
+					<description><![CDATA[The UK&#8217;s Financial Conduct Authority has opened two consultations to clarify how decentralized finance businesses will be regulated and which crypto activities could qualify for exemptions when the country&#8217;s new framework takes effect in October 2027. According to the FCA&#8217;s&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/09/crypto-news-United-Kingdom-crypto-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/09/crypto-news-United-Kingdom-crypto-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/09/crypto-news-United-Kingdom-crypto-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Bitcoin price falls below $82K as spot ETFs see $635M in outflows</title>
+		<link>https://crypto.news/why-is-bitcoin-price-down-today-etf-outflows/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 07:15:43 +0000</pubDate>
+				<category><![CDATA[Markets]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[Bitcoin spot ETF]]></category>
+		<category><![CDATA[Liquidation]]></category>
+		<category><![CDATA[outflows]]></category>
+		<category><![CDATA[Prediction]]></category>
+		<category><![CDATA[Price Analysis]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487437</guid>
+
+					<description><![CDATA[Bitcoin price drops below $82,000 amid reported $635M ETF outflows and $406M in crypto liquidations, with analysts watching $80,000 support.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/02/1.5B-liquidated-as-Bitcoin-drops-13-and-market-liquidity.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/02/1.5B-liquidated-as-Bitcoin-drops-13-and-market-liquidity.webp"/>
+<enclosure url="https://media.crypto.news/2026/02/1.5B-liquidated-as-Bitcoin-drops-13-and-market-liquidity.webp" length="3072" type="image/jpg"/>
+	</item>
+		<item>
+		<title>CME backed industry group urges CFTC to block Kalshi oil futures plan</title>
+		<link>https://crypto.news/cme-backed-industry-group-urges-cftc-to-block-kalshi-oil-futures-plan/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 06:32:00 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[CME]]></category>
+		<category><![CDATA[Prediction Markets]]></category>
+		<category><![CDATA[United States]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487434</guid>
+
+					<description><![CDATA[A group representing major US commodity exchanges has urged the Commodity Futures Trading Commission to reject Kalshi&#8217;s proposed oil perpetual futures contract over concerns about market integrity. According to Bloomberg, the Commodity Markets Council (CMC), whose members include CME Group&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/05/crypto-news-price-prediction-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/05/crypto-news-price-prediction-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/05/crypto-news-price-prediction-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Why is Zcash price down today? ZEC open interest falls 12%</title>
+		<link>https://crypto.news/why-is-zcash-price-down-today-zec-prediction/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 06:21:12 +0000</pubDate>
+				<category><![CDATA[Markets]]></category>
+		<category><![CDATA[Prediction]]></category>
+		<category><![CDATA[Price Analysis]]></category>
+		<category><![CDATA[Zcash]]></category>
+		<category><![CDATA[ZEC]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487427</guid>
+
+					<description><![CDATA[Zcash price falls 3.78% to $1,225 as futures open interest drops 12.45%. ZEC faces $1,250 resistance, with traders watching the NU7 upgrade.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Zcash4.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Zcash4.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Zcash4.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Aave V4 launches first externally curated lending markets with Sentora</title>
+		<link>https://crypto.news/aave-v4-launches-first-externally-curated-lending-markets-with-sentora/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 06:09:57 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Aave]]></category>
+		<category><![CDATA[Crypto Lending]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487424</guid>
+
+					<description><![CDATA[Aave has launched its first externally curated lending markets on V4 through a partnership with institutional DeFi platform Sentora, allowing users to borrow three stablecoins against selected crypto assets on Ethereum. According to Aave&#8217;s official announcement, Sentora is managing three&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/12/crypto-news-Aave-Lido-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/12/crypto-news-Aave-Lido-option02.webp"/>
+<enclosure url="https://media.crypto.news/2024/12/crypto-news-Aave-Lido-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>BNB Chain ranks No. 1 in tokenized stocks by volume, supply and holders in Q3</title>
+		<link>https://crypto.news/bnb-chain-tokenized-equity-volume-q3-2026/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 05:45:56 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[BNB Chain]]></category>
+		<category><![CDATA[Tokenized Stocks]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487418</guid>
+
+					<description><![CDATA[BNB Chain leads Q3 tokenized equity trading with $25.6B in volume, $1.13B in supply and 1.8M holders, according to Blockworks' quarterly report.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2023/08/Master-Key-Finance-to-launch-on-BNB-Chain02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2023/08/Master-Key-Finance-to-launch-on-BNB-Chain02.webp"/>
+<enclosure url="https://media.crypto.news/2023/08/Master-Key-Finance-to-launch-on-BNB-Chain02.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Jameson Lopp warns Bitcoin holders against giving up self custody</title>
+		<link>https://crypto.news/jameson-lopp-warns-bitcoin-holders-against-giving-up-self-custody/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 05:34:15 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[Crypto Wallet]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487415</guid>
+
+					<description><![CDATA[Casa chief security officer Jameson Lopp has urged Bitcoin holders not to abandon self custody in favor of ETFs and third party custodians following a series of cryptocurrency wallet security incidents. In an October 22 open letter addressed to Casa&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/08/crypto-news-Self-custody-matters-now-more-than-ever-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/08/crypto-news-Self-custody-matters-now-more-than-ever-option01.webp"/>
+<enclosure url="https://media.crypto.news/2025/08/crypto-news-Self-custody-matters-now-more-than-ever-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Circle expands Alliance Program with eight new partner benefits</title>
+		<link>https://crypto.news/circle-alliance-program-eight-benefits-alliance-hub/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 05:10:17 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Blockchain]]></category>
+		<category><![CDATA[Circle]]></category>
+		<category><![CDATA[USDC]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487411</guid>
+
+					<description><![CDATA[Circle adds eight new partner benefits and a private Alliance Hub, offering early product access, improved support and networking across its stablecoin ecosystem.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/04/crypto-news-Circle-USDC-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/04/crypto-news-Circle-USDC-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/04/crypto-news-Circle-USDC-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Ethereum postpones Glamsterdam after EIP-8037 raises security concerns</title>
+		<link>https://crypto.news/ethereum-glamsterdam-hoodi-upgrade-postponed/</link>
+		
+		<dc:creator><![CDATA[Olivia Stephanie]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 04:38:32 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Ethereum]]></category>
+		<category><![CDATA[governance]]></category>
+		<category><![CDATA[Security]]></category>
+		<category><![CDATA[Technology]]></category>
+		<category><![CDATA[Upgrade]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487407</guid>
+
+					<description><![CDATA[Ethereum postpones Glamsterdam's October 26 Hoodi testnet upgrade over EIP-8037 compatibility concerns, with no new mainnet activation date confirmed.]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/07/Ethereum2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/07/Ethereum2.webp"/>
+<enclosure url="https://media.crypto.news/2026/07/Ethereum2.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>OpenSea faces push for Bitcoin Ordinals and Runes trading support</title>
+		<link>https://crypto.news/opensea-bitcoin-ordinals-runes-trading-support/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 21:19:53 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[Ordinals]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487403</guid>
+
+					<description><![CDATA[Bitcoin Ordinals and Runes supporters have renewed calls for native trading on OpenSea after Leonidas shared a comment attributed to a company marketer saying community feedback helps shape its product roadmap. Leonidas, in posts dated Oct. 21 and Oct. 22,&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/08/crypto-news-Bitcoin-Ordinals-option04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/08/crypto-news-Bitcoin-Ordinals-option04.webp"/>
+<enclosure url="https://media.crypto.news/2024/08/crypto-news-Bitcoin-Ordinals-option04.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>TRON settles $2.21T in Q3 stablecoins as payment split stays unclear</title>
+		<link>https://crypto.news/tron-q3-stablecoin-settlement-nansen/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 20:51:20 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[payment platform]]></category>
+		<category><![CDATA[Stablecoin]]></category>
+		<category><![CDATA[Tron]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487401</guid>
+
+					<description><![CDATA[TRON has processed $2.21 trillion in stablecoin settlement during the third quarter of 2026, up 5.1% from the previous quarter, Nansen has reported. Nansen’s Oct. 21 report puts successful network transactions at 1.0748 billion for July through September, averaging 11.68&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Solana’s Reflect launches stablecoin creation in one transaction</title>
+		<link>https://crypto.news/solanas-reflect-launches-stablecoin-creation-in-one-transaction/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 20:25:34 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Solana]]></category>
+		<category><![CDATA[Stablecoin]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487397</guid>
+
+					<description><![CDATA[Reflect has launched Create on Solana, offering users a way to issue a branded yield-bearing stablecoin in one transaction and choose how interest is divided among holders. Reflect said its new tool lets users select collateral from a reviewed set,&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp"/>
+<enclosure url="https://media.crypto.news/2025/08/crypto-news-Stablecoins-vs-banks-option03.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>JPMorgan brings 2 tokenized money market funds to Solana for US investors</title>
+		<link>https://crypto.news/jpmorgan-mony-jltxx-tokenized-funds-solana/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 20:02:24 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[asset tokenization]]></category>
+		<category><![CDATA[JP Morgan]]></category>
+		<category><![CDATA[Solana]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487392</guid>
+
+					<description><![CDATA[J.P. Morgan Asset Management has brought two tokenized money market funds, MONY and JLTXX, to Solana for qualified U.S. investors through its Morgan Money platform. J.P. Morgan Asset Management said investors can subscribe and redeem through Morgan Money, with token&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2025/10/crypto-news-Tokenization-dollar-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2025/10/crypto-news-Tokenization-dollar-option02.webp"/>
+<enclosure url="https://media.crypto.news/2025/10/crypto-news-Tokenization-dollar-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Bitcoin slips below $81K as Cowen warns of deeper support retest</title>
+		<link>https://crypto.news/bitcoin-below-81k-cowen-support-warning/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 19:27:53 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487388</guid>
+
+					<description><![CDATA[Bitcoin has fallen below $81,000 before recovering some ground, bringing $80,000 back into focus as Benjamin Cowen warns that a daily close below its 50-day moving average could send prices toward the bull market support band. CoinGecko showed Bitcoin fell&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/07/Bitcoin1.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/07/Bitcoin1.webp"/>
+<enclosure url="https://media.crypto.news/2026/07/Bitcoin1.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Zcash releases Zebra 7.0.0 as NU7 node upgrade deadline approaches</title>
+		<link>https://crypto.news/zcash-zebra-7-nu7-mainnet-upgrade-deadline/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 19:00:01 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[nodes]]></category>
+		<category><![CDATA[Upgrade]]></category>
+		<category><![CDATA[Zcash]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487385</guid>
+
+					<description><![CDATA[Zcash Foundation has released Zebra 7.0.0 with NU7 mainnet support, telling node operators to upgrade before block 3,543,405, expected around Nov. 5. Zcash Foundation said in its Oct. 22 announcement that mainnet operators must install the upgrade to remain on&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Zcash2.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Zcash2.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Zcash2.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Solana pitches Quantumglow to protect Alpenglow from quantum attacks</title>
+		<link>https://crypto.news/solana-quantumglow-alpenglow-post-quantum-consensus/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 18:41:16 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[quantum computing]]></category>
+		<category><![CDATA[Solana]]></category>
+		<category><![CDATA[Upgrade]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487381</guid>
+
+					<description><![CDATA[Solana has promoted Quantumglow, a proposed post-quantum adaptation of Alpenglow designed to protect consensus while preserving the network’s fast finality. Solana Developers described the proposal in an Oct. 22 video post, presenting it as a way to secure agreement between&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/07/SOL11.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/07/SOL11.webp"/>
+<enclosure url="https://media.crypto.news/2026/07/SOL11.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>NEAR adds cross margin to confidential perps powered by Hyperliquid</title>
+		<link>https://crypto.news/near-cross-margin-confidential-perps-hyperliquid/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 18:10:48 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Hyperliquid]]></category>
+		<category><![CDATA[NEAR]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487377</guid>
+
+					<description><![CDATA[NEAR Protocol has rolled out cross-margin on its Hyperliquid-powered perpetuals platform, allowing trading positions to share a single perps balance while retaining what the project describes as confidential trading. NEAR Protocol announced the feature on Oct. 22, saying positions now&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2026/06/Hyperliquidcn.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2026/06/Hyperliquidcn.webp"/>
+<enclosure url="https://media.crypto.news/2026/06/Hyperliquidcn.webp" length="1600" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Cardano opens Dijkstra testnet as node 11.2 prepares protocol upgrade</title>
+		<link>https://crypto.news/cardano-dijkstra-testnet-node-11-2/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 16:22:44 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Cardano]]></category>
+		<category><![CDATA[TestNet]]></category>
+		<category><![CDATA[Upgrade]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487358</guid>
+
+					<description><![CDATA[Cardano’s public Dijkstra testnet has opened to stake pool operators ahead of node 11.2, which will support a planned test-network upgrade to protocol version 12 without Leios. Intersect said in its Oct. 22 Upgrade Bulletin #39 that DijkstraNet became publicly&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2023/08/Cardano04.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2023/08/Cardano04.webp"/>
+<enclosure url="https://media.crypto.news/2023/08/Cardano04.webp" length="1380" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Coinbase Ireland faces €3.25M fine over customer fund safeguards</title>
+		<link>https://crypto.news/coinbase-ireland-fine-customer-fund-safeguards/</link>
+		
+		<dc:creator><![CDATA[Lawrence Mondal]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 16:04:04 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Coinbase]]></category>
+		<category><![CDATA[funding]]></category>
+		<category><![CDATA[Ireland]]></category>
+		<category><![CDATA[Regulation]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487356</guid>
+
+					<description><![CDATA[Coinbase Ireland has agreed to a €3.25 million fine over failures to protect customer funds and oversee outsourced controls, with the sanctions awaiting High Court approval. The Central Bank of Ireland announced the settlement on Oct. 22, covering breaches of&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/10/crypto-news-Can-global-regulation-keep-up-with-the-tokenization-boom-option01.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/10/crypto-news-Can-global-regulation-keep-up-with-the-tokenization-boom-option01.webp"/>
+<enclosure url="https://media.crypto.news/2024/10/crypto-news-Can-global-regulation-keep-up-with-the-tokenization-boom-option01.webp" length="1386" type="image/jpg"/>
+	</item>
+		<item>
+		<title>Best meme coins to buy now (October 2026): 7 compared</title>
+		<link>https://crypto.news/best-meme-coins-to-buy-now-october-2026-7-compared/</link>
+		
+		<dc:creator><![CDATA[Rony Roy]]></dc:creator>
+		<pubDate>Thu, 22 Oct 2026 16:00:00 +0000</pubDate>
+				<category><![CDATA[News]]></category>
+		<category><![CDATA[Meme Coin]]></category>
+		<category><![CDATA[Memecoins]]></category>
+		<guid isPermaLink="false">https://crypto.news/?p=14487347</guid>
+
+					<description><![CDATA[The meme coin market is worth about $30 billion, and three coins hold most of it. For everything else the odds are poor: Bitquery data reported by crypto.news shows 79% of Pump.fun tokens traded only on their launch day. This&#8230;]]></description>
+		
+		
+		
+		<media:content url="https://media.crypto.news/2024/07/crypto-news-Memecoins-are-everything-wrong-with-web3-option02.webp" medium="image"/>
+<media:thumbnail url="https://media.crypto.news/2024/07/crypto-news-Memecoins-are-everything-wrong-with-web3-option02.webp"/>
+<enclosure url="https://media.crypto.news/2024/07/crypto-news-Memecoins-are-everything-wrong-with-web3-option02.webp" length="1386" type="image/jpg"/>
+	</item>
+	</channel>
+</rss>

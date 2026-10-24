@@ -1,0 +1,202 @@
+{
+ "rss_coindesk": {
+  "status": 200,
+  "bytes": 29935,
+  "type": "application/xml"
+ },
+ "rss_cointelegraph": {
+  "status": 200,
+  "bytes": 53333,
+  "type": "application/xml; charset=utf-8"
+ },
+ "rss_decrypt": {
+  "status": 200,
+  "bytes": 44257,
+  "type": "application/xml"
+ },
+ "rss_theblock": {
+  "status": 200,
+  "bytes": 30162,
+  "type": "text/xml; charset=UTF-8"
+ },
+ "rss_bitcoinmagazine": {
+  "status": 200,
+  "bytes": 66691,
+  "type": "application/rss+xml; charset=UTF-8"
+ },
+ "rss_cryptoslate": {
+  "status": 200,
+  "bytes": 16768,
+  "type": "application/rss+xml; charset=UTF-8"
+ },
+ "rss_cryptonews": {
+  "status": 200,
+  "bytes": 59899,
+  "type": "application/rss+xml; charset=UTF-8"
+ },
+ "rss_utoday": {
+  "status": 200,
+  "bytes": 53925,
+  "type": "application/rss+xml; charset=utf-8"
+ },
+ "rss_google_ondo": {
+  "status": 200,
+  "bytes": 115378,
+  "type": "application/xml; charset=utf-8"
+ },
+ "rss_google_xrp": {
+  "status": 200,
+  "bytes": 127629,
+  "type": "application/xml; charset=utf-8"
+ },
+ "fng": {
+  "status": 200,
+  "bytes": 300333,
+  "type": "application/json"
+ },
+ "llama_stables": {
+  "status": 200,
+  "bytes": 1330209,
+  "type": "application/json; charset=utf-8"
+ },
+ "llama_chains": {
+  "status": 200,
+  "bytes": 58054,
+  "type": "text/html; charset=utf-8"
+ },
+ "llama_tvl_eth": {
+  "status": 200,
+  "bytes": 122396,
+  "type": "text/html; charset=utf-8"
+ },
+ "llama_tvl_sol": {
+  "status": 200,
+  "bytes": 75356,
+  "type": "text/html; charset=utf-8"
+ },
+ "llama_tvl_xrpl": {
+  "status": 200,
+  "bytes": 33026,
+  "type": "text/html; charset=utf-8"
+ },
+ "llama_ondo": {
+  "status": 200,
+  "bytes": 1,
+  "type": "application/json; charset=utf-8"
+ },
+ "llama_ondo_full": {
+  "status": 200,
+  "bytes": 823,
+  "type": "application/json; charset=utf-8"
+ },
+ "llama_dex_sol": {
+  "status": 200,
+  "bytes": 235405,
+  "type": "application/json; charset=utf-8"
+ },
+ "llama_stables_sol": {
+  "status": 200,
+  "bytes": 743739,
+  "type": "application/json; charset=utf-8"
+ },
+ "mempool_fees": {
+  "status": 200,
+  "bytes": 74,
+  "type": "application/json; charset=utf-8"
+ },
+ "mempool": {
+  "status": 200,
+  "bytes": 1670,
+  "type": "application/json"
+ },
+ "mempool_hashrate": {
+  "status": 200,
+  "bytes": 24917,
+  "type": "application/json; charset=utf-8"
+ },
+ "bc_ntx": {
+  "status": 200,
+  "bytes": 11031,
+  "type": "application/json; charset=utf-8"
+ },
+ "bc_vol": {
+  "status": 200,
+  "bytes": 15305,
+  "type": "application/json; charset=utf-8"
+ },
+ "blockchair_btc": {
+  "status": 200,
+  "bytes": 1882,
+  "type": "application/json"
+ },
+ "blockchair_eth": {
+  "status": 200,
+  "bytes": 2497,
+  "type": "application/json"
+ },
+ "blockchair_btc_whales": {
+  "status": 430,
+  "bytes": 675,
+  "type": "application/json"
+ },
+ "okx_funding": {
+  "status": 200,
+  "bytes": 524,
+  "type": "application/json;charset=UTF-8"
+ },
+ "okx_oi": {
+  "status": 200,
+  "bytes": 189,
+  "type": "application/json;charset=UTF-8"
+ },
+ "binance_funding": {
+  "status": 451,
+  "bytes": 224,
+  "type": "application/json"
+ },
+ "bybit_tickers": {
+  "status": 403,
+  "bytes": 96,
+  "type": "application/json"
+ },
+ "kraken_fut": {
+  "status": 200,
+  "bytes": 137794,
+  "type": "application/json"
+ },
+ "coingecko_global": {
+  "status": 200,
+  "bytes": 3725,
+  "type": "application/json; charset=utf-8"
+ },
+ "hyperliquid": {
+  "status": 200,
+  "bytes": 72180,
+  "type": "application/json"
+ },
+ "hyperliquid_fhist": {
+  "status": 200,
+  "bytes": 44063,
+  "type": "application/json"
+ },
+ "solana_perf": {
+  "status": 200,
+  "bytes": 1156,
+  "type": "application/json; charset=utf-8"
+ },
+ "xrpl_info": {
+  "status": 200,
+  "bytes": 1121,
+  "type": "application/json; charset=utf-8"
+ },
+ "xrpl_ripple": {
+  "status": 200,
+  "bytes": 808,
+  "type": "application/json"
+ },
+ "eth_rpc": {
+  "status": 200,
+  "bytes": 45,
+  "type": "application/json"
+ }
+}

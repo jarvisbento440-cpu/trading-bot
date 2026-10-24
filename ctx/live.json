@@ -1,0 +1,716 @@
+{
+ "news_sync": {
+  "new": 659,
+  "failed": []
+ },
+ "onchain_failed": [
+  "Ondo-TVL"
+ ],
+ "coins": {
+  "BTC": {
+   "lines": [
+    "News 3 Tage: neutral (+0,01, 154 Meldungen)",
+    "Fear & Greed: 51 (neutral)",
+    "Funding: 0,0010 %/h (+9 % p, a,) – normal"
+   ],
+   "headwind_long": [
+    "Starke negative Meldung: „Canadian bitcoin firm Coinkite facing proposed class-action lawsuit after $140-million hack“ (The Globe and Mail)",
+    "Starke negative Meldung: „Bitcoin ‘Goes to Zero’ After a Hack, Chamath Palihapitiya Predicts“ (Yahoo Finance)"
+   ],
+   "news": {
+    "coin": "BTC",
+    "score": 0.04,
+    "count": 154,
+    "news3": 0.01,
+    "news3_n": 154,
+    "filter": false,
+    "pos": 32,
+    "neg": 28,
+    "label": "neutral",
+    "strong_neg": [
+     {
+      "id": "22ed58b82fd7cf4b",
+      "ts": 1792800937000,
+      "source": "The Globe and Mail",
+      "title": "Canadian bitcoin firm Coinkite facing proposed class-action lawsuit after $140-million hack",
+      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPRkRROHc5dUVFbmFKZVpsMEYtUU5wWFo1Rkhnd0Fqdi03aHRyczc2SlROMnkzcXdmaUVBd2RVQ3QwX2oycUtpYXhPWEdWcnNvRERVbGk2QnpJNGhBWVk1cEE3ZHB6SVV6VHMwS2M0S0NLSTUzSWJpMTdSeFExdmRQWWotZi1FZWU1R29KemUteURKV0tTd0F6T0J3Yk1weF9LNHhRVFlCT29sTFllRG5NcU9zMGdldw?oc=5",
+      "coins": "BTC",
+      "score": -2.0,
+      "alerted": 0
+     },
+     {
+      "id": "7286ab7cc0152cb3",
+      "ts": 1792788607000,
+      "source": "Yahoo Finance",
+      "title": "Bitcoin ‘Goes to Zero’ After a Hack, Chamath Palihapitiya Predicts",
+      "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOalREVGdETGFHV0VfWnhRdWVhVTVGbGJkcjk5NHo2R3pTM3FyTXBDQVpVUmFOS1I4V1phNGNFREZrd1Y3T2J2dGZEaElIbzhPNU05M0ZoVzlDTV9TSlNNcUZnNXE5MVlSNUFjWEFGblRrOGhmOGxuNFNBNUFNVng0MjdwVjdETDZSd0xyRzZSdU9LaVI0NlhrRlZqVQ?oc=5",
+      "coins": "BTC",
+      "score": -2.0,
+      "alerted": 0
+     }
+    ],
+    "strong_pos": [
+     {
+      "id": "9675b1f61f82f39e",
+      "ts": 1792794624000,
+      "source": "Yahoo Finance",
+      "title": "'Cash Is A Melting Ice Cube,' Says Industry Executive as Bitcoin Adoption Poised to Surge",
+      "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNLUFwVFJsWnhkVmREMkpwRWlpQ0pwTXVfRVQ0VTc0ZE85OWZyVkJ4NllBemk1dUFhT3JTeUxtSUJFRzgzdEdycHRKUHFuUTRJbXBaV3p0cXhRWWEwbUdEWnBIT3N1MkJETGxtQ1VpTE1RSmpTdWtfZXlKVFFJUFNhU1FlTnMtQUlWZGdXcVJxTUd5UGVrU0E?oc=5",
+      "coins": "BTC",
+      "score": 2.0,
+      "alerted": 0
+     }
+    ]
+   },
+   "latest": [
+    [
+     1.7,
+     "StreetInsider",
+     "Bitcoin Price Prediction This Year: $1B in ETF Buying Meets $75K Downside Risk as AlphaPepe Targets Its First Breakout"
+    ],
+    [
+     0.0,
+     "StreetInsider",
+     "Bitcoin News: BTC Near $81,700 as Remittix’s $33M Raise Leaves $3M to Its Hard Cap"
+    ],
+    [
+     -2.0,
+     "The Globe and Mail",
+     "Canadian bitcoin firm Coinkite facing proposed class-action lawsuit after $140-million hack"
+    ],
+    [
+     0.0,
+     "Yahoo Finance",
+     "Bitcoin Usually Bottoms After Midterm Elections. What Happens if This Cycle Breaks the Pattern?"
+    ],
+    [
+     0.0,
+     "AOL.com",
+     "Bitcoin Cash vs Litecoin: Which Payment Coin Has More Upside in 2026?"
+    ],
+    [
+     -1.0,
+     "CryptoRank",
+     "Bitcoin Price at $81K: Will BTC Crash to $75K or Rally to $100K?"
+    ],
+    [
+     0.0,
+     "bloomingbit",
+     "Bitcoin Trapped in Range With Focus on US Midterm Elections, Fed and Big Tech Earnings"
+    ],
+    [
+     0.0,
+     "24/7 Wall St.",
+     "Which Crypto Under $1 Has the Most Upside in 2026?"
+    ]
+   ],
+   "onchain": {
+    "coin": "BTC",
+    "rows": [
+     {
+      "name": "Funding (Ø 7 Tage)",
+      "value": "0,0010 %/h (+9 % p, a,)",
+      "signal": 0,
+      "note": "normal"
+     },
+     {
+      "name": "Open Interest",
+      "value": "3,6 Mrd, $",
+      "signal": 0,
+      "note": "offene gehebelte Positionen (Hyperliquid)"
+     },
+     {
+      "name": "Stablecoins (alle Chains)",
+      "value": "302,8 Mrd, $ · 30 T -0,5 %",
+      "signal": 0,
+      "note": "wächst = frisches Geld wartet im Markt"
+     },
+     {
+      "name": "Hashrate 30 T vs. 60 T",
+      "value": "+4,0 %",
+      "signal": 0,
+      "note": "Miner bauen aus"
+     },
+     {
+      "name": "Gebühr (schnell)",
+      "value": "1 sat/vB · 47.932 wartend",
+      "signal": 0,
+      "note": "hohe Gebühren = viel Andrang"
+     }
+    ],
+    "score": 0,
+    "label": "neutral",
+    "ts": 1792806843856,
+    "failed": [
+     "Ondo-TVL"
+    ]
+   }
+  },
+  "ETH": {
+   "lines": [
+    "News 3 Tage: neutral (-0,08, 97 Meldungen)",
+    "Fear & Greed: 51 (neutral)",
+    "Funding: 0,0009 %/h (+8 % p, a,) – normal"
+   ],
+   "headwind_long": [
+    "Starke negative Meldung: „Initia Halted After Exploit: Hacker Mints Tokens and Transfers $2.6M to Ethereum“ (KuCoin)"
+   ],
+   "news": {
+    "coin": "ETH",
+    "score": -0.11,
+    "count": 97,
+    "news3": -0.08,
+    "news3_n": 97,
+    "filter": false,
+    "pos": 18,
+    "neg": 27,
+    "label": "neutral",
+    "strong_neg": [
+     {
+      "id": "41355cf6910f5795",
+      "ts": 1792788211000,
+      "source": "KuCoin",
+      "title": "Initia Halted After Exploit: Hacker Mints Tokens and Transfers $2.6M to Ethereum",
+      "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxOTTBMVURfQ1Zzbk5zLTNuZmY5Rlc5RFF4eTgtaFBwR0dCVkMyOThQMlAwY09BaE1VVUdHVkRGRmxQak90RGtINWkwNWY4UXlpNnBQU0FPQWRfSklUSWxKUjZzUTZHVUtDcDBMT0VsdWVLV2tkMk5WWm1mdHFZT0ExdjY4VEM0VzRpTkhVMWpTYzFnYzBBZFFFQ0dVbVNhRlA2ZTV4Sy1YWUtJMXc0aF91RzlB?oc=5",
+      "coins": "ETH",
+      "score": -2.0,
+      "alerted": 0
+     }
+    ],
+    "strong_pos": []
+   },
+   "latest": [
+    [
+     0.0,
+     "TradingKey",
+     "Ethereum (ETHUSD) Is down 1.00% on Oct 24: What Do On-Chain Data and Market Sentiment Show?"
+    ],
+    [
+     0.0,
+     "StreetInsider",
+     "Ethereum Price Prediction: Iran War Threatens Tom Lee’s $10K ETH Call as AlphaPepe Enters the Next Big Crypto Race"
+    ],
+    [
+     -1.0,
+     "NewsCord",
+     "Initia Halts Blockchain After Unauthorized Token Minting, Transfers $2.6M to Ethereum: 10 outlets compared"
+    ],
+    [
+     0.0,
+     "CryptoRank",
+     "Dacity Coin (Ethereum) Price | DACITY Price Today, Live Chart, USD converter, Market Capitalization"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "Why Arthur Hayes Thinks HYPE Will Lag Behind ETH and ZEC"
+    ],
+    [
+     0.5,
+     "Cryptonews.net",
+     "JPMorgan's JPM Coin Shows Zero Supply on Ethereum (ETH) After Oct. 19 Launch"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "Derive Introduces Automated Trading for BTC and ETH Options"
+    ],
+    [
+     0.0,
+     "Moomoo",
+     "Ethereum(ETH) Stock Price Today | Quotes & News"
+    ]
+   ],
+   "onchain": {
+    "coin": "ETH",
+    "rows": [
+     {
+      "name": "Funding (Ø 7 Tage)",
+      "value": "0,0009 %/h (+8 % p, a,)",
+      "signal": 0,
+      "note": "normal"
+     },
+     {
+      "name": "Open Interest",
+      "value": "2,6 Mrd, $",
+      "signal": 0,
+      "note": "offene gehebelte Positionen (Hyperliquid)"
+     },
+     {
+      "name": "Stablecoins (alle Chains)",
+      "value": "302,8 Mrd, $ · 30 T -0,5 %",
+      "signal": 0,
+      "note": "wächst = frisches Geld wartet im Markt"
+     },
+     {
+      "name": "TVL Ethereum",
+      "value": "49,2 Mrd, $ · 30 T -8,0 %",
+      "signal": 0,
+      "note": "in DeFi gebundenes Kapital"
+     },
+     {
+      "name": "Stablecoins auf Ethereum",
+      "value": "144,1 Mrd, $ · 30 T -1,1 %",
+      "signal": 0,
+      "note": "Liquidität auf dieser Chain"
+     },
+     {
+      "name": "DEX-Umsatz 7 Tage",
+      "value": "7,3 Mrd, $ (-11,2 % zur Vorwoche)",
+      "signal": 0,
+      "note": "Handel auf dezentralen Börsen"
+     }
+    ],
+    "score": 0,
+    "label": "neutral",
+    "ts": 1792806843856,
+    "failed": [
+     "Ondo-TVL"
+    ]
+   }
+  },
+  "SOL": {
+   "lines": [
+    "News 3 Tage: neutral (+0,12, 84 Meldungen)",
+    "Fear & Greed: 51 (neutral)",
+    "Funding: 0,0006 %/h (+5 % p, a,) – normal"
+   ],
+   "headwind_long": [],
+   "news": {
+    "coin": "SOL",
+    "score": 0.1,
+    "count": 84,
+    "news3": 0.12,
+    "news3_n": 84,
+    "filter": false,
+    "pos": 22,
+    "neg": 5,
+    "label": "neutral",
+    "strong_neg": [],
+    "strong_pos": []
+   },
+   "latest": [
+    [
+     0.5,
+     "TechBullion",
+     "Solana Price Prediction: J.P. Morgan Launches 2 Solana Funds as Pepeto Presale Hits $11.2M"
+    ],
+    [
+     0.0,
+     "24/7 Wall St.",
+     "What Will 10 Million Shiba Inu (SHIB) Be Worth by 2030?"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "60% of Altcoins Down This Month"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "Securitize confirms 12 stocks live on Solana with eligible US access"
+    ],
+    [
+     0.0,
+     "Yahoo Finance",
+     "What Will 100 Solana (SOL) Be Worth by 2030?"
+    ],
+    [
+     0.5,
+     "Cryptonews.net",
+     "Backpack Securities Launches $AAPL on Solana Through"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "Solana’s Yakovenko puts 5 major apps ahead of validators and developers"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "BisonFi Becomes Leading DEX on Solana, Overtaking Pumpfun"
+    ]
+   ],
+   "onchain": {
+    "coin": "SOL",
+    "rows": [
+     {
+      "name": "Funding (Ø 7 Tage)",
+      "value": "0,0006 %/h (+5 % p, a,)",
+      "signal": 0,
+      "note": "normal"
+     },
+     {
+      "name": "Open Interest",
+      "value": "552,1 Mio, $",
+      "signal": 0,
+      "note": "offene gehebelte Positionen (Hyperliquid)"
+     },
+     {
+      "name": "Stablecoins (alle Chains)",
+      "value": "302,8 Mrd, $ · 30 T -0,5 %",
+      "signal": 0,
+      "note": "wächst = frisches Geld wartet im Markt"
+     },
+     {
+      "name": "TVL Solana",
+      "value": "5,8 Mrd, $ · 30 T -9,0 %",
+      "signal": 0,
+      "note": "in DeFi gebundenes Kapital"
+     },
+     {
+      "name": "Stablecoins auf Solana",
+      "value": "15,8 Mrd, $ · 30 T -2,1 %",
+      "signal": 0,
+      "note": "Liquidität auf dieser Chain"
+     },
+     {
+      "name": "DEX-Umsatz 7 Tage",
+      "value": "12,2 Mrd, $ (-14,9 % zur Vorwoche)",
+      "signal": 0,
+      "note": "Handel auf dezentralen Börsen"
+     },
+     {
+      "name": "Transaktionen/s",
+      "value": "1.584",
+      "signal": 0,
+      "note": "ohne Validator-Votes"
+     }
+    ],
+    "score": 0,
+    "label": "neutral",
+    "ts": 1792806843856,
+    "failed": [
+     "Ondo-TVL"
+    ]
+   }
+  },
+  "XRP": {
+   "lines": [
+    "News 3 Tage: neutral (+0,09, 110 Meldungen)",
+    "Fear & Greed: 51 (neutral)",
+    "Funding: 0,0009 %/h (+8 % p, a,) – normal"
+   ],
+   "headwind_long": [],
+   "news": {
+    "coin": "XRP",
+    "score": 0.13,
+    "count": 110,
+    "news3": 0.09,
+    "news3_n": 110,
+    "filter": false,
+    "pos": 27,
+    "neg": 18,
+    "label": "neutral",
+    "strong_neg": [],
+    "strong_pos": []
+   },
+   "latest": [
+    [
+     0.0,
+     "Pluang",
+     "XRP Ledger tracks payment volume by transfers, not trading activity, offering insight into network use."
+    ],
+    [
+     0.0,
+     "Robinhood",
+     "XRP price at Oct 23, 2026 at 10pm EDT Crypto Prediction Market"
+    ],
+    [
+     0.0,
+     "TradingKey",
+     "XRP (XRPUSD) Is down 1.59% on Oct 24: What Are the Risk Factors?"
+    ],
+    [
+     0.5,
+     "FXEmpire",
+     "XRP Price Prediction: New Wallet Count Explodes as XRP Recovers Above $1.31"
+    ],
+    [
+     1.0,
+     "U.Today",
+     "Shiba Inu (SHIB), Dogecoin (DOGE), XRP and Binance Coin (BNB) Price Analysis for Oct. 24: Can Bullish Pace Be Preserved?"
+    ],
+    [
+     0.0,
+     "StreetInsider",
+     "XRP Price Prediction: UMB Private Wealth Reveals XRP ETF Stake as Remittix’s Raise Reaches $33M"
+    ],
+    [
+     0.0,
+     "The Manila Times",
+     "Cryptocurrency News: Remittix Pairs Its $33 Million Raise With a 300 Million RTX Burn as XRP Ledger’s November Update Revives a $10 XRP Price Prediction"
+    ],
+    [
+     0.0,
+     "Cryptonews.net",
+     "XRP holds the $1.30 support as modest ETF inflows fail to halt pullback"
+    ]
+   ],
+   "onchain": {
+    "coin": "XRP",
+    "rows": [
+     {
+      "name": "Funding (Ø 7 Tage)",
+      "value": "0,0009 %/h (+8 % p, a,)",
+      "signal": 0,
+      "note": "normal"
+     },
+     {
+      "name": "Open Interest",
+      "value": "222,8 Mio, $",
+      "signal": 0,
+      "note": "offene gehebelte Positionen (Hyperliquid)"
+     },
+     {
+      "name": "Stablecoins (alle Chains)",
+      "value": "302,8 Mrd, $ · 30 T -0,5 %",
+      "signal": 0,
+      "note": "wächst = frisches Geld wartet im Markt"
+     },
+     {
+      "name": "TVL XRPL",
+      "value": "38,9 Mio, $ · 30 T -13,3 %",
+      "signal": 0,
+      "note": "in DeFi gebundenes Kapital"
+     }
+    ],
+    "score": 0,
+    "label": "neutral",
+    "ts": 1792806843856,
+    "failed": [
+     "Ondo-TVL"
+    ]
+   }
+  },
+  "ONDO": {
+   "lines": [
+    "News 3 Tage: neutral (+0,07, 42 Meldungen)",
+    "Fear & Greed: 51 (neutral)",
+    "Funding: 0,0006 %/h (+5 % p, a,) – normal"
+   ],
+   "headwind_long": [],
+   "news": {
+    "coin": "ONDO",
+    "score": 0.16,
+    "count": 42,
+    "news3": 0.07,
+    "news3_n": 42,
+    "filter": false,
+    "pos": 5,
+    "neg": 1,
+    "label": "neutral",
+    "strong_neg": [],
+    "strong_pos": []
+   },
+   "latest": [
+    [
+     1.0,
+     "TronWeekly",
+     "Ondo Advances Tokenized Finance As ONDO Price Eyes Breakout Toward $0.60"
+    ],
+    [
+     0.0,
+     "CryptoSlate",
+     "PDD Holdings Tokenized Stock (Ondo) price today, PDDon to USD chart, marketcap and volume"
+    ],
+    [
+     0.0,
+     "TradingView",
+     "Ondo Insur Tech PLC Estimates – LSE:ONDO"
+    ],
+    [
+     0.0,
+     "Tribune Online",
+     "Achievers varsity produces 98 first-class graduates as 836 set for convocation"
+    ],
+    [
+     0.0,
+     "Incrypted",
+     "Unchained Summit India to Bring Together over 50 Representatives from Crypto Industry and Financial Sector"
+    ],
+    [
+     0.0,
+     "Vanguard News",
+     "Ondo APC eyes 500,000 women for Tinubu’s one-million-vote target"
+    ],
+    [
+     0.0,
+     "Yahoo! Finance Canada",
+     "US Natural Gas Fund Tokenized Stock (Ondo) USD Price (UNGON-USD)"
+    ],
+    [
+     1.0,
+     "Coin Gabbar",
+     "Ondo News Today: Europe Banks Body Flags a Huge Jump, ONDO Price Check"
+    ]
+   ],
+   "onchain": {
+    "coin": "ONDO",
+    "rows": [
+     {
+      "name": "Funding (Ø 7 Tage)",
+      "value": "0,0006 %/h (+5 % p, a,)",
+      "signal": 0,
+      "note": "normal"
+     },
+     {
+      "name": "Open Interest",
+      "value": "23,3 Mio, $",
+      "signal": 0,
+      "note": "offene gehebelte Positionen (Hyperliquid)"
+     },
+     {
+      "name": "Stablecoins (alle Chains)",
+      "value": "302,8 Mrd, $ · 30 T -0,5 %",
+      "signal": 0,
+      "note": "wächst = frisches Geld wartet im Markt"
+     }
+    ],
+    "score": 0,
+    "label": "neutral",
+    "ts": 1792806843856,
+    "failed": [
+     "Ondo-TVL"
+    ]
+   }
+  }
+ },
+ "fear_greed": {
+  "value": 51,
+  "label": "neutral",
+  "ts": 1792800000000,
+  "avg7": 57.0,
+  "history": [
+   [
+    1790208000000,
+    71
+   ],
+   [
+    1790294400000,
+    71
+   ],
+   [
+    1790380800000,
+    74
+   ],
+   [
+    1790467200000,
+    70
+   ],
+   [
+    1790553600000,
+    74
+   ],
+   [
+    1790640000000,
+    73
+   ],
+   [
+    1790726400000,
+    71
+   ],
+   [
+    1790812800000,
+    74
+   ],
+   [
+    1790899200000,
+    72
+   ],
+   [
+    1790985600000,
+    67
+   ],
+   [
+    1791072000000,
+    65
+   ],
+   [
+    1791158400000,
+    70
+   ],
+   [
+    1791244800000,
+    73
+   ],
+   [
+    1791331200000,
+    71
+   ],
+   [
+    1791417600000,
+    64
+   ],
+   [
+    1791504000000,
+    59
+   ],
+   [
+    1791590400000,
+    64
+   ],
+   [
+    1791676800000,
+    61
+   ],
+   [
+    1791763200000,
+    69
+   ],
+   [
+    1791849600000,
+    57
+   ],
+   [
+    1791936000000,
+    62
+   ],
+   [
+    1792022400000,
+    53
+   ],
+   [
+    1792108800000,
+    63
+   ],
+   [
+    1792195200000,
+    55
+   ],
+   [
+    1792281600000,
+    53
+   ],
+   [
+    1792368000000,
+    59
+   ],
+   [
+    1792454400000,
+    55
+   ],
+   [
+    1792540800000,
+    63
+   ],
+   [
+    1792627200000,
+    68
+   ],
+   [
+    1792713600000,
+    50
+   ],
+   [
+    1792800000000,
+    51
+   ]
+  ]
+ },
+ "news_total": [
+  659,
+  533,
+  -0.007481031866464338
+ ]
+}

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	xmlns:media="http://search.yahoo.com/mrss/"
+>
+
+<channel>
+	<title>CryptoSlate</title>
+	<atom:link href="https://cryptoslate.com/feed/" rel="self" type="application/rss+xml" />
+	<link>https://cryptoslate.com/</link>
+	<description>Cryptocurrency News and Real-time Coin Data</description>
+	<lastBuildDate>Fri, 23 Oct 2026 17:02:06 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.4.3</generator>
+
+<image>
+	<url>https://cryptoslate.com/wp-content/uploads/2023/06/cropped-cryptoslate-transparent-icon-256x256-1-32x32.png</url>
+	<title>CryptoSlate</title>
+	<link>https://cryptoslate.com/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>New OCC stablecoin rule resets redemptions, and banks face big shifts</title>
+		<link>https://cryptoslate.com/new-occ-stablecoin-rule-resets-redemptions-and-banks-face-big-shifts/</link>
+		
+		<dc:creator><![CDATA[Liam 'Akiba' Wright]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 22:50:04 +0000</pubDate>
+				<category><![CDATA[Analysis]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Regulation]]></category>
+		<category><![CDATA[Stablecoins]]></category>
+		<category><![CDATA[Circle]]></category>
+		<category><![CDATA[payments]]></category>
+		<category><![CDATA[stablecoins]]></category>
+		<category><![CDATA[USDC]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575696</guid>
+
+					<description><![CDATA[<p>For covered issuers, the ordinary two-business-day limit ends at payment initiation or requested issuer credit, with external bank availability assessed separately.</p>
+<p><a href="https://cryptoslate.com/new-occ-stablecoin-rule-resets-redemptions-and-banks-face-big-shifts/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/occ-seven-day-reversal.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/occ-seven-day-reversal.webp" length="236678" type="image/webp"/>
+	</item>
+		<item>
+		<title>Aave changes USDT borrowing rules and loan costs suddenly jump</title>
+		<link>https://cryptoslate.com/aave-changes-usdt-borrowing-rules-and-loan-costs-suddenly-jump/</link>
+		
+		<dc:creator><![CDATA[Liam 'Akiba' Wright]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 21:40:08 +0000</pubDate>
+				<category><![CDATA[DeFi]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Lending]]></category>
+		<category><![CDATA[Stablecoins]]></category>
+		<category><![CDATA[Aave]]></category>
+		<category><![CDATA[ethereum]]></category>
+		<category><![CDATA[stablecoins]]></category>
+		<category><![CDATA[Tether]]></category>
+		<category><![CDATA[USDT]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575522</guid>
+
+					<description><![CDATA[<p>The October 20 fixed-supply model underlies the cushion; the implemented 92% threshold adds no cash or guaranteed exit.</p>
+<p><a href="https://cryptoslate.com/aave-changes-usdt-borrowing-rules-and-loan-costs-suddenly-jump/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/aave-usdt-liquidity-valve.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/aave-usdt-liquidity-valve.webp" length="245848" type="image/webp"/>
+	</item>
+		<item>
+		<title>UK&#8217;s FCA says crypto apps may need licenses when algorithms choose trade routes</title>
+		<link>https://cryptoslate.com/uks-fca-says-crypto-apps-may-need-licenses-when-algorithms-choose-trade-routes/</link>
+		
+		<dc:creator><![CDATA[Oluwapelumi Adejumo]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 20:30:00 +0000</pubDate>
+				<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Regulation]]></category>
+		<category><![CDATA[Technology]]></category>
+		<category><![CDATA[payments]]></category>
+		<category><![CDATA[regulation]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575472</guid>
+
+					<description><![CDATA[<p>Proposed guidance separates technical access from substantive transaction involvement as firms apply for the UK’s October 2027 regime.</p>
+<p><a href="https://cryptoslate.com/uks-fca-says-crypto-apps-may-need-licenses-when-algorithms-choose-trade-routes/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/fca-crypto-algorithm-control.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/fca-crypto-algorithm-control.webp" length="225628" type="image/webp"/>
+	</item>
+		<item>
+		<title>SpaceX perpetual futures traded about $6 billion after earnings</title>
+		<link>https://cryptoslate.com/spacex-perpetual-futures-traded-about-6-billion-after-earnings/</link>
+		
+		<dc:creator><![CDATA[Liam 'Akiba' Wright]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 19:10:43 +0000</pubDate>
+				<category><![CDATA[Analysis]]></category>
+		<category><![CDATA[Derivatives]]></category>
+		<category><![CDATA[Earnings]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Binance]]></category>
+		<category><![CDATA[Hyperliquid]]></category>
+		<category><![CDATA[payments]]></category>
+		<category><![CDATA[SpaceX]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575554</guid>
+
+					<description><![CDATA[<p>Talos’s combined Binance and Hyperliquid turnover figure rose sharply while Binance’s dollar exposure contracted; actual retained fees remain unquantified.</p>
+<p><a href="https://cryptoslate.com/spacex-perpetual-futures-traded-about-6-billion-after-earnings/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/spacex-perpetual-market-divergence.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/spacex-perpetual-market-divergence.webp" length="183150" type="image/webp"/>
+	</item>
+		<item>
+		<title>Bitcoin ETFs shed $635 million as BTC tests their holdings’ estimated $81,500 cost basis</title>
+		<link>https://cryptoslate.com/bitcoin-etf-outflows-holdings-cost-basis/</link>
+		
+		<dc:creator><![CDATA[Oluwapelumi Adejumo]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 18:10:49 +0000</pubDate>
+				<category><![CDATA[ETF]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Market]]></category>
+		<category><![CDATA[Price Watch]]></category>
+		<category><![CDATA[Trading]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[Blackrock]]></category>
+		<category><![CDATA[ETFs]]></category>
+		<category><![CDATA[ethereum]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575609</guid>
+
+					<description><![CDATA[<p>US spot Bitcoin exchange-traded funds recorded about $635 million in net outflows Thursday as the cryptocurrency traded near the estimated cost basis of the funds&#039; Bitcoin holdings. The Oct. 22 withdrawals were the largest daily outflow since June 25 and reversed nearly 60% of the inflows the funds attracted over the previous three trading sessions,…</p>
+<p><a href="https://cryptoslate.com/bitcoin-etf-outflows-holdings-cost-basis/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/bitcoin-etf-liquidity-drain.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/bitcoin-etf-liquidity-drain.webp" length="259400" type="image/webp"/>
+	</item>
+		<item>
+		<title>Coinbase to drop this Japanese yen stablecoin years after its price crash sparked investor lawsuits</title>
+		<link>https://cryptoslate.com/coinbase-to-drop-this-japanese-yen-stablecoin-years-after-its-price-crash-sparked-investor-lawsuits/</link>
+		
+		<dc:creator><![CDATA[Oluwapelumi Adejumo]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 17:10:05 +0000</pubDate>
+				<category><![CDATA[Exchanges]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Stablecoins]]></category>
+		<category><![CDATA[Circle]]></category>
+		<category><![CDATA[Coinbase]]></category>
+		<category><![CDATA[stablecoins]]></category>
+		<category><![CDATA[USDC]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575546</guid>
+
+					<description><![CDATA[<p>Holders who want to avoid market-rate conversion must withdraw before Monday, ahead of GMO Trust’s Nov. 11 initial direct-redemption deadline.</p>
+<p><a href="https://cryptoslate.com/coinbase-to-drop-this-japanese-yen-stablecoin-years-after-its-price-crash-sparked-investor-lawsuits/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/coinbase-gyen-usdc-transition.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/coinbase-gyen-usdc-transition.webp" length="246272" type="image/webp"/>
+	</item>
+		<item>
+		<title>Evernorth’s $132 million funding option could buy more XRP while reducing XRP per share</title>
+		<link>https://cryptoslate.com/evernorths-132-million-funding-option-could-buy-more-xrp-while-reducing-xrp-per-share/</link>
+		
+		<dc:creator><![CDATA[Liam 'Akiba' Wright]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 15:50:06 +0000</pubDate>
+				<category><![CDATA[Analysis]]></category>
+		<category><![CDATA[Digital Asset Treasuries]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Investments]]></category>
+		<category><![CDATA[regulation]]></category>
+		<category><![CDATA[Ripple]]></category>
+		<category><![CDATA[xrp]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575372</guid>
+
+					<description><![CDATA[<p>A conditional model puts the XRP allocation hurdle near 70%, while actual accretion depends on ownership, exercises and purchases.</p>
+<p><a href="https://cryptoslate.com/evernorths-132-million-funding-option-could-buy-more-xrp-while-reducing-xrp-per-share/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/evernorth-xrp-allocation-cover.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/evernorth-xrp-allocation-cover.webp" length="213468" type="image/webp"/>
+	</item>
+		<item>
+		<title>What Is an Agentic Activities Launchpad? Inside AX1 Console 2.0</title>
+		<link>https://cryptoslate.com/what-is-an-agentic-activities-launchpad-inside-ax1-console-2-0/</link>
+		
+		<dc:creator><![CDATA[News Desk]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 15:00:23 +0000</pubDate>
+				<category><![CDATA[Sponsored]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575671</guid>
+
+					<description><![CDATA[<p>Crypto has spent years perfecting the launchpad. First came token launchpads, where anyone could create and list a token in a few clicks. Then, in 2024, agent launchpads arrived on Base, most visibly Virtuals Protocol, turning AI agents into tradable tokens. AX1, a startup ecosystem on Base, is betting on a third kind. It has…</p>
+<p><a href="https://cryptoslate.com/what-is-an-agentic-activities-launchpad-inside-ax1-console-2-0/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/ax1-console-agentic-activities-launchpad.jpg" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/ax1-console-agentic-activities-launchpad.jpg" length="177238" type="image/jpeg"/>
+	</item>
+		<item>
+		<title>Tether’s own AI study shows when buying a laptop costs more than cloud tokens</title>
+		<link>https://cryptoslate.com/tethers-own-ai-study-shows-when-buying-a-laptop-costs-more-than-cloud-tokens/</link>
+		
+		<dc:creator><![CDATA[Liam 'Akiba' Wright]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 14:50:48 +0000</pubDate>
+				<category><![CDATA[AI]]></category>
+		<category><![CDATA[Analysis]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Investments]]></category>
+		<category><![CDATA[Privacy]]></category>
+		<category><![CDATA[regulation]]></category>
+		<category><![CDATA[stablecoins]]></category>
+		<category><![CDATA[Tether]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575512</guid>
+
+					<description><![CDATA[<p>QVAC’s dense-model example falls short of a new laptop’s cheap-cloud break-even, even using refreshed Singapore prices.</p>
+<p><a href="https://cryptoslate.com/tethers-own-ai-study-shows-when-buying-a-laptop-costs-more-than-cloud-tokens/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/laptop-cloud-balance.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/laptop-cloud-balance.webp" length="209026" type="image/webp"/>
+	</item>
+		<item>
+		<title>Bitcoin&#8217;s $80,000 recovery faces liquidity questions as Binance&#8217;s Tether flows swing $14 billion</title>
+		<link>https://cryptoslate.com/bitcoins-80000-recovery-faces-liquidity-questions-as-binances-tether-flows-swing-14-billion/</link>
+		
+		<dc:creator><![CDATA[Oluwapelumi Adejumo]]></dc:creator>
+		<pubDate>Fri, 23 Oct 2026 14:00:15 +0000</pubDate>
+				<category><![CDATA[Analysis]]></category>
+		<category><![CDATA[Exchanges]]></category>
+		<category><![CDATA[Featured]]></category>
+		<category><![CDATA[Stablecoins]]></category>
+		<category><![CDATA[Binance]]></category>
+		<category><![CDATA[Bitcoin]]></category>
+		<category><![CDATA[ethereum]]></category>
+		<category><![CDATA[stablecoins]]></category>
+		<category><![CDATA[Tether]]></category>
+		<category><![CDATA[USDT]]></category>
+		<guid isPermaLink="false">https://cryptoslate.com/?p=575544</guid>
+
+					<description><![CDATA[<p>The 2026 Ethereum and Tron totals measure a treasury route, without proving an equivalent cash exit from crypto.</p>
+<p><a href="https://cryptoslate.com/bitcoins-80000-recovery-faces-liquidity-questions-as-binances-tether-flows-swing-14-billion/">Read the full story on CryptoSlate</a></p><p>Understand the crypto stories that matter and what to watch next. <a href="https://cryptoslate.com/newsletters/#newsletter-catalyst">Get The Catalyst in your inbox</a></p>]]></description>
+		
+		
+		
+		<media:content url="https://cryptoslate.com/wp-content/uploads/2026/10/tether-token-flow-imbalance.webp" medium="image"/>
+<enclosure url="https://cryptoslate.com/wp-content/uploads/2026/10/tether-token-flow-imbalance.webp" length="256338" type="image/webp"/>
+	</item>
+	</channel>
+</rss>
