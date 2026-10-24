@@ -83,7 +83,7 @@ def load_context(folder: Path) -> dict[str, pd.Series]:
         for xml in pages:
             for it in news.parse_feed(xml, "Google News"):
                 k = it["title"].lower()[:80]
-                if k in seen:
+                if k in seen or c not in news.coins_in(it["title"]):  # wie live: Coin muss im Titel stehen
                     continue
                 seen.add(k)
                 rows.append((it["ts"], news.score_title(it["title"])))
@@ -233,11 +233,59 @@ def main(hist: str, ctxdir: str, out: str | None = None) -> dict:
         port = m.where(started).mean(axis=1).fillna(0)
         results[name] = {"coins": sorted(rets), **{p: window_metrics(port, a, b) for p, (a, b) in periods.items()}}
 
-    res = {"ic": ic_rows, "rules": results,
+    res = {"ic": ic_rows, "rules": results, "news_robustness": news_robustness(daily, feats, periods),
            "coverage": {k: [str(v.index.min().date()), str(v.index.max().date()), int(v.notna().sum())] for k, v in ctx.items()}}
     if out:
         Path(out).write_text(json.dumps(res, indent=1, ensure_ascii=False, default=float), encoding="utf-8")
     return res
+
+
+def _port(daily, feats, fn, fee=0.001) -> pd.Series:
+    old, R.FEE = R.FEE, fee
+    try:
+        rets = {c: R.coin_returns(daily[c], fn(c, daily[c], feats[c]).fillna(0)) for c in FOCUS if c in daily}
+    finally:
+        R.FEE = old
+    m = pd.DataFrame(rets)
+    started = pd.DataFrame({c: daily[c]["close"].rolling(200).count() >= 200 for c in rets}).reindex(m.index).fillna(False)
+    return m.where(started).mean(axis=1).fillna(0)
+
+
+def news_robustness(daily, feats, periods, placebo: int = 200) -> dict:
+    """News-Regel: andere Schwellen, höhere Gebühr, je Coin und Zufallsvergleich (gleich viele Raus-Tage, zufällig verteilt)."""
+    keys = ["Entwicklung 2024/25", "Prüfjahr 2025/26"]
+    win = {k: periods[k] for k in keys}
+
+    def mets(p):
+        return {k: window_metrics(p, a, b) for k, (a, b) in win.items()}
+
+    out = {"thresholds": {}, "per_coin": {}}
+    for fee in (0.001, 0.0025):
+        out["thresholds"][f"fee {fee}"] = {"Trendampel": mets(_port(daily, feats, lambda c, df, f: trend(df), fee))}
+        for th in (-0.1, -0.2, -0.3, -0.5):
+            out["thresholds"][f"fee {fee}"][f"raus < {th}"] = mets(_port(
+                daily, feats, lambda c, df, f, th=th: trend(df) * ~(f["news3"] < th), fee))
+    for c in FOCUS:
+        df, f = daily[c], feats[c]
+        a = R.coin_returns(df, trend(df))
+        b = R.coin_returns(df, trend(df) * ~(f["news3"] < -0.2))
+        out["per_coin"][c] = {k: {"Trendampel": window_metrics(a, x, y), "mit News-Filter": window_metrics(b, x, y)}
+                              for k, (x, y) in win.items()}
+    real = mets(_port(daily, feats, lambda c, df, f: trend(df) * ~(f["news3"] < -0.2)))
+    rng = np.random.default_rng(1)
+    sh = {k: [] for k in keys}
+    for _ in range(placebo):
+        def fn(c, df, f):
+            m = (f["news3"] < -0.2).values
+            idx = np.flatnonzero(f["news3"].notna().values)
+            rnd = np.zeros(len(m), bool)
+            rnd[rng.choice(idx, int(m.sum()), replace=False)] = True
+            return trend(df) * ~pd.Series(rnd, index=df.index)
+        for k, v in mets(_port(daily, feats, fn)).items():
+            sh[k].append(v["sharpe"])
+    out["placebo"] = {k: {"real_sharpe": real[k]["sharpe"], "median_sharpe": float(np.median(sh[k])),
+                          "share_random_better": float(np.mean(np.array(sh[k]) >= real[k]["sharpe"]))} for k in keys}
+    return out
 
 
 def report(res: dict) -> str:
@@ -252,6 +300,15 @@ def report(res: dict) -> str:
             m = r.get(p) or {}
             cells.append(f"{p}: {m['total']*100:+6.1f}% Sh {m['sharpe']:+.2f} DD {m['maxdd']*100:5.1f}%" if m else f"{p}: –")
         lines.append(f"  {name:45s} " + " | ".join(cells))
+    rob = res.get("news_robustness")
+    if rob:
+        lines.append("\nNews-Regel je Coin (Sharpe Trendampel → mit Filter):")
+        for c, ps in rob["per_coin"].items():
+            lines.append(f"  {c:5s} " + " | ".join(
+                f"{p}: {v['Trendampel']['sharpe']:+.2f} → {v['mit News-Filter']['sharpe']:+.2f}" for p, v in ps.items()))
+        lines.append("Zufallsvergleich: " + " | ".join(
+            f"{p}: echt {v['real_sharpe']:+.2f}, Zufall Median {v['median_sharpe']:+.2f}, Zufall besser in {v['share_random_better'] * 100:.1f} %"
+            for p, v in rob["placebo"].items()))
     return "\n".join(lines)
 
 

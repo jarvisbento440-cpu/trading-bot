@@ -92,16 +92,20 @@ def snapshot(ctx: dict) -> dict:
             "strong_pos": len(n.get("strong_pos") or []), "onchain": oc.get("score"), "fng": fg.get("value")}
 
 
-def alert_strong_news(db, coins: list[str], notifier, hours: int = 6) -> int:
-    """Schickt sehr starke Meldungen (±2) zu beobachteten Coins einmal per Telegram."""
-    since = int((time.time() - hours * 3600) * 1000)
+def alert_strong_news(db, coins: list[str], notifier, hours: int = 6, cooldown_h: float = 3) -> int:
+    """Schickt sehr starke Meldungen (±2) zu beobachteten Coins per Telegram: jede einmal, je Coin höchstens alle 3 h."""
+    now = time.time()
+    since = int((now - hours * 3600) * 1000)
     sent = 0
     for r in db.news_since(since):
         cs = [c for c in (r["coins"] or "").split(",") if c in coins]
         if not cs or abs(r["score"]) < 2 or r["alerted"]:
             continue
-        if not db.mark_news_alerted(r["id"]):
+        last = max((db.get_context(f"news_alert_{c}") or 0) for c in cs)
+        if now - last < cooldown_h * 3600 or not db.mark_news_alerted(r["id"]):
             continue
+        for c in cs:
+            db.set_context(f"news_alert_{c}", now)
         icon = "🚨" if r["score"] < 0 else "📈"
         notifier.send(f"{icon} News zu {', '.join(cs)} ({'stark negativ' if r['score'] < 0 else 'stark positiv'})\n"
                       f"{r['title']}\n{r['source']} · {r['url'] or ''}\n\n"

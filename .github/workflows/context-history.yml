@@ -9,9 +9,6 @@ on:
       parts:
         description: "Teile: all oder z. B. funding,news"
         default: "all"
-  push:
-    branches: [claude/project-thread-1iwdna]
-    paths: [scripts/fetch_context_history.py, .github/workflows/context-history.yml]
 
 permissions:
   contents: write
@@ -26,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}" "${{ inputs.parts || 'funding' }}"
+      - run: python scripts/fetch_context_history.py /tmp/ctxhist "${{ inputs.weeks || '104' }}" "${{ inputs.parts || 'all' }}"
       - name: In Branch "context-history" speichern
         run: |
           git config user.name "github-actions"

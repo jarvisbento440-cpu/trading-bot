@@ -42,7 +42,7 @@ COIN_WORDS = {
     "ETH": (["ethereum", "ether"], ["ETH"]),
     "SOL": (["solana"], ["SOL"]),
     "XRP": (["ripple", "xrp ledger"], ["XRP"]),
-    "ONDO": (["ondo"], ["ONDO"]),
+    "ONDO": (["ondo finance", "ondo global", "ondo chain", "ondo token"], ["ONDO"]),
     "DOGE": (["dogecoin"], ["DOGE"]),
     "ADA": (["cardano"], ["ADA"]),
     "LINK": (["chainlink"], ["LINK"]),
@@ -65,7 +65,7 @@ LEXICON: list[tuple[str, float]] = [
     # negativ
     (r"\bplunge[sd]?\b", -1.5), (r"\btumble[sd]?\b", -1), (r"\bslump(s|ed)?\b", -1), (r"\bsink(s|ing)?\b", -1),
     (r"\bdrop(s|ped)?\b", -0.7), (r"\bfall(s|ing)?\b", -0.7), (r"\bfell\b", -0.7), (r"\bdip(s|ped)?\b", -0.5),
-    (r"\bsell-?off\b", -1.5), (r"\bdump(s|ed|ing)?\b", -1), (r"\bliquidat(ed|ions?)\b", -1),
+    (r"\bsell-?off\b", -1.5), (r"\bbleed(s|ing)?\b", -1), (r"\bdump(s|ed|ing)?\b", -1), (r"\bliquidat(ed|ions?)\b", -1),
     (r"\boutflows?\b", -1), (r"\bbearish\b", -1), (r"\bfears?\b", -0.7), (r"\bwarn(s|ing)?\b", -0.7),
     (r"\bprobe\b", -1), (r"\binvestigat(ion|es|ed)\b", -1), (r"\bfine[sd]?\b", -0.7), (r"\breject(s|ed)?\b", -1),
     (r"\bdelay(s|ed)?\b", -0.7), (r"\boutage\b", -1), (r"\bhalt(s|ed)?\b", -1), (r"\bvulnerab(le|ility)\b", -1),
@@ -177,11 +177,7 @@ def fetch(coins: list[str], timeout: int = 12) -> tuple[list[dict], list[str]]:
         try:
             r = requests.get(url, headers=UA, timeout=timeout)
             r.raise_for_status()
-            got = parse_feed(r.text, name)
-            if name.startswith("Google News "):
-                for it in got:
-                    it["query"] = name.split()[-1]
-            items += got
+            items += parse_feed(r.text, name)
         except requests.RequestException as e:
             log.info("News-Quelle %s nicht erreichbar: %s", name, e)
             failed.append(name)
@@ -212,10 +208,7 @@ def sync(db, coins: list[str], max_age_days: int = 3) -> dict:
     for it in items:
         if it["ts"] < cutoff:
             continue
-        cs = coins_in(it["title"])
-        tag = it.get("query")  # Treffer der Google-Suche zu einem Coin zählen für diesen Coin
-        if tag and tag not in cs:
-            cs.append(tag)
+        cs = coins_in(it["title"])  # nur Coins, die im Titel stehen (Google-Suche liefert auch Fremdes)
         rows.append({**it, "coins": ",".join(cs), "score": score_title(it["title"])})
     new = db.save_news(rows)
     try:

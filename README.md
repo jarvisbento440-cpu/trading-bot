@@ -75,6 +75,8 @@ pip install pytest && python -m pytest
 
 **Liquidations-Heatmap:** Buttons „Heatmap: 3 Tage / 1 Woche“ oben. Farbfläche im Chart, wo gehebelte Trader (10x–100x) liquidiert würden (geschätzt aus Kursen und Volumen, ähnlich Coinglass). Gelb = viel Liquidität; wird der Preis erreicht, verschwindet die Zone. Im Vollbild stehen die stärksten Zonen ober- und unterhalb des Kurses.
 
+**News & On-Chain:** Button „📰 News & On-Chain“ und Abzeichen 📰 auf jeder Kachel. Schlagzeilen aus 8 Krypto-Newsseiten und Google News (bewertet −2 … +2 per Wortliste), Fear & Greed, Funding und Open Interest (Hyperliquid), Stablecoins/TVL/DEX-Umsatz (DefiLlama), Bitcoin-Gebühren und Hashrate. Alles kostenlos, kein Schlüssel nötig. Getestet hat nur eine Regel geholfen: Trendampel pausieren, solange die News der letzten 3 Tage negativ sind (kleiner Vorteil). Signale bekommen News-Zeilen und einen ⚠️-Hinweis bei Gegenwind, sehr starke Meldungen kommen per Telegram. Details und alle Testergebnisse: [docs/news-onchain.md](docs/news-onchain.md).
+
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
 
 8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
@@ -87,4 +89,4 @@ pip install pytest && python -m pytest
 
 4. Backtest → echte Trefferquoten pro Score
 5. Signal-Tracking (Ziel/Stop erreicht) + Wochenbericht
-6. News-Modul, 7. On-Chain-Modul, 8. Coin-Scanner
+6. ~~News-Modul~~, 7. ~~On-Chain-Modul~~ (fertig, siehe docs/news-onchain.md), 8. Coin-Scanner

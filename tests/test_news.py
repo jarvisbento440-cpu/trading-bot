@@ -68,14 +68,14 @@ def test_headwind_only_long_for_filter(tmp_path):
 
 
 def test_strong_news_alert_once(tmp_path):
-    db, _ = _db_with_news(tmp_path, [-2.0, 0.5])
+    db, _ = _db_with_news(tmp_path, [-2.0, 0.5, 2.0])
     sent = []
 
     class N:
         def send(self, t):
             sent.append(t)
 
-    assert context.alert_strong_news(db, ["BTC"], N()) == 1
+    assert context.alert_strong_news(db, ["BTC"], N()) == 1  # zweite starke Meldung: Pause je Coin
     assert context.alert_strong_news(db, ["BTC"], N()) == 0
     assert "BTC" in sent[0]
 

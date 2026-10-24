@@ -1,6 +1,6 @@
 """On-Chain- und Derivate-Daten aus kostenlosen Quellen ohne API-Schlüssel.
 
-- DefiLlama: Stablecoin-Menge (gesamt und je Chain), TVL je Chain, DEX-Umsatz, Ondo-TVL
+- DefiLlama: Stablecoin-Menge (gesamt und je Chain), TVL je Chain, DEX-Umsatz
 - mempool.space / Blockchair: Bitcoin-Gebühren, Mempool, Hashrate, größte Transaktion
 - Hyperliquid: Funding-Rate und Open Interest je Coin (größte Börse ohne Anmeldung, auch aus Österreich/USA erreichbar)
 - Solana-RPC: Transaktionen pro Sekunde
@@ -22,7 +22,6 @@ HL = "https://api.hyperliquid.xyz/info"
 LLAMA = "https://api.llama.fi"
 STABLES = "https://stablecoins.llama.fi"
 CHAIN = {"ETH": "Ethereum", "SOL": "Solana", "XRP": "XRPL"}
-ONDO_SLUGS = ["ondo-yield-assets", "ondo-global-markets"]
 HOT_FUNDING = 2 * 0.0000125  # doppelter Standard-Funding von Hyperliquid pro Stunde (≈ 22 % p. a.)
 
 # Gewicht je Merkmal als Signal: 1 = im Test (Entwicklung UND Prüfjahr) hilfreich, 0 = nur Info.
@@ -84,25 +83,6 @@ def dex_volume(chain: str) -> dict:
     last7 = sum(v for _, v in s[-7:])
     prev7 = sum(v for _, v in s[-14:-7])
     return {"value": last7, "chg7": (last7 / prev7 - 1) if prev7 else None}
-
-
-def ondo_tvl() -> dict:
-    total, past7, past30 = 0.0, 0.0, 0.0
-    for slug in ONDO_SLUGS:
-        try:
-            d = _get(f"{LLAMA}/protocol/{slug}", timeout=30)
-        except requests.RequestException:
-            continue
-        s = _series_llama_tvl([{"date": x["date"], "tvl": x.get("totalLiquidityUSD")} for x in d.get("tvl", [])])
-        if not s:
-            continue
-        total += s[-1][1]
-        c7, c30 = _change(s, 7), _change(s, 30)
-        past7 += s[-1][1] / (1 + c7) if c7 is not None else s[-1][1]
-        past30 += s[-1][1] / (1 + c30) if c30 is not None else s[-1][1]
-    if not total:
-        raise ValueError("keine Ondo-TVL")
-    return {"value": total, "chg7": total / past7 - 1 if past7 else None, "chg30": total / past30 - 1 if past30 else None}
 
 
 def hyperliquid() -> dict[str, dict]:
@@ -191,8 +171,6 @@ def snapshot(coins: list[str], prev_oi: list | None = None) -> dict:
             m["dex"] = _try(failed, "DEX Ethereum", dex_volume, "Ethereum")
         if c == "BTC":
             m.update(_try(failed, "mempool.space", bitcoin) or {})
-        if c == "ONDO":
-            m["tvl"] = _try(failed, "Ondo-TVL", ondo_tvl)
     # Open Interest vor ~24 h aus den eigenen Schnappschüssen
     hist = [h for h in (prev_oi or []) if now - h["ts"] <= 3 * DAY_MS]
     hist.append({"ts": now, "oi": {c: snap["coins"][c].get("oi_usd") for c in coins}})
@@ -225,14 +203,14 @@ def _usd(x: float | None) -> str:
         return "–"
     for div, unit in ((1e12, "Bio."), (1e9, "Mrd."), (1e6, "Mio.")):
         if abs(x) >= div:
-            return f"{x / div:,.1f} {unit} $".replace(",", "X").replace(".", ",").replace("X", ".")
+            return f"{x / div:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".") + f" {unit} $"
     return f"{x:,.0f} $".replace(",", ".")
 
 
 def funding_text(rate_h: float | None) -> str:
     if rate_h is None:
         return "–"
-    return f"{rate_h * 100:.4f} %/h ({rate_h * 24 * 365 * 100:+.0f} % p. a.)".replace(".", ",")
+    return f"{rate_h * 100:.4f} %/h".replace(".", ",") + f" ({rate_h * 24 * 365 * 100:+.0f} % p. a.)"
 
 
 def view(snap: dict | None, symbol: str) -> dict:
@@ -263,12 +241,13 @@ def view(snap: dict | None, symbol: str) -> dict:
                      "signal": 0, "note": "offene gehebelte Positionen (Hyperliquid)"})
     st = mk.get("stables")
     if st:
-        sig = TESTED["stables_up"] if (st.get("chg30") or 0) > 0 else -TESTED["stables_up"]
+        up = (st.get("chg30") or 0) > 0
         rows.append({"name": "Stablecoins (alle Chains)", "value": f"{_usd(st['value'])} · 30 T {_pct(st.get('chg30'))}",
-                     "signal": sig, "note": "wächst = frisches Geld wartet im Markt" if sig >= 0 else "schrumpft = Geld fließt ab"})
+                     "signal": TESTED["stables_up"] * (1 if up else -1),
+                     "note": "wächst = frisches Geld wartet im Markt" if up else "schrumpft = Geld fließt ab"})
     tvl = m.get("tvl")
     if tvl:
-        rows.append({"name": "TVL Ondo-Produkte" if coin == "ONDO" else f"TVL {CHAIN.get(coin, coin)}",
+        rows.append({"name": f"TVL {CHAIN.get(coin, coin)}",
                      "value": f"{_usd(tvl['value'])} · 30 T {_pct(tvl.get('chg30'))}",
                      "signal": TESTED["tvl_up"] * (1 if (tvl.get("chg30") or 0) > 0 else -1),
                      "note": "in DeFi gebundenes Kapital"})

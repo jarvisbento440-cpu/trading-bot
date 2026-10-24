@@ -2,9 +2,6 @@ name: News/On-Chain-Test
 
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/project-thread-1iwdna]
-    paths: [scripts/check_context.py, scripts/check_news_live.py, .github/workflows/context-check.yml]
 
 permissions:
   contents: write

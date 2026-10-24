@@ -1018,7 +1018,7 @@
         <div class="row"><span class="badge ${n.filter ? "news-warn" : scoreCls(n.news3) === "up" ? "news-pos" : scoreCls(n.news3) === "down" ? "news-neg" : ""}">📰 ${esc(n.label)}</span>
         <span class="muted">Schnitt ${numDe(n.news3)} aus ${n.news3_n} Meldungen · ${n.pos} positiv / ${n.neg} negativ</span></div>
         ${n.filter ? `<p><strong>News-Filter aktiv:</strong> Im Test (2 Jahre) lief die Trendampel besser, wenn sie bei negativen News (Schnitt unter −0,2) pausierte. Kleiner Vorteil, statistisch nicht sicher.</p>` : ""}
-        ${newsItemsHtml((n.latest || []).slice(0, 6))}
+        ${newsItemsHtml((n.latest || []).slice(0, 5))}
         <p class="muted">Bewertung automatisch per Wortliste (−2 … +2), kein Lesen „zwischen den Zeilen“. Alle Meldungen: Knopf „📰 News &amp; On-Chain“.</p></div>`;
     }
     if (c.fear_greed) html += `<h3>Fear &amp; Greed (ganzer Markt)</h3>${fngHtml(c.fear_greed)}<p class="muted">Nur zur Info: Als Kauf-/Verkaufsregel hat der Index im Test nicht funktioniert.</p>`;
@@ -1046,7 +1046,7 @@
       r.coins.map((c) => {
         const n = c.news || {}, rows = (c.onchain && c.onchain.rows) || [];
         const f = rows.find((x) => x.name.startsWith("Funding"));
-        const other = rows.filter((x) => x !== f).slice(0, 3).map((x) => `${esc(x.name)}: ${esc(x.value)}`).join("<br>");
+        const other = rows.filter((x) => x !== f && !x.name.startsWith("Stablecoins (alle")).slice(0, 3).map((x) => `${esc(x.name)}: ${esc(x.value)}`).join("<br>");
         return `<tr><td class="l">${coinName(c.symbol)}</td><td class="${scoreCls(n.news3)}">${numDe(n.news3)}</td><td>${n.n || 0}</td>
           <td class="l">${n.filter ? '<span class="badge news-warn">⚠ Filter: pausieren</span>' : esc(n.label || "–")}</td>
           <td>${f ? esc(f.value) + `<div class="muted">${esc(f.note)}</div>` : "–"}</td><td class="l muted">${other || "–"}</td></tr>`;
