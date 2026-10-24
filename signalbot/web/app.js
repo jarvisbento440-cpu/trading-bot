@@ -30,6 +30,9 @@
     regimeSeen: store.get("regimeSeen", {}),
     heatmap: store.get("heatmap", "off"),
     trendLight: null,
+    ctxHtml: {},
+    ctxAt: {},
+    newsCoin: "",
   };
 
   const $ = (s, el = document) => el.querySelector(s);
@@ -582,7 +585,6 @@
     return !st || !st.stats || st.stats.avg_r >= -0.03;
   };
   const pctDe = (x) => x == null ? "–" : Math.round(x * 100) + " %";
-  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const rDe = (x) => x == null ? "–" : Math.abs(x) < 0.005 ? "±0,00 R" : (x >= 0 ? "+" : "") + x.toFixed(2).replace(".", ",") + " R";
   const whyHtml = (why) => (why || []).map((w) => `<span class="${w.effect > 0 ? "up" : "down"}">${w.effect > 0 ? "▲" : "▼"} ${w.name}</span>`).join(" · ");
   function aiHtml(ai) {
@@ -712,7 +714,7 @@
       <div class="tile-head">
         <span class="tile-sym">${coinName(coin.symbol)}</span>${coin.extra ? `<span class="badge">${coin.kind || ""}</span>` : ""}
         <span class="tile-price"></span><span class="tile-chg"></span>
-        <span class="badge tile-light" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
+        <span class="badge tile-light" hidden></span><span class="badge tile-news" hidden></span><span class="badge tile-trend"></span><span class="badge tile-sig" hidden></span>
       </div>
       <div class="tile-chart"></div>
       <div class="tile-empty">Lade Daten…</div>
@@ -741,10 +743,18 @@
     tr.textContent = { up: "Tagestrend ↑", down: "Tagestrend ↓", flat: "Seitwärts" }[coin.trend];
     tr.className = "badge tile-trend " + (coin.trend === "flat" ? "" : coin.trend);
     el.classList.toggle("alert", state.alerts.has(coin.symbol));
+    const nb = $(".tile-news", el), cx = coin.context;
+    nb.hidden = !cx || cx.news3 == null;
+    if (cx && cx.news3 != null) {
+      nb.textContent = (cx.strong_neg ? "🚨 " : "📰 ") + (cx.news3 >= 0 ? "+" : "") + cx.news3.toFixed(2).replace(".", ",");
+      nb.className = "badge tile-news " + (cx.filter ? "news-warn" : cx.news3 >= 0.2 ? "news-pos" : cx.news3 <= -0.2 ? "news-neg" : "");
+      nb.title = `News der letzten 3 Tage: ${cx.label} (${cx.n} Meldungen)` +
+        (cx.filter ? " · News-Filter: Trendampel pausieren" : "") + (cx.strong_neg ? ` · ${cx.strong_neg} sehr negative Meldung(en)` : "");
+    }
     const lt = $(".tile-light", el), r = coin.regime;
     lt.hidden = !r;
     if (r) {
-      lt.textContent = r.state === "long" ? `🚦 Halten · ${Math.round(r.size * 100)} %` : "🚦 Raus";
+      lt.textContent = r.state === "long" ? (cx && cx.filter ? "🚦 Grün · News ⚠ pausieren" : `🚦 Halten · ${Math.round(r.size * 100)} %`) : "🚦 Raus";
       lt.className = "badge tile-light light-" + r.state;
       lt.title = lightText(r);
     }
@@ -968,6 +978,7 @@
         ${row("Empfohlener Anteil", r.state === "long" ? Math.round(r.size * 100) + " %" : "0 %")}</table>
         <p class="muted">Grün = Coin halten, grau = draußen bleiben (kein Short). Anteil = wie viel deines Budgets für diesen Coin, kleiner wenn der Kurs stark schwankt. Grüne/graue Linie im Chart = 50-Tage-Schnitt.</p></div>`;
     }
+    html += `<div id="focus-ctx">${state.ctxHtml[data.symbol] || ""}</div>`;
     const sel = (drawings[data.symbol] || []).find((x) => x.id === draw.sel && x.type !== "hline");
     if (sel) {
       const t = positionText(sel), ps = positionSize(sel), st = positionStatus(sel, data.candles);
@@ -1037,6 +1048,85 @@
     html += `
       <p class="disclaimer">Trefferquoten stammen aus der Vergangenheit und sind keine Garantie. Immer mit Stop handeln, max. 1–2 % Risiko pro Trade.</p>`;
     $("#focus-info").innerHTML = html;
+    loadFocusContext(data.symbol);
+  }
+
+  // ---------- News & On-Chain ----------
+  const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const numDe = (x, d = 2) => x == null ? "–" : (x >= 0 ? "+" : "") + x.toFixed(d).replace(".", ",");
+  const scoreCls = (x) => x == null ? "" : x >= 0.2 ? "up" : x <= -0.2 ? "down" : "";
+  const agoDe = (ms) => { const m = Math.round((Date.now() - ms) / 6e4); return m < 60 ? `vor ${m} min` : m < 1440 ? `vor ${Math.round(m / 60)} h` : `vor ${Math.round(m / 1440)} T`; };
+  function fngHtml(fg) {
+    if (!fg) return '<p class="muted">Fear & Greed noch nicht geladen.</p>';
+    return `<div class="fng"><b>${fg.value}</b><span>${esc(fg.label)}</span><div class="fng-bar"><i style="left:${fg.value}%"></i></div>
+      <span class="muted">Ø 7 Tage ${String(fg.avg7).replace(".", ",")}</span></div>`;
+  }
+  function newsItemsHtml(items) {
+    if (!items || !items.length) return '<p class="muted">Keine Meldungen im Zeitraum.</p>';
+    return `<ul class="news-list">` + items.map((r) => `<li><span class="news-score ${scoreCls(r.score)}">${numDe(r.score, 1)}</span>
+      <span>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.title)}</a>` : esc(r.title)}
+      <span class="news-meta"> · ${esc(r.source)} · ${agoDe(r.ts)}${r.coins ? " · " + esc(r.coins) : ""}</span></span></li>`).join("") + `</ul>`;
+  }
+  function onchainHtml(oc) {
+    if (!oc || !oc.rows || !oc.rows.length) return '<p class="muted">Noch keine On-Chain-Daten (werden alle 30 Minuten geholt).</p>';
+    const row = (k, v, cls = "") => `<tr><td>${k}</td><td class="${cls}">${v}</td></tr>`;
+    return `<table>` + oc.rows.map((r) => row(esc(r.name), `${esc(r.value)}<div class="muted">${esc(r.note)}</div>`,
+      r.signal > 0 ? "up" : r.signal < 0 ? "down" : "")).join("") + `</table>`;
+  }
+  async function loadFocusContext(symbol) {
+    if (!symbol.includes("/")) return;
+    const now = Date.now();
+    if (state.ctxAt[symbol] && now - state.ctxAt[symbol] < 60000) return;
+    state.ctxAt[symbol] = now;
+    let c;
+    try { c = await getJSON(`/api/context?symbol=${encodeURIComponent(symbol)}`); } catch (e) { return; }
+    const n = c.news;
+    let html = "";
+    if (n) {
+      html += `<h3>News (3 Tage)</h3><div class="light-card ${n.filter ? "" : n.news3 >= 0.2 ? "long" : ""}">
+        <div class="row"><span class="badge ${n.filter ? "news-warn" : scoreCls(n.news3) === "up" ? "news-pos" : scoreCls(n.news3) === "down" ? "news-neg" : ""}">📰 ${esc(n.label)}</span>
+        <span class="muted">Schnitt ${numDe(n.news3)} aus ${n.news3_n} Meldungen · ${n.pos} positiv / ${n.neg} negativ</span></div>
+        ${n.filter ? `<p><strong>News-Filter aktiv:</strong> Im Test (2 Jahre) lief die Trendampel besser, wenn sie bei negativen News (Schnitt unter −0,2) pausierte. Kleiner Vorteil, statistisch nicht sicher.</p>` : ""}
+        ${newsItemsHtml((n.latest || []).slice(0, 5))}
+        <p class="muted">Bewertung automatisch per Wortliste (−2 … +2), kein Lesen „zwischen den Zeilen“. Alle Meldungen: Knopf „📰 News &amp; On-Chain“.</p></div>`;
+    }
+    if (c.fear_greed) html += `<h3>Fear &amp; Greed (ganzer Markt)</h3>${fngHtml(c.fear_greed)}<p class="muted">Nur zur Info: Als Kauf-/Verkaufsregel hat der Index im Test nicht funktioniert.</p>`;
+    if (c.onchain) html += `<h3>On-Chain &amp; Derivate</h3>${onchainHtml(c.onchain)}<p class="muted">Nur zur Info: Keiner dieser Werte hat im Prüfjahr als Regel geholfen (siehe docs/news-onchain.md).</p>`;
+    state.ctxHtml[symbol] = html;
+    const box = $("#focus-ctx");
+    if (box && state.focus && state.focus.symbol === symbol) box.innerHTML = html;
+  }
+
+  async function openNews(coin) {
+    if (coin !== undefined) state.newsCoin = coin;
+    $("#news").classList.remove("hidden");
+    const body = $("#news-body");
+    let r;
+    try { r = await getJSON(`/api/news?coin=${encodeURIComponent(state.newsCoin || "")}`); }
+    catch (e) { body.innerHTML = '<p class="muted">Konnte News nicht laden.</p>'; return; }
+    const coins = r.coins.map((c) => c.symbol.split("/")[0]);
+    $("#news-coins").innerHTML = ["", ...coins].map((c) => `<button class="btn${(state.newsCoin || "") === c ? " active" : ""}" data-c="${c}">${c || "Alle"}</button>`).join("");
+    $("#news-coins").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => openNews(b.dataset.c)));
+    const st = r.status;
+    let html = `<h3>Markt-Stimmung</h3>${fngHtml(r.fear_greed)}`;
+    const stab = r.market && r.market.stables;
+    if (stab) html += `<p class="muted">Stablecoins (alle Chains): ${(stab.value / 1e9).toFixed(1).replace(".", ",")} Mrd. $ · 30 Tage ${numDe(stab.chg30 * 100, 1)} %</p>`;
+    html += `<h3>Je Coin</h3><div class="table-wrap"><table class="bt"><thead><tr><th class="l">Coin</th><th>News 3 T</th><th>Meldungen</th><th class="l">Bewertung</th><th>Funding (Ø 7 T)</th><th class="l">Weitere On-Chain-Werte</th></tr></thead><tbody>` +
+      r.coins.map((c) => {
+        const n = c.news || {}, rows = (c.onchain && c.onchain.rows) || [];
+        const f = rows.find((x) => x.name.startsWith("Funding"));
+        const other = rows.filter((x) => x !== f && !x.name.startsWith("Stablecoins (alle")).slice(0, 3).map((x) => `${esc(x.name)}: ${esc(x.value)}`).join("<br>");
+        return `<tr><td class="l">${coinName(c.symbol)}</td><td class="${scoreCls(n.news3)}">${numDe(n.news3)}</td><td>${n.n || 0}</td>
+          <td class="l">${n.filter ? '<span class="badge news-warn">⚠ Filter: pausieren</span>' : esc(n.label || "–")}</td>
+          <td>${f ? esc(f.value) + `<div class="muted">${esc(f.note)}</div>` : "–"}</td><td class="l muted">${other || "–"}</td></tr>`;
+      }).join("") + `</tbody></table></div>`;
+    html += `<h3>Schlagzeilen (48 h${state.newsCoin ? ", " + esc(state.newsCoin) : ""})</h3>${newsItemsHtml(r.items)}`;
+    const failed = [...((st && st.failed) || []), ...(r.onchain_failed || [])];
+    html += `<p class="muted">Quellen: CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine, CryptoSlate, crypto.news, U.Today, Google News; Fear &amp; Greed (alternative.me);
+      DefiLlama, mempool.space, Blockchair, Hyperliquid, Solana-RPC. Alles kostenlos, ohne Schlüssel.${st ? " Stand News: " + agoDe(st.ts) + "." : ""}
+      ${r.onchain_ts ? " Stand On-Chain: " + agoDe(r.onchain_ts) + "." : ""}${failed.length ? " Gerade nicht erreichbar: " + esc(failed.join(", ")) + "." : ""}</p>
+      <p class="disclaimer">Die Bewertung ist eine einfache Wortliste. Getestet ist nur eine Regel: Trendampel pausieren, solange die News der letzten 3 Tage im Schnitt unter −0,2 liegen – kleiner Vorteil, statistisch nicht sicher.</p>`;
+    body.innerHTML = html;
   }
 
   // ---------- Kachel „Markt hinzufügen“ ----------
@@ -1387,6 +1477,8 @@
   $("#focus-close").addEventListener("click", closeFocus);
   $("#bt-open").addEventListener("click", openBacktest);
   $("#paper-open").addEventListener("click", openPaper);
+  $("#news-open").addEventListener("click", () => openNews());
+  $("#news-close").addEventListener("click", () => $("#news").classList.add("hidden"));
   $("#paper-close").addEventListener("click", () => $("#paper").classList.add("hidden"));
   $("#bt-close").addEventListener("click", () => $("#backtest").classList.add("hidden"));
   $("#bt-run").addEventListener("click", runBacktest);
@@ -1396,7 +1488,8 @@
     if ((e.key === "Delete" || e.key === "Backspace") && state.focus && draw.sel && !e.target.closest("input")) { deleteSelected(); return; }
     if (e.key !== "Escape") return;
     if (state.focus && (draw.tool || draw.sel)) { setTool(null); draw.sel = null; redrawDrawings(); return; }
-    if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
+    if (!$("#news").classList.contains("hidden")) $("#news").classList.add("hidden");
+    else if (!$("#paper").classList.contains("hidden")) $("#paper").classList.add("hidden");
     else if (!$("#backtest").classList.contains("hidden")) $("#backtest").classList.add("hidden");
     else if (state.focus) closeFocus();
   });

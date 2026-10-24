@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import sqlite3
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS signals (
     score      INTEGER NOT NULL,
     entry REAL, stop REAL, target1 REAL, target2 REAL,
     reasons    TEXT,
+    ctx        TEXT,              -- News/On-Chain beim Signal (JSON), für die Auswertung
     status     TEXT NOT NULL DEFAULT 'open',  -- open / target1 / target2 / stopped / expired
     closed_at  INTEGER,
     UNIQUE (strategy, symbol, timeframe, bar_ts, side)
@@ -35,6 +38,22 @@ CREATE TABLE IF NOT EXISTS regime_alerts (
     state  TEXT NOT NULL,     -- long / flat
     PRIMARY KEY (symbol, bar_ts)
 );
+CREATE TABLE IF NOT EXISTS news (
+    id      TEXT PRIMARY KEY,   -- Hash aus Link/Titel
+    ts      INTEGER NOT NULL,   -- Veröffentlichung in ms (UTC)
+    source  TEXT,
+    title   TEXT NOT NULL,
+    url     TEXT,
+    coins   TEXT,               -- betroffene Coins, z. B. "BTC,ETH"; leer = allgemeine Marktmeldung
+    score   REAL NOT NULL,      -- Stimmung −2 … +2
+    alerted INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS news_ts ON news (ts);
+CREATE TABLE IF NOT EXISTS context (
+    key  TEXT PRIMARY KEY,      -- z. B. fear_greed, onchain
+    ts   INTEGER NOT NULL,
+    data TEXT NOT NULL          -- JSON
+);
 """
 
 
@@ -42,7 +61,7 @@ class Database:
     def __init__(self, path: str):
         if path != ":memory:":
             Path(path).parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(path)
+        self.conn = sqlite3.connect(path, timeout=30)
         self._migrate()
         self.conn.executescript(SCHEMA)
 
@@ -58,6 +77,10 @@ class Database:
                 "side, score, entry, stop, target1, target2, reasons, status, closed_at FROM signals_old"
             )
             self.conn.execute("DROP TABLE signals_old")
+            self.conn.commit()
+            cols = [r[1] for r in self.conn.execute("PRAGMA table_info(signals)")]
+        if cols and "ctx" not in cols:
+            self.conn.execute("ALTER TABLE signals ADD COLUMN ctx TEXT")
             self.conn.commit()
 
     def save_candles(self, exchange: str, symbol: str, timeframe: str, rows: list[list]) -> int:
@@ -98,10 +121,10 @@ class Database:
         """Speichert ein Signal. False, wenn es schon existiert."""
         cur = self.conn.execute(
             "INSERT OR IGNORE INTO signals "
-            "(created_at, strategy, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons) "
+            "(created_at, strategy, symbol, timeframe, bar_ts, side, score, entry, stop, target1, target2, reasons, ctx) "
             "VALUES (:created_at, :strategy, :symbol, :timeframe, :bar_ts, :side, :score, :entry, :stop, :target1, "
-            ":target2, :reasons)",
-            {"strategy": "score", **sig},
+            ":target2, :reasons, :ctx)",
+            {"strategy": "score", "ctx": None, **sig},
         )
         self.conn.commit()
         return cur.rowcount == 1
@@ -118,3 +141,47 @@ class Database:
             (symbol, timeframe, side, strategy),
         ).fetchone()
         return row[0]
+
+    # ---------- News und On-Chain ----------
+    def save_news(self, rows: list[dict]) -> int:
+        """Speichert neue Schlagzeilen, gibt die Anzahl neuer zurück."""
+        n = 0
+        for r in rows:
+            cur = self.conn.execute(
+                "INSERT OR IGNORE INTO news (id, ts, source, title, url, coins, score) VALUES (?,?,?,?,?,?,?)",
+                (r["id"], r["ts"], r.get("source"), r["title"], r.get("url"), r.get("coins", ""), r["score"]))
+            n += cur.rowcount
+        self.conn.commit()
+        return n
+
+    def news_since(self, since_ms: int, coin: str | None = None, limit: int = 500) -> list[dict]:
+        cols = ["id", "ts", "source", "title", "url", "coins", "score", "alerted"]
+        if coin:
+            rows = self.conn.execute(
+                f"SELECT {', '.join(cols)} FROM news WHERE ts >= ? AND (',' || coins || ',') LIKE ? "
+                "ORDER BY ts DESC LIMIT ?", (since_ms, f"%,{coin},%", limit)).fetchall()
+        else:
+            rows = self.conn.execute(f"SELECT {', '.join(cols)} FROM news WHERE ts >= ? ORDER BY ts DESC LIMIT ?",
+                                     (since_ms, limit)).fetchall()
+        return [dict(zip(cols, r)) for r in rows]
+
+    def mark_news_alerted(self, news_id: str) -> bool:
+        cur = self.conn.execute("UPDATE news SET alerted = 1 WHERE id = ? AND alerted = 0", (news_id,))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def prune_news(self, before_ms: int) -> None:
+        self.conn.execute("DELETE FROM news WHERE ts < ?", (before_ms,))
+        self.conn.commit()
+
+    def set_context(self, key: str, data) -> None:
+        self.conn.execute("INSERT OR REPLACE INTO context VALUES (?, ?, ?)",
+                          (key, int(time.time() * 1000), json.dumps(data)))
+        self.conn.commit()
+
+    def get_context(self, key: str, with_ts: bool = False):
+        row = self.conn.execute("SELECT ts, data FROM context WHERE key = ?", (key,)).fetchone()
+        if not row:
+            return (None, None) if with_ts else None
+        data = json.loads(row[1])
+        return (data, row[0]) if with_ts else data

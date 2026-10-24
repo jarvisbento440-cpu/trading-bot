@@ -151,3 +151,19 @@ table.bt th.l, table.bt td.l { text-align: left; }
 .ai-line .badge { margin-right: 6px; }
 .small { font-size: 11px; }
 .bt td.small { white-space: normal; min-width: 240px; }
+
+/* News & On-Chain */
+.badge.news-pos { border-color: var(--up); color: var(--up); }
+.badge.news-neg { border-color: var(--down); color: var(--down); }
+.badge.news-warn { background: rgba(239,83,80,.18); border-color: var(--down); color: var(--down); font-weight: 600; }
+.news-list { list-style: none; margin: 6px 0 0 !important; padding: 0 !important; }
+.news-list li { display: flex; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.news-list li a { color: inherit; text-decoration: none; }
+.news-list li a:hover { text-decoration: underline; }
+.news-score { min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.news-meta { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.fng { display: flex; align-items: center; gap: 12px; margin: 4px 0 8px; }
+.fng-bar { position: relative; flex: 1; max-width: 320px; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #ef5350, #f2b84b 50%, #26a69a); }
+.fng-bar i { position: absolute; top: -4px; width: 4px; height: 16px; background: var(--text, #fff); border-radius: 2px; transform: translateX(-2px); }
+.oc-sig { font-weight: 600; }

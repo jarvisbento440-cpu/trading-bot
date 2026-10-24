@@ -36,6 +36,13 @@ class Config:
     weekly_report: bool = True  # Wochenbericht per Telegram
     report_weekday: int = 6     # 0 = Montag … 6 = Sonntag
     report_hour: int = 18       # Ortszeit
+    news: bool = True          # Schlagzeilen + Fear & Greed laden (kostenlos, ohne Schlüssel)
+    news_minutes: int = 10     # wie oft Schlagzeilen geholt werden
+    news_alerts: bool = True   # sehr starke Meldungen (z. B. Hack, ETF-Zulassung) per Telegram
+    onchain: bool = True       # On-Chain-/Funding-Daten laden
+    onchain_minutes: int = 30
+    # Was starker Gegenwind aus News/On-Chain mit einem Signal macht: warn = nur Hinweis, block = nicht senden, off
+    context_filter: str = "warn"
     telegram_token: str = ""
     telegram_chat_id: str = ""
 

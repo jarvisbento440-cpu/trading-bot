@@ -41,6 +41,15 @@ weekly_report: true
 report_weekday: 6    # 0 = Montag ... 6 = Sonntag
 report_hour: 18      # Uhrzeit (Ortszeit des Rechners)
 
+# News (Schlagzeilen aus RSS + Google News, Fear & Greed) und On-Chain (DefiLlama, mempool.space,
+# Hyperliquid-Funding). Alles kostenlos und ohne API-Schlüssel. Erklärung: docs/news-onchain.md
+news: true
+news_minutes: 10
+news_alerts: true        # sehr starke Meldung zu einem deiner Coins (Hack, Delisting, ETF ...) per Telegram
+onchain: true
+onchain_minutes: 30
+context_filter: warn     # warn = Hinweis im Signal, block = Signal bei starkem Gegenwind nicht senden, off = aus
+
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
 
 # Risiko-Management

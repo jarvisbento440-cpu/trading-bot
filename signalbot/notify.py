@@ -15,7 +15,8 @@ def fmt_price(p: float) -> str:
 
 
 def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Modell", hist: dict | None = None,
-                  ai: dict | None = None, hitrate: dict | None = None, setup: int | None = None) -> str:
+                  ai: dict | None = None, hitrate: dict | None = None, setup: int | None = None,
+                  context: list[str] | None = None, warn: list[str] | None = None) -> str:
     from .hitrates import format_line
     icon = "🟢" if s.side == "long" else "🔴"
     rr = abs(s.target1 - s.entry) / abs(s.entry - s.stop)
@@ -38,6 +39,8 @@ def format_signal(symbol: str, timeframe: str, s, strategy_name: str = "Score-Mo
         *([_ai_line(ai)] if ai else []),
         "Gründe:",
         *[f"• {r}" for r in s.reasons],
+        *(["News & On-Chain:", *[f"• {r}" for r in context]] if context else []),
+        *(["⚠️ Gegenwind:", *[f"• {w}" for w in warn]] if warn else []),
         "",
         DISCLAIMER,
     ]

@@ -30,6 +30,7 @@
     <div id="strat-panel" class="strat-panel hidden"></div>
     <button id="bt-open" class="btn">📊 Backtest</button>
     <button id="paper-open" class="btn">📝 Papier-Test</button>
+    <button id="news-open" class="btn">📰 News &amp; On-Chain</button>
     <button id="sound-btn" class="btn" title="Ton bei neuen Signalen">🔔 Ton an</button>
   </div>
 </header>
@@ -71,6 +72,15 @@
     <button id="paper-close" class="btn">✕ Schließen (Esc)</button>
   </div>
   <div id="paper-body" class="bt-body"></div>
+</div>
+
+<div id="news" class="focus hidden" role="dialog" aria-modal="true">
+  <div class="focus-head">
+    <div class="focus-title">News &amp; On-Chain</div>
+    <div class="group" id="news-coins" aria-label="Coin wählen"></div>
+    <button id="news-close" class="btn">✕ Schließen (Esc)</button>
+  </div>
+  <div id="news-body" class="bt-body"></div>
 </div>
 
 <script src="vendor/lightweight-charts.standalone.production.js"></script>

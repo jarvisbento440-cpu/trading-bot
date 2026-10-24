@@ -24,7 +24,9 @@ def closed_candles(df, tf_ms: int, now_ms: int):
 
 def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     """Prüft alle Strategien auf der letzten abgeschlossenen Kerze und verschickt neue Signale."""
-    from . import hitrates, learn, tracking
+    import json
+
+    from . import context, hitrates, learn, tracking
     from .backtest import latest_result, stats_for
     from .strategies import BY_KEY, prepare, signals_at
 
@@ -40,8 +42,9 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
     for symbol in all_symbols(cfg):
         src = YAHOO if is_yahoo(symbol) else ex.id
         daily = db.candles(src, symbol, cfg.trend_timeframe, 400).drop(columns=["time"])
+        ctx = context.coin_context(db, cfg, symbol) if (cfg.news or cfg.onchain) and "/" in symbol else {}
         if cfg.trend_light and cfg.trend_timeframe == "1d":
-            sent += _trend_light(symbol, daily, now, db, notifier)
+            sent += _trend_light(symbol, daily, now, db, notifier, ctx)
         for tf in cfg.signal_timeframes:
             tf_ms = ex.parse_timeframe(tf) * 1000
             df = closed_candles(db.candles(src, symbol, tf, 600).drop(columns=["time"]), tf_ms, now)
@@ -56,16 +59,25 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                 last = db.last_signal_bar(symbol, tf, sig.side, sig.strategy)
                 if last is not None and sig.bar_ts - last < cfg.risk.cooldown_bars * tf_ms:
                     continue
+                warn = context.headwind(ctx, sig.side) if cfg.context_filter != "off" else []
+                blocked = bool(warn) and cfg.context_filter == "block"
+                extra = context.reason_lines(ctx) + [f"⚠️ {w}" for w in warn]
+                if blocked:
+                    extra.append("Nicht per Telegram gesendet (context_filter: block)")
                 is_new = db.insert_signal({
                     "created_at": now, "strategy": sig.strategy, "symbol": symbol, "timeframe": tf,
                     "bar_ts": sig.bar_ts, "side": sig.side, "score": sig.score, "entry": sig.entry,
                     "stop": sig.stop, "target1": sig.target1, "target2": sig.target2,
-                    "reasons": "; ".join(sig.reasons),
+                    "reasons": "; ".join(sig.reasons + extra),
+                    "ctx": json.dumps(context.snapshot(ctx)) if ctx else None,
                 })
                 if is_new:
                     ai = judge(sig)
                     if ai:
                         learn.store(db, db.signal_id(sig.strategy, symbol, tf, sig.bar_ts, sig.side), ai)
+                    if blocked:
+                        continue
+                    if ai:
                         if cfg.learn_filter and not ai["take"]:
                             log.info("%s %s %s: vom Lernmodell aussortiert (%.0f %%, %+.2f R)",
                                      symbol, tf, sig.strategy, ai["p_win"] * 100, ai["exp_r"])
@@ -73,22 +85,48 @@ def scan(cfg: Config, ex, db: Database, notifier: Notifier) -> int:
                     setup, hr = tracking.expected_for(table, d, len(d) - 1, sig.strategy, tf, sig.side, sig.score)
                     tracking.remember(db, sig.strategy, symbol, tf, sig.bar_ts, sig.side, setup, hr)
                     hist = None if hr else stats_for(bt, sig.strategy, tf, sig.score if sig.strategy == "score" else None)
-                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist, ai, hr, setup))
+                    notifier.send(format_signal(symbol, tf, sig, BY_KEY[sig.strategy].name, hist, ai, hr, setup,
+                                                context.reason_lines(ctx), warn))
                     sent += 1
     return sent
 
 
-def _trend_light(symbol: str, daily, now: int, db: Database, notifier: Notifier) -> int:
-    """Meldet, wenn die Trendampel auf der letzten Tageskerze umgesprungen ist."""
+def _trend_light(symbol: str, daily, now: int, db: Database, notifier: Notifier, ctx: dict | None = None) -> int:
+    """Meldet, wenn die Trendampel auf der letzten Tageskerze umgesprungen ist,
+    und wenn der News-Filter bei grüner Ampel an- oder ausgeht."""
     from .regime import current, format_switch
     r = current(daily, now)
-    if not r or not r["switched"]:
+    if not r:
         return 0
-    if not db.insert_regime_alert(symbol, r["bar_ts"], r["state"]):
-        return 0
-    log.info("%s Trendampel: %s", symbol, r["state"])
-    notifier.send(format_switch(symbol, r))
-    return 1
+    sent = 0
+    n = (ctx or {}).get("news") or {}
+    if r["switched"] and db.insert_regime_alert(symbol, r["bar_ts"], r["state"]):
+        log.info("%s Trendampel: %s", symbol, r["state"])
+        msg = format_switch(symbol, r)
+        if r["state"] == "long" and n.get("filter"):
+            msg += "\n\n📰 Aber: News der letzten 3 Tage negativ – im Test lief es besser, erst nach besseren News einzusteigen."
+        notifier.send(msg)
+        sent += 1
+    if r["state"] == "long" and n.get("news3") is not None:
+        key = f"newsfilter_{symbol}"
+        prev = db.get_context(key)
+        cur = bool(n["filter"])
+        if prev is None:
+            db.set_context(key, cur)  # erster Lauf: nur merken
+        elif prev != cur:
+            db.set_context(key, cur)
+            notifier.send(format_news_filter(symbol, n, cur))
+            sent += 1
+    return sent
+
+
+def format_news_filter(symbol: str, n: dict, on: bool) -> str:
+    v = f"{n['news3']:+.2f}".replace(".", ",")
+    if on:
+        return (f"📰 {symbol}: News der letzten 3 Tage negativ ({v})\n"
+                "Trendampel ist grün, aber laut Test war es besser, solange zu pausieren (raus / nicht neu kaufen).\n"
+                "Kleiner Vorteil, statistisch nicht sicher – siehe docs/news-onchain.md.")
+    return f"📰 {symbol}: News nicht mehr negativ ({v}) – Trendampel gilt wieder normal (grün = halten)."
 
 
 def main() -> None:
@@ -152,14 +190,19 @@ def main() -> None:
 
     if args.command == "once":
         sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
+        from .context import Updater
+        Updater(cfg).run(db, notifier)
         log.info("%d Signal(e) verschickt", scan(cfg, ex, db, notifier))
         return
 
+    from .context import Updater
+    updater = Updater(cfg)
     notifier.send("🤖 Signal-Bot gestartet: " + ", ".join(cfg.symbols))
     while True:
         try:
             sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
             sync_extra(cfg, ex, db)
+            updater.run(db, notifier)
             scan(cfg, ex, db, notifier)
             from .tracking import after_update
             after_update(cfg, db, notifier)
