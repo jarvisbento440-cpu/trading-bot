@@ -44,4 +44,17 @@
 
 Korrelation über 0 = höherer Wert ging mit besserer Rendite einher. |t| unter 2 ist meist Zufall.
 
+## Varianten: Entwicklung (bis 2024) gegen Prüfung (ab 2025)
+
+| Variante | Ø 7 T. bis 2024 | gehalten bis 2024 | Ø 7 T. ab 2025 | gehalten ab 2025 | Max. Rückgang ab 2025 |
+|---|---:|---:|---:|---:|---:|
+| Ampel grün (alle) | +0,6 % | -77,4 % | -1,5 % | -89,5 % | -93,6 % |
+| Scanner Top 5 | -0,3 % | -89,3 % | -1,7 % | -93,3 % | -97,4 % |
+| Rücksetzer Top 5 | +0,3 % | -63,5 % | -0,2 % | -60,9 % | -84,2 % |
+| Rücksetzer Top 5, nur wenn BTC grün | -0,1 % | -44,9 % | +0,8 % | +5,2 % | -63,9 % |
+| Nur BTC | +1,0 % | +149,4 % | -0,3 % | -31,9 % | -55,4 % |
+| BTC nur wenn Ampel grün | +0,9 % | +50,7 % | +0,3 % | +8,9 % | -30,3 % |
+
+'Gehalten' = jede Woche gleich gewichtet die ausgewählten Coins kaufen und 7 Tage halten, in Wochen ohne Auswahl Bargeld.
+
 225 Wochen (06/2022–09/2026), Coinbase, je Woche die Top 100 nach Volumen. Ø Rendite in den 7 Tagen danach (nach Gebühr): Scanner Top 5 -0,9 %, alle grünen -0,1 %, alle roten -0,5 %, alle Coins -0,3 %, BTC +0,5 %. Jede Woche die Top 5 halten: -99,3 % (größter Rückgang -99,2 %), BTC jede Woche: +69,8 %. Coins, die heute nicht mehr gelistet sind, fehlen, das macht das Ergebnis eher zu gut.
