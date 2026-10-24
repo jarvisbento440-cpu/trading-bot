@@ -43,7 +43,7 @@ def test_days_on_counts_since_switch():
     assert f["days_on"].iloc[-2] == last["days_on"] - 1
 
 
-def test_analyze_scores_only_green_and_ranks_strength():
+def test_analyze_scores_only_green_and_prefers_pullbacks():
     n = 120
     btc = daily(np.linspace(100, 110, n))
     strong = daily(np.linspace(100, 180, n), vols=np.r_[np.ones(n - 3) * 1000, [5000] * 3])
@@ -52,8 +52,9 @@ def test_analyze_scores_only_green_and_ranks_strength():
     t = scanner.analyze({"BTC/USDT": btc, "STRONG/USDT": strong, "WEAK/USDT": weak, "DOWN/USDT": down},
                         "BTC/USDT", now_after(btc))
     assert np.isnan(t.loc["DOWN/USDT", "score"]) and not t.loc["DOWN/USDT", "on"]
-    assert t.index[0] == "STRONG/USDT"
-    assert t.loc["STRONG/USDT", "score"] > t.loc["WEAK/USDT", "score"]
+    # Schon davongelaufen (weit über dem Schnitt, stärker als BTC) -> niedriger als der ruhige Coin
+    assert t.index[-2:].tolist() == ["STRONG/USDT", "DOWN/USDT"]
+    assert t.loc["STRONG/USDT", "score"] < t.loc["WEAK/USDT", "score"]
     assert t.loc["STRONG/USDT", "vol_surge"] > 4
     assert abs(t.loc["STRONG/USDT", "rs30"] - (t.loc["STRONG/USDT", "ret30"] - t.loc["BTC/USDT", "ret30"])) < 1e-9
 

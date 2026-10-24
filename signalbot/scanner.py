@@ -5,13 +5,12 @@ Ablauf (alle paar Stunden):
    Hebel-Token aussortieren, die `top` Coins mit dem höchsten 24h-Volumen nehmen.
 2. Für jeden Coin die Tageskerzen laden und dieselbe Trendampel wie bei den Haupt-Coins
    rechnen (Schluss über dem 50-Tage-Schnitt = grün).
-3. Nur Coins mit grüner Ampel bekommen einen Scanner-Score (0–100). Er sagt, wie auffällig
-   ein Coin im Vergleich zu den anderen grünen Coins ist:
-     40 % Stärke gegenüber BTC (30 Tage), 30 % Volumen-Schub (3 Tage gegen 30 Tage),
-     15 % frischer Trend (Ampel erst seit wenigen Tagen grün), 15 % nicht überdehnt
-     (Abstand zum 50-Tage-Schnitt).
-Der Score ist eine Rangliste für die Beobachtung, keine Trefferwahrscheinlichkeit.
-Wie gut er in der Vergangenheit war: scripts/scanner_test.py, docs/scanner.md.
+3. Nur Coins mit grüner Ampel bekommen einen Scanner-Score (0–100): "Rücksetzer im Aufwärtstrend",
+   je zur Hälfte nah am 50-Tage-Schnitt und nicht schon stärker als BTC gelaufen (30 Tage).
+   Der erste Entwurf (Stärke gegenüber BTC + Volumen-Schub) hat im historischen Test die
+   schlechtesten Coins ausgewählt: wer schon davongelaufen war, fiel danach im Schnitt zurück.
+Der Score ist eine Rangliste für die Beobachtung, keine Trefferwahrscheinlichkeit, und schlug im
+Test BTC mit Trendampel nicht. Details: scripts/scanner_test.py, docs/scanner.md.
 """
 from __future__ import annotations
 
@@ -38,7 +37,7 @@ STABLE = {
 PEGGED = {"WBTC", "WETH", "WBETH", "STETH", "WSTETH", "BETH", "CBETH", "RETH", "BNSOL", "JITOSOL", "MSOL",
           "PAXG", "XAUT", "WBNB", "TBTC", "LBTC", "CBBTC"}
 LEVERAGED = re.compile(r".+(UP|DOWN|BULL|BEAR|[235][LS])$")
-WEIGHTS = {"rs30": 0.40, "vol_surge": 0.30, "fresh": 0.15, "calm": 0.15}
+WEIGHTS = {"calm": 0.5, "lag": 0.5}
 MIN_DAYS = SMA + 10
 
 
@@ -83,10 +82,8 @@ def rank_score(rows: pd.DataFrame, btc_ret30: float | None) -> pd.Series:
     if g.empty:
         return out
     parts = pd.DataFrame(index=g.index)
-    parts["rs30"] = (g["ret30"] - (btc_ret30 or 0.0)).rank(pct=True)
-    parts["vol_surge"] = g["vol_surge"].rank(pct=True)
-    parts["fresh"] = (1 - g["days_on"].clip(upper=30) / 30)
-    parts["calm"] = 1 - g["distance"].rank(pct=True)
+    parts["calm"] = 1 - g["distance"].rank(pct=True)  # nah am 50-Tage-Schnitt
+    parts["lag"] = 1 - (g["ret30"] - (btc_ret30 or 0.0)).rank(pct=True)  # noch nicht davongelaufen
     parts = parts.fillna(0.5)
     s = sum(parts[k] * w for k, w in WEIGHTS.items())
     out.loc[g.index] = (s * 100).round()
@@ -178,7 +175,8 @@ def run(cfg: Config, ex) -> dict:
     green = sum(c["on"] for c in coins)
     return {"created_at": int(time.time() * 1000), "exchange": ex.id, "quote": quote, "scanned": len(coins),
             "green": green, "breadth": green / len(coins) * 100 if coins else None,
-            "btc_ret30": float(t.loc[btc, "ret30"]) if btc in t.index else None, "coins": coins}
+            "btc_ret30": float(t.loc[btc, "ret30"]) if btc in t.index else None,
+            "btc_on": bool(t.loc[btc, "on"]) if btc in t.index else None, "coins": coins}
 
 
 def _path(cfg: Config) -> Path:
@@ -220,11 +218,13 @@ def format_report(result: dict, n: int = 5) -> str:
     if result.get("breadth") is not None:
         lines.append(f"Marktbreite: {result['green']} von {result['scanned']} Coins "
                      f"({result['breadth']:.0f} %) über dem 50-Tage-Schnitt")
+    if result.get("btc_on") is False:
+        lines.append("⚠️ BTC-Trendampel ist RAUS. In dieser Lage haben im Test auch grüne Altcoins meist verloren.")
     top = picks(result, n)
     if not top:
         lines += ["", "Kein Coin außerhalb deiner Liste hat gerade eine grüne Trendampel."]
     else:
-        lines += ["", "Auffällig (Trendampel grün, nicht in deiner Liste):"]
+        lines += ["", "Grüne Ampel, nah am 50-Tage-Schnitt (nicht in deiner Liste):"]
         for i, c in enumerate(top, 1):
             extra = []
             if c["days_on"] is not None and c["days_on"] <= 5:
@@ -234,8 +234,8 @@ def format_report(result: dict, n: int = 5) -> str:
             vs = f"{c['vol_surge']:.1f}".replace(".", ",") if c["vol_surge"] is not None else "–"
             lines.append(f"{i}. {c['name']} {fmt_price(c['price'])} · Score {c['score']} · "
                          f"30 T vs. BTC {c['rs30']:+.0f} % · Volumen ×{vs}" + (" · " + ", ".join(extra) if extra else ""))
-    lines += ["", "Das ist eine Beobachtungsliste, kein Kaufsignal. In der Oberfläche unter 🔍 Scanner "
-                  "kannst du einen Coin mit einem Klick zu deinen Charts hinzufügen."]
+    lines += ["", "Beobachtungsliste, kein Kaufsignal: Im Test 2022–2026 schlug keine Altcoin-Auswahl BTC mit "
+                  "Trendampel. Unter 🔍 Scanner kannst du einen Coin mit einem Klick zu deinen Charts hinzufügen."]
     return "\n".join(lines)
 
 

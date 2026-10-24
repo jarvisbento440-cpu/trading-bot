@@ -94,6 +94,15 @@ def panel(data: dict) -> dict:
     return feats
 
 
+def momentum_score(x: pd.DataFrame) -> pd.Series:
+    """Erster Entwurf des Scanner-Scores (Schwung), zum Vergleich: 40 % Stärke vs. BTC, 30 % Volumen-Schub,
+    15 % frisch grün, 15 % nah am 50-Tage-Schnitt."""
+    g = x[x["on"]]
+    s = (0.40 * g["rs30"].rank(pct=True) + 0.30 * g["vol_surge"].rank(pct=True).fillna(0.5)
+         + 0.15 * (1 - g["days_on"].clip(upper=30) / 30).fillna(0.5) + 0.15 * (1 - g["distance"].rank(pct=True)))
+    return s.reindex(x.index)
+
+
 def evaluate(feats: dict) -> dict:
     btc = feats["BTC/USD"]
     first = max(btc.index[0] + 90 * DAY, int(pd.Timestamp("2022-06-06", tz="UTC").timestamp() * 1000))
@@ -115,10 +124,7 @@ def evaluate(feats: dict) -> dict:
         x["rs30"] = x["ret30"] - bret
         x["date"] = t
         x["rank"] = x["score"].rank(ascending=False, method="first")
-        # Gegenprobe "Rücksetzer im Aufwärtstrend": grün, aber nah am 50-Tage-Schnitt und schwächer als BTC
-        g = x[x["on"]]
-        pull = ((1 - g["distance"].rank(pct=True)) + (1 - g["rs30"].rank(pct=True))) / 2
-        x["pull_rank"] = pull.rank(ascending=False, method="first").reindex(x.index)
+        x["mom_rank"] = momentum_score(x).rank(ascending=False, method="first")
         x["btc_on"] = bool(btc.loc[t, "on"]) if t in btc.index else False
         recs.append(x.rename_axis("symbol").reset_index())
     r = pd.concat(recs, ignore_index=True)
@@ -149,6 +155,8 @@ def report(r: pd.DataFrame) -> dict:
         "Ampel rot": ~r["on"],
         "Scanner Top 5": r["rank"] <= 5,
         "Scanner Top 10": r["rank"] <= 10,
+        "Scanner Top 5, nur wenn BTC grün": (r["rank"] <= 5) & r["btc_on"],
+        "Alter Schwung-Score Top 5": r["mom_rank"] <= 5,
         "Grün, Score unter 50": r["on"] & (r["score"] < 50),
         "Nur BTC": r["symbol"] == "BTC/USD",
     }
@@ -176,9 +184,9 @@ def report(r: pd.DataFrame) -> dict:
     split = int(pd.Timestamp("2025-01-01", tz="UTC").timestamp() * 1000)
     variants = {
         "Ampel grün (alle)": r["on"],
+        "Alter Schwung-Score Top 5": r["mom_rank"] <= 5,
         "Scanner Top 5": r["rank"] <= 5,
-        "Rücksetzer Top 5": r["pull_rank"] <= 5,
-        "Rücksetzer Top 5, nur wenn BTC grün": (r["pull_rank"] <= 5) & r["btc_on"],
+        "Scanner Top 5, nur wenn BTC grün": (r["rank"] <= 5) & r["btc_on"],
         "Nur BTC": r["symbol"] == "BTC/USD",
         "BTC nur wenn Ampel grün": (r["symbol"] == "BTC/USD") & r["btc_on"],
     }
@@ -236,15 +244,19 @@ def to_markdown(o: dict) -> str:
 
 def summary(o: dict) -> str:
     g = o["groups"]
-    s5, al, gr, rd, bt = (g[k] for k in ("Scanner Top 5", "Alle Top-100", "Ampel grün", "Ampel rot", "Nur BTC"))
-    f = lambda x: f"{x:+.1f} %".replace(".", ",")  # noqa: E731
+    s5, sf, old, gr, bt = (g[k] for k in ("Scanner Top 5", "Scanner Top 5, nur wenn BTC grün",
+                                          "Alter Schwung-Score Top 5", "Ampel grün", "Nur BTC"))
+    f = lambda x: f"{x:+.0f} %"  # noqa: E731
     d = lambda ms: pd.to_datetime(ms, unit="ms").strftime("%m/%Y")  # noqa: E731
-    return (f"{o['weeks']} Wochen ({d(o['from'])}–{d(o['to'])}), Coinbase, je Woche die Top {TOP} nach Volumen. "
-            f"Ø Rendite in den 7 Tagen danach (nach Gebühr): Scanner Top 5 {f(s5['fwd7']['avg'])}, "
-            f"alle grünen {f(gr['fwd7']['avg'])}, alle roten {f(rd['fwd7']['avg'])}, alle Coins {f(al['fwd7']['avg'])}, "
-            f"BTC {f(bt['fwd7']['avg'])}. Jede Woche die Top 5 halten: {f(s5['curve']['total'])} "
-            f"(größter Rückgang {f(s5['curve']['maxdd'])}), BTC jede Woche: {f(bt['curve']['total'])}. "
-            f"Coins, die heute nicht mehr gelistet sind, fehlen, das macht das Ergebnis eher zu gut.")
+    return (f"{o['weeks']} Wochen ({d(o['from'])}–{d(o['to'])}), Coinbase, je Woche die Top {TOP} nach Volumen, "
+            f"jede Woche die Auswahl gekauft und 7 Tage gehalten (nach Gebühr): "
+            f"Scanner Top 5 {f(s5['curve']['total'])}, nur wenn die BTC-Ampel grün ist {f(sf['curve']['total'])} "
+            f"(größter Rückgang {f(sf['curve']['maxdd'])}), alter Schwung-Score {f(old['curve']['total'])}, "
+            f"alle grünen Coins {f(gr['curve']['total'])}, BTC {f(bt['curve']['total'])}. "
+            + ("Kein Scanner-Ansatz schlug BTC. " if max(s5["curve"]["total"], sf["curve"]["total"]) < bt["curve"]["total"]
+               else "") +
+            f"Coins, die heute nicht mehr gelistet sind, fehlen, "
+            f"das macht das Ergebnis eher noch zu gut.")
 
 
 def main() -> None:

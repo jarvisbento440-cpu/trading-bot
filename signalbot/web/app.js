@@ -1162,9 +1162,11 @@
     const rows = res.coins.filter((c) => scanOpt.all || c.on);
     html += `<p class="muted">Stand ${when} · ${res.scanned} Coins mit dem höchsten 24h-Volumen auf ${res.exchange} (${res.quote}) · BTC 30 Tage ${sp(res.btc_ret30)}.
       Neu gescannt wird alle ${num(r.every_hours)} Stunden.</p>
+      ${res.btc_on === false ? '<p class="down">⚠️ Die BTC-Trendampel steht auf RAUS. In dieser Lage haben im historischen Test auch Altcoins mit grüner Ampel meist verloren.</p>' : ""}
       <div class="paper-kpis">
         <div><span class="muted">Marktbreite</span><b>${num(res.breadth)} %</b><span>${res.green} von ${res.scanned} Coins mit grüner Trendampel</span></div>
-        <div><span class="muted">Stärkster grüner Coin</span><b>${(res.coins.find((c) => c.on && !c.watched) || {}).name || "–"}</b></div>
+        <div><span class="muted">BTC-Trendampel</span><b>${res.btc_on == null ? "–" : res.btc_on ? "🟢 grün" : "⚪ raus"}</b></div>
+        <div><span class="muted">Platz 1 außerhalb deiner Liste</span><b>${(res.coins.find((c) => c.on && !c.watched) || {}).name || "–"}</b></div>
       </div>
       <div class="scan-opts"><label><input type="checkbox" id="so-all" ${scanOpt.all ? "checked" : ""}> Auch Coins mit roter Ampel zeigen</label></div>
       <div class="table-wrap"><table class="bt"><thead><tr><th>#</th><th class="l">Coin</th><th>Score</th><th>Kurs</th><th>24 h</th><th>7 Tage</th><th>30 T vs. BTC</th>
@@ -1192,11 +1194,12 @@
   function scanHelp(t) {
     let html = `<h3>So liest du das</h3><ul>
       <li><strong>Trendampel grün</strong>: Tagesschluss über dem 50-Tage-Schnitt, dieselbe Regel wie bei deinen Haupt-Coins. Nur grüne Coins bekommen einen Score.</li>
-      <li><strong>Score</strong> (0–100) vergleicht die grünen Coins untereinander: 40 % Stärke gegenüber BTC über 30 Tage, 30 % Volumen-Schub (letzte 3 Tage gegen die 30 davor),
-        15 % frischer Trend (erst seit wenigen Tagen grün), 15 % nicht überdehnt (nah am 50-Tage-Schnitt). Er ist eine Rangliste, keine Trefferwahrscheinlichkeit.</li>
+      <li><strong>Score</strong> (0–100) vergleicht die grünen Coins untereinander: „Rücksetzer im Aufwärtstrend“, je zur Hälfte nah am 50-Tage-Schnitt und
+        in den letzten 30 Tagen nicht schon stärker als BTC gelaufen. Coins, die schon davongelaufen waren, fielen im Test danach im Schnitt zurück. Der Score ist eine Rangliste, keine Trefferwahrscheinlichkeit.</li>
       <li><strong>Marktbreite</strong>: Anteil der Coins mit grüner Ampel. Über 50 % ist der Gesamtmarkt eher stark, unter 30 % eher schwach.</li>
       <li><strong>Anteil</strong>: wie viel deines Budgets für diesen Coin die Trendampel nach seiner Schwankung empfehlen würde.</li>
-      <li>Kleine Coins schwanken stark und können schnell abstürzen. Der Scanner ist eine Beobachtungsliste, kein Kaufsignal.</li></ul>`;
+      <li><strong>Volumen-Schub</strong>: Handelsvolumen der letzten 3 Tage gegen die 30 davor. Nur zur Info, im Test kein Vorteil.</li>
+      <li>Kleine Coins schwanken stark und können schnell abstürzen. Im Test 2022–2026 hat keine Altcoin-Auswahl BTC mit Trendampel geschlagen. Der Scanner ist eine Beobachtungsliste, kein Kaufsignal.</li></ul>`;
     if (t && t.summary) html += `<h3>Historischer Test</h3><p class="muted">${t.summary}</p>`;
     return html;
   }
