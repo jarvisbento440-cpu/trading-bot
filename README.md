@@ -79,6 +79,8 @@ pip install pytest && python -m pytest
 
 **Trendampel (empfohlen):** einfacher Tages-Trendfilter, der als einziger Ansatz auch im unberührten Prüfjahr vorne lag (+13 % statt −32 % bei Kaufen & Halten, größter Rückgang −44 % statt −85 %). Details und alle getesteten Regeln: [docs/trendampel.md](docs/trendampel.md).
 
+**Lernmodell (aus Fehlsignalen lernen):** schätzt für jedes Signal die Trefferchance aus 45.000 vergangenen Signalen und meldet schwache Signale nicht mehr per Telegram (`learn_filter` in `config.yaml`). Im Prüfjahr sank der Verlust pro Trade von −0,12 R auf etwa 0 R, profitabel werden die Strategien dadurch aber nicht. Im Papier-Test steht bei jedem Trade, was dafür und dagegen sprach. Details: [docs/lernen.md](docs/lernen.md).
+
 8 Strategien (Score-Modell, Donchian, Supertrend, MACD, RSI, Bollinger-Squeeze, Fibonacci Golden Pocket, Liquiditäts-Sweep) mit Erklärung und Quellen: [docs/strategien.md](docs/strategien.md).
 
 - Backtest im Programm: Button **„📊 Backtest“**. Ergebnis mit 1 Jahr echter Kurse: [results/backtest-bericht.md](results/backtest-bericht.md).

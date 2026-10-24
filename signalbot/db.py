@@ -106,6 +106,12 @@ class Database:
         self.conn.commit()
         return cur.rowcount == 1
 
+    def signal_id(self, strategy: str, symbol: str, timeframe: str, bar_ts: int, side: str) -> int | None:
+        row = self.conn.execute(
+            "SELECT id FROM signals WHERE strategy=? AND symbol=? AND timeframe=? AND bar_ts=? AND side=?",
+            (strategy, symbol, timeframe, bar_ts, side)).fetchone()
+        return row[0] if row else None
+
     def last_signal_bar(self, symbol: str, timeframe: str, side: str, strategy: str = "score") -> int | None:
         row = self.conn.execute(
             "SELECT MAX(bar_ts) FROM signals WHERE symbol=? AND timeframe=? AND side=? AND strategy=?",
