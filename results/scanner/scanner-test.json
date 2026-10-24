@@ -406,22 +406,22 @@
    "weeks": 211
   },
   "Volumen-Schub": {
-   "ic": -0.06789759891462979,
-   "t": -4.016605071405097,
+   "ic": -0.0678975989146298,
+   "t": -4.016605071405099,
    "weeks": 211
   },
   "Tage grün (weniger = frischer)": {
    "ic": -0.020944325622981794,
-   "t": -1.3461266965175298,
+   "t": -1.34612669651753,
    "weeks": 211
   },
   "Abstand 50-T.": {
-   "ic": -0.16343311989032877,
-   "t": -9.42025978376187,
+   "ic": -0.1634331198903288,
+   "t": -9.420259783761871,
    "weeks": 211
   },
   "Scanner-Score": {
-   "ic": 0.1552740383091038,
+   "ic": 0.15527403830910377,
    "t": 9.584079924857829,
    "weeks": 211
   }
@@ -681,5 +681,5 @@
   }
  },
  "summary": "225 Wochen (06/2022–09/2026), Coinbase, je Woche die Top 100 nach Volumen, jede Woche die Auswahl gekauft und 7 Tage gehalten (nach Gebühr): Scanner Top 5 -86 %, nur wenn die BTC-Ampel grün ist -43 % (größter Rückgang -84 %), alter Schwung-Score -99 %, alle grünen Coins -98 %, BTC +70 %. Kein Scanner-Ansatz schlug BTC. Coins, die heute nicht mehr gelistet sind, fehlen, das macht das Ergebnis eher noch zu gut.",
- "created_at": 1792807301942
+ "created_at": 1792825477741
 }
