@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS regime_alerts (
     state  TEXT NOT NULL,     -- long / flat
     PRIMARY KEY (symbol, bar_ts)
 );
+CREATE TABLE IF NOT EXISTS scanner_reports (
+    day INTEGER PRIMARY KEY  -- Tag (UTC, Tage seit 1970), an dem die Scanner-Übersicht verschickt wurde
+);
 """
 
 
@@ -91,6 +94,12 @@ class Database:
     def insert_regime_alert(self, symbol: str, bar_ts: int, state: str) -> bool:
         """Merkt sich einen Trendampel-Wechsel. False, wenn er schon gemeldet wurde."""
         cur = self.conn.execute("INSERT OR IGNORE INTO regime_alerts VALUES (?, ?, ?)", (symbol, bar_ts, state))
+        self.conn.commit()
+        return cur.rowcount > 0
+
+    def insert_scanner_report(self, day: int) -> bool:
+        """Merkt sich die tägliche Scanner-Übersicht. False, wenn sie heute schon verschickt wurde."""
+        cur = self.conn.execute("INSERT OR IGNORE INTO scanner_reports VALUES (?)", (day,))
         self.conn.commit()
         return cur.rowcount > 0
 

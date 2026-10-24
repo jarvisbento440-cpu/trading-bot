@@ -17,6 +17,16 @@ class Risk:
 
 
 @dataclass
+class Scanner:
+    enabled: bool = True
+    top: int = 150             # so viele Coins mit dem höchsten 24h-Volumen prüfen
+    min_volume: float = 2_000_000  # Mindest-Tagesvolumen in Quote-Währung (z. B. USDT)
+    every_hours: float = 4     # so oft neu scannen
+    telegram_daily: bool = True  # einmal am Tag die Übersicht per Telegram
+    telegram_top: int = 5
+
+
+@dataclass
 class Config:
     exchange: str = "binance"
     symbols: list[str] = field(default_factory=lambda: ["BTC/USDT"])
@@ -31,6 +41,7 @@ class Config:
     strategies: list[str] = field(default_factory=lambda: [
         "score", "donchian", "supertrend", "macd", "rsi", "squeeze", "fib", "sweep"])
     trend_light: bool = True  # Trendampel (Tages-Trendfilter) anzeigen und melden
+    scanner: Scanner = field(default_factory=Scanner)
     telegram_token: str = ""
     telegram_chat_id: str = ""
 
@@ -39,7 +50,8 @@ def load_config(path: str | Path = "config.yaml") -> Config:
     load_dotenv()
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
     risk = Risk(**raw.pop("risk", {}))
-    cfg = Config(**raw, risk=risk)
+    scanner = Scanner(**(raw.pop("scanner", None) or {}))
+    cfg = Config(**raw, risk=risk, scanner=scanner)
     cfg.telegram_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
     cfg.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
     # Trend-Zeitebene und Signal-Zeitebenen müssen gespeichert werden

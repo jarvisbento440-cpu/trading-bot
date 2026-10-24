@@ -76,12 +76,22 @@ def _trend_light(symbol: str, daily, now: int, db: Database, notifier: Notifier)
     return 1
 
 
+def _scanner(cfg: Config, ex, db: Database, notifier: Notifier) -> None:
+    """Coin-Scanner; ein Fehler dort darf den Rest nicht aufhalten."""
+    from . import scanner
+    try:
+        scanner.maybe_run(cfg, ex, db, notifier)
+    except Exception:
+        log.exception("Coin-Scanner fehlgeschlagen, nächster Versuch beim nächsten Durchlauf")
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description="Krypto-Signal-Bot")
-    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest"], nargs="?", default="ui",
+    p.add_argument("command", choices=["ui", "backfill", "once", "run", "backtest", "scanner"], nargs="?", default="ui",
                    help="ui = Oberfläche (Standard), backfill = Historie laden, "
                         "once = einmal prüfen, run = Dauerbetrieb ohne Oberfläche, "
-                        "backtest = Strategien an der Vergangenheit testen")
+                        "backtest = Strategien an der Vergangenheit testen, "
+                        "scanner = Coin-Scanner einmal ausführen")
     p.add_argument("--config", default="config.yaml")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--offline", action="store_true", help="Oberfläche ohne Kurs-Aktualisierung")
@@ -122,6 +132,17 @@ def main() -> None:
         log.info("Ergebnis gespeichert: %s", path)
         return
 
+    if args.command == "scanner":
+        from . import scanner
+        if args.exchange:
+            ex = make_exchange(args.exchange)
+        if args.quote:
+            cfg.symbols = [s.split("/")[0] + "/" + args.quote for s in cfg.symbols]
+        result = scanner.run(cfg, ex)
+        scanner.save(cfg, result)
+        print(scanner.format_report(result, 10))
+        return
+
     if args.command == "backfill":
         sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
         return
@@ -129,6 +150,7 @@ def main() -> None:
     if args.command == "once":
         sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
         log.info("%d Signal(e) verschickt", scan(cfg, ex, db, notifier))
+        _scanner(cfg, ex, db, notifier)
         return
 
     notifier.send("🤖 Signal-Bot gestartet: " + ", ".join(cfg.symbols))
@@ -137,6 +159,7 @@ def main() -> None:
             sync_all(ex, db, cfg.symbols, cfg.store_timeframes, cfg.backfill_days)
             sync_extra(cfg, ex, db)
             scan(cfg, ex, db, notifier)
+            _scanner(cfg, ex, db, notifier)
             from .paper import update as paper_update
             paper_update(cfg, db)
         except Exception:

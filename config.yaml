@@ -31,6 +31,16 @@ trend_light: true
 
 strategies: [score, donchian, supertrend, macd, rsi, squeeze, fib, sweep]
 
+# Coin-Scanner: sucht unter den meistgehandelten Coins der Börse weitere mit grüner Trendampel
+# (Erklärung: docs/scanner.md). Ergebnis in der Oberfläche unter "🔍 Scanner" und einmal am Tag per Telegram.
+scanner:
+  enabled: true
+  top: 150              # so viele Coins mit dem höchsten 24h-Volumen prüfen
+  min_volume: 2000000   # Mindest-Tagesvolumen (USDT)
+  every_hours: 4        # so oft neu scannen
+  telegram_daily: true  # einmal am Tag die besten 5 per Telegram
+  telegram_top: 5
+
 # Risiko-Management
 risk:
   stop_atr: 1.5        # Stop = Einstieg -/+ 1,5 x ATR
